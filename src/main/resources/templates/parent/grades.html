@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả học tập & Điểm danh - EduCenter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .child-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+            background: #fff;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar dùng chung -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-clipboard2-data-fill text-warning me-2"></i>Kết quả học tập & Chuyên cần
+            </h2>
+            <p class="text-muted mb-0">Theo dõi chi tiết bảng điểm và lịch sử điểm danh của các con tại trung tâm</p>
+        </div>
+        <a th:href="@{/parent/dashboard}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Về Dashboard
+        </a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(children)}" class="alert alert-info text-center py-4">
+        <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+        Bạn chưa có hồ sơ con em nào trong hệ thống.
+    </div>
+
+    <!-- Lặp qua từng người con -->
+    <div class="child-card" th:each="c : ${children}">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-2 text-primary">
+                    <i class="bi bi-person-circle fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-dark mb-0" th:text="${c.fullName}">Hoàng Nam</h5>
+                    <small class="text-muted" th:text="${c.school != null ? c.school : '---'} + ' • ' + ${c.gradeLevel != null ? c.gradeLevel : ''}"></small>
+                </div>
+            </div>
+            <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                <i class="bi bi-mortarboard me-1"></i>Học viên chính thức
+            </span>
+        </div>
+
+        <div class="card-body p-4">
+            <!-- 1. BẢNG ĐIỂM -->
+            <h6 class="fw-bold text-dark mb-3">
+                <i class="bi bi-award text-primary me-2"></i>Bảng điểm kết quả học tập
+            </h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                        <tr class="text-center">
+                            <th class="text-start ps-3">Lớp học</th>
+                            <th style="width: 110px;">Kiểm tra (x1)</th>
+                            <th style="width: 110px;">Giữa kỳ (x2)</th>
+                            <th style="width: 110px;">Cuối kỳ (x3)</th>
+                            <th style="width: 110px;">Điểm TB</th>
+                            <th style="width: 120px;">Học lực</th>
+                            <th class="text-start ps-3">Nhận xét của giáo viên</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(studentGrades[c.id])}">
+                            <td colspan="7" class="text-center py-3 text-muted">Chưa có dữ liệu điểm thi</td>
+                        </tr>
+                        <tr th:each="g : ${studentGrades[c.id]}">
+                            <td class="ps-3 fw-bold text-dark" th:text="${g.classEntity.name}">Toán 10 - Nâng Cao</td>
+                            <td class="text-center fw-semibold" th:text="${g.testScore != null ? g.testScore : '---'}">9.0</td>
+                            <td class="text-center fw-semibold" th:text="${g.midtermScore != null ? g.midtermScore : '---'}">8.5</td>
+                            <td class="text-center fw-semibold" th:text="${g.finalScore != null ? g.finalScore : '---'}">9.0</td>
+                            <td class="text-center fw-bold text-primary fs-6" th:text="${g.averageScore != null ? g.averageScore : '---'}">8.83</td>
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success px-3 py-1" th:text="${g.academicPerformance}">Giỏi</span>
+                            </td>
+                            <td class="ps-3 small text-secondary" th:text="${g.note != null && !g.note.empty ? g.note : 'Chưa có nhận xét'}">
+                                Học lực Xuất sắc, tư duy logic rất tốt
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 2. LỊCH SỬ ĐIỂM DANH -->
+            <h6 class="fw-bold text-dark mb-3">
+                <i class="bi bi-calendar-check text-success me-2"></i>Lịch sử chuyên cần & Điểm danh
+            </h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3" style="width: 140px;">Ngày học</th>
+                            <th>Lớp học</th>
+                            <th class="text-center" style="width: 160px;">Trạng thái</th>
+                            <th class="pe-3">Ghi chú chuyên cần</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(studentAttendances[c.id])}">
+                            <td colspan="4" class="text-center py-3 text-muted">Chưa có lịch sử điểm danh</td>
+                        </tr>
+                        <tr th:each="att : ${studentAttendances[c.id]}">
+                            <td class="ps-3 fw-semibold text-secondary" th:text="${#temporals.format(att.attendanceDate, 'dd/MM/yyyy')}">05/10/2026</td>
+                            <td class="fw-bold text-dark" th:text="${att.classEntity.name}">Toán 10</td>
+                            <td class="text-center">
+                                <span th:if="${att.status == 'PRESENT'}" class="badge bg-success-subtle text-success px-3 py-1 rounded-pill">
+                                    <i class="bi bi-check-circle me-1"></i>Có mặt
+                                </span>
+                                <span th:if="${att.status == 'EXCUSED'}" class="badge bg-warning-subtle text-warning-emphasis px-3 py-1 rounded-pill">
+                                    <i class="bi bi-envelope-paper me-1"></i>Vắng có phép
+                                </span>
+                                <span th:if="${att.status == 'ABSENT'}" class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill">
+                                    <i class="bi bi-x-circle me-1"></i>Vắng không phép
+                                </span>
+                            </td>
+                            <td class="pe-3 small text-muted" th:text="${att.note != null ? att.note : 'Đúng giờ'}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

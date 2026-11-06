@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lớp học của tôi - EduCenter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .table-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar dùng chung -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-easel2-fill text-primary me-2"></i>Danh sách Lớp học phụ trách
+            </h2>
+            <p class="text-muted mb-0">Quản lý chuyên môn, thực hiện điểm danh và vào điểm cho các lớp học</p>
+        </div>
+        <a th:href="@{/teacher/dashboard}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Về Dashboard
+        </a>
+    </div>
+
+    <!-- Thông báo lỗi nếu có -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Bảng danh sách lớp -->
+    <div class="card table-card bg-white">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4" style="width: 70px;">Mã</th>
+                            <th style="min-width: 200px;">Tên lớp học</th>
+                            <th>Môn học</th>
+                            <th class="text-center" style="width: 120px;">Sĩ số</th>
+                            <th>Thời gian khóa học</th>
+                            <th class="text-center" style="width: 130px;">Trạng thái</th>
+                            <th style="width: 220px;" class="text-end pe-4">Nghiệp vụ giảng dạy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(classes)}">
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                Thầy/cô chưa có lớp học nào được phân công.
+                            </td>
+                        </tr>
+                        <tr th:each="c : ${classes}">
+                            <td class="ps-4 fw-semibold text-secondary" th:text="'#' + ${c.id}">#1</td>
+                            <td>
+                                <strong class="text-dark" th:text="${c.name}">Toán 10 - Nâng Cao</strong>
+                                <small class="text-muted d-block" th:text="${c.description}"></small>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle" th:text="${c.subject.name}">Toán</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-bold text-dark" th:text="${studentCounts[c.id]} + ' / ' + ${c.maxStudents}">3 / 25</span>
+                            </td>
+                            <td>
+                                <span class="small text-secondary">
+                                    <span th:text="${c.startDate != null ? #temporals.format(c.startDate, 'dd/MM/yyyy') : '---'}"></span>
+                                    -
+                                    <span th:text="${c.endDate != null ? #temporals.format(c.endDate, 'dd/MM/yyyy') : '---'}"></span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${c.status == 'ACTIVE'}" class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Đang dạy</span>
+                                <span th:if="${c.status == 'FINISHED'}" class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill">Đã xong</span>
+                                <span th:if="${c.status == 'CANCELLED'}" class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">Hủy</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/teacher/attendance/{id}(id=${c.id})}" class="btn btn-outline-success">
+                                        <i class="bi bi-ui-checks me-1"></i>Điểm danh
+                                    </a>
+                                    <a th:href="@{/teacher/grades/{id}(id=${c.id})}" class="btn btn-outline-primary">
+                                        <i class="bi bi-award me-1"></i>Bảng điểm
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

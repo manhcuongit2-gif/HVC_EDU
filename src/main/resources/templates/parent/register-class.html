@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký Lớp học - EduCenter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .form-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar dùng chung -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-journal-plus text-success me-2"></i>Đăng ký Lớp học mới
+            </h2>
+            <p class="text-muted mb-0">Chọn con em và khóa học mong muốn tại Trung tâm EduCenter</p>
+        </div>
+        <a th:href="@{/parent/dashboard}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Về Dashboard
+        </a>
+    </div>
+
+    <!-- Thông báo lỗi nếu có -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="card form-card bg-white p-4">
+                <form th:action="@{/parent/register-class}" method="post">
+                    <!-- Chọn con em -->
+                    <div class="mb-3">
+                        <label for="studentId" class="form-label fw-semibold">Chọn con em đăng ký <span class="text-danger">*</span></label>
+                        <select class="form-select" id="studentId" name="studentId" required>
+                            <option value="">-- Chọn con em --</option>
+                            <option th:each="c : ${myChildren}" th:value="${c.id}"
+                                    th:text="${c.fullName} + ' (' + ${c.gender} + ' - ' + ${c.school != null ? c.school : 'Chưa có trường'} + ')'">
+                                Hoàng Nam
+                            </option>
+                        </select>
+                        <div class="form-text" th:if="${#lists.isEmpty(myChildren)}">
+                            <span class="text-danger">Bạn chưa có hồ sơ con nào.</span>
+                            <a th:href="@{/parent/children}">Nhấn vào đây để thêm hồ sơ con</a> trước khi đăng ký.
+                        </div>
+                    </div>
+
+                    <!-- Chọn Lớp học -->
+                    <div class="mb-3">
+                        <label for="classId" class="form-label fw-semibold">Chọn lớp học mong muốn <span class="text-danger">*</span></label>
+                        <select class="form-select" id="classId" name="classId" required>
+                            <option value="">-- Chọn lớp học --</option>
+                            <option th:each="cls : ${classes}" th:value="${cls.id}"
+                                    th:text="${cls.name} + ' - Môn ' + ${cls.subject.name} + ' (GV: ' + ${cls.teacher.user.fullName} + ') - Học phí: ' + ${#numbers.formatDecimal(cls.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                Toán 10 - Nâng Cao
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Ghi chú / Nguyện vọng -->
+                    <div class="mb-4">
+                        <label for="note" class="form-label fw-semibold">Nguyện vọng / Ghi chú cho trung tâm</label>
+                        <textarea class="form-control" id="note" name="note" rows="3"
+                                  placeholder="VD: Cháu học lực khá môn Toán, mong muốn học nâng cao để thi vào 10..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a th:href="@{/parent/dashboard}" class="btn btn-light px-4">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-success px-4" th:disabled="${#lists.isEmpty(myChildren)}">
+                            <i class="bi bi-send-check me-1"></i>Gửi đơn đăng ký
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

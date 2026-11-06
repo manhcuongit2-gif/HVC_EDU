@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyệt Đăng ký học - EduCenter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #212529;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            border-radius: 6px;
+            margin: 2px 10px;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: #ffffff;
+            background-color: #0d6efd;
+        }
+        .sidebar .nav-link i {
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+        .table-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar dùng chung -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Admin dùng chung -->
+        <div th:replace="~{fragments/sidebar-admin :: sidebar('registrations')}"></div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
+                <div>
+                    <h2 class="h3 fw-bold text-dark mb-1">
+                        <i class="bi bi-file-earmark-check-fill text-primary me-2"></i>Duyệt đơn Đăng ký học
+                    </h2>
+                    <p class="text-muted mb-0">Tiếp nhận và phê duyệt yêu cầu đăng ký lớp học mới từ phụ huynh học sinh</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/admin/registrations}" class="btn btn-sm" th:classappend="${currentFilter == 'all'} ? 'btn-primary' : 'btn-outline-secondary'">
+                        Tất cả đơn
+                    </a>
+                    <a th:href="@{/admin/registrations(filter='pending')}" class="btn btn-sm position-relative" th:classappend="${currentFilter == 'pending'} ? 'btn-primary' : 'btn-outline-secondary'">
+                        Chờ phê duyệt
+                        <span th:if="${pendingCount > 0}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" th:text="${pendingCount}">
+                            1
+                        </span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Thông báo thành công -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- Thông báo lỗi -->
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- Bảng danh sách đơn đăng ký -->
+            <div class="card table-card bg-white">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4" style="width: 70px;">Mã</th>
+                                    <th>Phụ huynh</th>
+                                    <th>Học sinh</th>
+                                    <th>Lớp đăng ký</th>
+                                    <th>Ngày nộp</th>
+                                    <th>Ghi chú</th>
+                                    <th class="text-center" style="width: 140px;">Trạng thái</th>
+                                    <th style="width: 170px;" class="text-end pe-4">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(registrations)}">
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                        Hiện không có đơn đăng ký học nào.
+                                    </td>
+                                </tr>
+                                <tr th:each="r : ${registrations}">
+                                    <td class="ps-4 fw-semibold text-secondary" th:text="'#' + ${r.id}">#1</td>
+                                    <td>
+                                        <div class="fw-bold text-dark" th:text="${r.parent.user.fullName}">Hoàng Tiến Dũng</div>
+                                        <small class="text-muted" th:text="${r.parent.user.phone}">0912345678</small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-primary" th:text="${r.student.fullName}">Hoàng Nam</div>
+                                        <small class="text-muted" th:text="${r.student.school != null ? r.student.school : '---'}"></small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark" th:text="${r.classEntity.name}">Toán 10 - Nâng Cao</div>
+                                        <small class="text-success fw-semibold" th:text="${#numbers.formatDecimal(r.classEntity.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
+                                    </td>
+                                    <td>
+                                        <span class="small text-muted" th:text="${#temporals.format(r.registrationDate, 'dd/MM/yyyy HH:mm')}">01/09/2026</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-secondary" th:text="${r.note != null && !r.note.empty ? r.note : 'Không có ghi chú'}"></small>
+                                        <div th:if="${r.adminNote != null}" class="text-info small fst-italic">
+                                            Phản hồi: <span th:text="${r.adminNote}"></span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span th:if="${r.status == 'PENDING'}" class="badge bg-warning-subtle text-warning-emphasis px-3 py-2 rounded-pill">
+                                            <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
+                                        </span>
+                                        <span th:if="${r.status == 'APPROVED'}" class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
+                                            <i class="bi bi-check-circle me-1"></i>Đã duyệt
+                                        </span>
+                                        <span th:if="${r.status == 'REJECTED'}" class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">
+                                            <i class="bi bi-x-circle me-1"></i>Từ chối
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div th:if="${r.status == 'PENDING'}" class="btn-group btn-group-sm">
+                                            <form th:action="@{/admin/registrations/approve/{id}(id=${r.id})}" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Xác nhận phê duyệt đơn này? Học sinh sẽ được thêm vào lớp và phát sinh khoản thu học phí.')">
+                                                <button type="submit" class="btn btn-success" title="Duyệt đơn">
+                                                    <i class="bi bi-check-lg me-1"></i>Duyệt
+                                                </button>
+                                            </form>
+                                            <form th:action="@{/admin/registrations/reject/{id}(id=${r.id})}" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Xác nhận từ chối đơn này?')">
+                                                <button type="submit" class="btn btn-outline-danger" title="Từ chối">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <span th:unless="${r.status == 'PENDING'}" class="small text-muted">
+                                            <i class="bi bi-check2-all me-1"></i>Đã xử lý
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

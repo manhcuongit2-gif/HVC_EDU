@@ -6,6 +6,23 @@
     <title>Cổng thông tin Giáo viên - EduCenter</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        .content-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -13,49 +30,148 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <div class="container py-4">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center pb-2 mb-4 border-bottom">
         <div>
-            <h2 class="h3 fw-bold text-dark">Cổng thông tin Giáo viên</h2>
-            <p class="text-muted mb-0">Xin chào thầy/cô: <strong th:text="${currentUser.fullName}">Giáo viên</strong></p>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-person-workspace text-primary me-2"></i>Cổng thông tin Giáo viên
+            </h2>
+            <p class="text-muted mb-0">Xin chào thầy/cô: <strong class="text-dark" th:text="${currentUser.fullName}">Giáo viên</strong></p>
         </div>
         <span class="badge bg-success p-2 fs-6">
-            <i class="bi bi-person-check-fill me-1"></i> Quyền Giáo viên
+            <i class="bi bi-person-badge-fill me-1"></i> Quyền Giáo viên
         </span>
     </div>
 
-    <div class="row g-4">
-        <!-- Card 1: Lịch dạy -->
+    <!-- Stat cards -->
+    <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body text-center p-4">
-                    <i class="bi bi-calendar-week-fill text-primary fs-1 mb-3"></i>
-                    <h5 class="fw-bold">Lịch dạy học</h5>
-                    <p class="text-muted small">Xem thời khóa biểu các ca dạy trong tuần</p>
-                    <button class="btn btn-outline-primary btn-sm w-100" disabled>Xem lịch dạy</button>
+            <div class="card stat-card p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary me-3">
+                        <i class="bi bi-easel2-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small text-uppercase">Lớp đang giảng dạy</h6>
+                        <h3 class="fw-bold mb-0 text-dark" th:text="${classCount}">1</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success me-3">
+                        <i class="bi bi-people-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small text-uppercase">Tổng số học sinh</h6>
+                        <h3 class="fw-bold mb-0 text-dark" th:text="${totalStudents}">3</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info me-3">
+                        <i class="bi bi-calendar3 fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small text-uppercase">Số ca dạy trong tuần</h6>
+                        <h3 class="fw-bold mb-0 text-dark" th:text="${scheduleCount}">2</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Danh sách lớp học phụ trách -->
+        <div class="col-lg-8">
+            <div class="card content-card bg-white h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-book-half text-primary me-2"></i>Lớp học phụ trách
+                    </h5>
+                    <a th:href="@{/teacher/classes}" class="btn btn-outline-primary btn-sm">Xem tất cả</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Tên lớp học</th>
+                                    <th>Môn học</th>
+                                    <th class="text-center">Sĩ số</th>
+                                    <th class="text-end pe-3">Nghiệp vụ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(myClasses)}">
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                        Hiện tại thầy/cô chưa được phân công lớp học nào.
+                                    </td>
+                                </tr>
+                                <tr th:each="c : ${myClasses}">
+                                    <td class="ps-3">
+                                        <div class="fw-bold text-dark" th:text="${c.name}">Toán 10 - Nâng Cao</div>
+                                        <small class="text-muted" th:text="${c.startDate != null ? #temporals.format(c.startDate, 'dd/MM/yyyy') : '---'}"></small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle" th:text="${c.subject.name}">Toán</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold text-dark" th:text="${studentCounts[c.id]} + ' / ' + ${c.maxStudents}">3 / 25</span>
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <div class="btn-group btn-group-sm">
+                                            <a th:href="@{/teacher/attendance/{id}(id=${c.id})}" class="btn btn-outline-success">
+                                                <i class="bi bi-ui-checks me-1"></i>Điểm danh
+                                            </a>
+                                            <a th:href="@{/teacher/grades/{id}(id=${c.id})}" class="btn btn-outline-primary">
+                                                <i class="bi bi-award me-1"></i>Vào điểm
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Card 2: Điểm danh -->
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body text-center p-4">
-                    <i class="bi bi-ui-checks text-success fs-1 mb-3"></i>
-                    <h5 class="fw-bold">Điểm danh lớp</h5>
-                    <p class="text-muted small">Điểm danh học sinh có mặt, vắng, có phép</p>
-                    <button class="btn btn-outline-success btn-sm w-100" disabled>Vào điểm danh</button>
+        <!-- Lịch dạy trong tuần -->
+        <div class="col-lg-4">
+            <div class="card content-card bg-white h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-clock-history text-info me-2"></i>Lịch dạy trong tuần
+                    </h5>
+                    <a th:href="@{/teacher/schedules}" class="btn btn-outline-info btn-sm">Chi tiết</a>
                 </div>
-            </div>
-        </div>
-
-        <!-- Card 3: Nhập điểm -->
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body text-center p-4">
-                    <i class="bi bi-award-fill text-warning fs-1 mb-3"></i>
-                    <h5 class="fw-bold">Sổ điểm & Đánh giá</h5>
-                    <p class="text-muted small">Nhập điểm kiểm tra, giữa kỳ, cuối kỳ</p>
-                    <button class="btn btn-outline-warning btn-sm w-100" disabled>Vào sổ điểm</button>
+                <div class="card-body p-3">
+                    <div th:if="${#lists.isEmpty(mySchedules)}" class="text-center py-4 text-muted">
+                        <i class="bi bi-calendar-x fs-3 d-block mb-2"></i>
+                        Chưa có lịch dạy được xếp.
+                    </div>
+                    <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(mySchedules)}">
+                        <li class="list-group-item px-0 py-3" th:each="s : ${mySchedules}">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-dark" th:text="${s.dayOfWeekDisplay}">Thứ Hai</span>
+                                <span class="fw-bold text-primary small">
+                                    <i class="bi bi-clock me-1"></i>
+                                    <span th:text="${s.startTime} + ' - ' + ${s.endTime}">17:30 - 19:30</span>
+                                </span>
+                            </div>
+                            <div class="fw-semibold text-dark" th:text="${s.classEntity.name}">Toán 10 - Nâng Cao</div>
+                            <small class="text-muted">
+                                <i class="bi bi-building me-1"></i><span th:text="${s.room.name}">Phòng P101</span>
+                            </small>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>

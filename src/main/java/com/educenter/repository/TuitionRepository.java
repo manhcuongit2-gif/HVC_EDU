@@ -1,0 +1,22 @@
+package com.educenter.repository;
+
+import com.educenter.entity.Tuition;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@Repository
+public interface TuitionRepository extends JpaRepository<Tuition, Long> {
+    List<Tuition> findAllByOrderByIdDesc();
+    List<Tuition> findByStatus(String status);
+    List<Tuition> findByStudentId(Long studentId);
+    List<Tuition> findByStudentParentUserIdOrderByIdDesc(Long userId);
+    List<Tuition> findByClassEntityId(Long classId);
+    long countByStatus(String status);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Tuition t WHERE t.status = 'PAID'")
+    BigDecimal calculateTotalPaidRevenue();
+}

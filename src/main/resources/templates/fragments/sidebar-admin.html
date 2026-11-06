@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"></head>
+<body>
+<nav th:fragment="sidebar(activeMenu)" class="col-md-3 col-lg-2 d-md-block sidebar collapse p-0">
+    <div class="pt-3">
+        <div class="px-3 pb-2 text-uppercase text-white-50 small fw-bold">Menu Quản trị</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'dashboard'} ? ' active' : ''" th:href="@{/admin/dashboard}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'subjects'} ? ' active' : ''" th:href="@{/admin/subjects}">
+                    <i class="bi bi-book-half"></i> Môn học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'rooms'} ? ' active' : ''" th:href="@{/admin/rooms}">
+                    <i class="bi bi-building"></i> Phòng học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'teachers'} ? ' active' : ''" th:href="@{/admin/teachers}">
+                    <i class="bi bi-person-badge-fill"></i> Giáo viên
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'parents'} ? ' active' : ''" th:href="@{/admin/parents}">
+                    <i class="bi bi-person-heart"></i> Phụ huynh
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'students'} ? ' active' : ''" th:href="@{/admin/students}">
+                    <i class="bi bi-people-fill"></i> Học sinh
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'classes'} ? ' active' : ''" th:href="@{/admin/classes}">
+                    <i class="bi bi-easel2-fill"></i> Lớp học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'schedules'} ? ' active' : ''" th:href="@{/admin/schedules}">
+                    <i class="bi bi-calendar3"></i> Lịch học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'registrations'} ? ' active' : ''" th:href="@{/admin/registrations}">
+                    <i class="bi bi-file-earmark-check-fill"></i> Đăng ký học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'tuition'} ? ' active' : ''" th:href="@{/admin/tuition}">
+                    <i class="bi bi-credit-card-fill"></i> Học phí & VNPay
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'statistics'} ? ' active' : ''" th:href="@{/admin/statistics}">
+                    <i class="bi bi-bar-chart-fill"></i> Thống kê
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+</body>
+</html>

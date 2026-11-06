@@ -1,7 +1,6 @@
 package com.educenter.security;
 
 import com.educenter.entity.User;
-import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,7 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
-@Getter
 public class CustomUserDetails implements UserDetails {
 
     private final User user;
@@ -18,9 +16,20 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
+    public Long getId() {
+        return user != null ? user.getId() : null;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getRole().getName()));
+        if (user.getRole() != null) {
+            return Collections.singletonList(new SimpleGrantedAuthority(user.getRole().getName()));
+        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -38,7 +47,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     public String getRoleName() {
-        return user.getRole().getName();
+        return user.getRole() != null ? user.getRole().getName() : "";
     }
 
     @Override

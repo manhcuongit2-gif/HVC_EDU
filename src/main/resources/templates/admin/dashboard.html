@@ -37,6 +37,12 @@
         .stat-card:hover {
             transform: translateY(-3px);
         }
+        .table-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -46,124 +52,203 @@
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar Admin -->
-        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse p-0">
-            <div class="pt-3">
-                <div class="px-3 pb-2 text-uppercase text-white-50 small fw-bold">Menu Quản trị</div>
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active" th:href="@{/admin/dashboard}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-people-fill"></i> Học sinh</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-person-badge-fill"></i> Giáo viên</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-person-heart"></i> Phụ huynh</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-book-half"></i> Môn học</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-building"></i> Phòng học</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-easel2-fill"></i> Lớp học</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-calendar3"></i> Lịch học</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-file-earmark-check-fill"></i> Đăng ký học</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-credit-card-fill"></i> Học phí & VNPay</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-bar-chart-fill"></i> Thống kê</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+        <!-- Sidebar Admin dùng chung -->
+        <div th:replace="~{fragments/sidebar-admin :: sidebar('dashboard')}"></div>
 
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
                 <div>
-                    <h2 class="h3 fw-bold text-dark">Bảng điều khiển Quản trị</h2>
-                    <p class="text-muted mb-0">Chào mừng trở lại, <strong th:text="${currentUser.fullName}">Admin</strong>!</p>
+                    <h2 class="h3 fw-bold text-dark mb-1">Bảng điều khiển Quản trị</h2>
+                    <p class="text-muted mb-0">Chào mừng trở lại, <strong class="text-dark" th:text="${currentUser.fullName}">Admin</strong>!</p>
                 </div>
                 <div class="badge bg-danger p-2 fs-6">
                     <i class="bi bi-shield-check me-1"></i> Quyền Quản trị viên
                 </div>
             </div>
 
-            <!-- Thống kê nhanh -->
+            <!-- Thống kê nhanh từ Database -->
             <div class="row g-3 mb-4">
+                <!-- Học sinh -->
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card stat-card p-3 bg-white">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary me-3">
-                                <i class="bi bi-people fs-3"></i>
-                            </div>
-                            <div>
-                                <h6 class="text-muted mb-1 small text-uppercase">Học sinh</h6>
-                                <h3 class="fw-bold mb-0">5</h3>
+                    <a th:href="@{/admin/students}" class="text-decoration-none">
+                        <div class="card stat-card p-3 bg-white h-100">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary me-3">
+                                    <i class="bi bi-people-fill fs-3"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted mb-1 small text-uppercase">Học sinh</h6>
+                                    <h3 class="fw-bold mb-0 text-dark" th:text="${studentCount}">5</h3>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
+
+                <!-- Lớp học -->
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card stat-card p-3 bg-white">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success me-3">
-                                <i class="bi bi-person-badge fs-3"></i>
-                            </div>
-                            <div>
-                                <h6 class="text-muted mb-1 small text-uppercase">Giáo viên</h6>
-                                <h3 class="fw-bold mb-0">3</h3>
+                    <a th:href="@{/admin/classes}" class="text-decoration-none">
+                        <div class="card stat-card p-3 bg-white h-100">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success me-3">
+                                    <i class="bi bi-easel2-fill fs-3"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted mb-1 small text-uppercase">Lớp học</h6>
+                                    <h3 class="fw-bold mb-0 text-dark" th:text="${classCount}">3</h3>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
+
+                <!-- Doanh thu học phí -->
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card stat-card p-3 bg-white">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning me-3">
-                                <i class="bi bi-easel2 fs-3"></i>
-                            </div>
-                            <div>
-                                <h6 class="text-muted mb-1 small text-uppercase">Lớp đang mở</h6>
-                                <h3 class="fw-bold mb-0">3</h3>
+                    <a th:href="@{/admin/tuition}" class="text-decoration-none">
+                        <div class="card stat-card p-3 bg-white h-100">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info me-3">
+                                    <i class="bi bi-cash-coin fs-3"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted mb-1 small text-uppercase">Doanh thu đã thu</h6>
+                                    <h4 class="fw-bold mb-0 text-success" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                        0 đ
+                                    </h4>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
+
+                <!-- Đơn đăng ký chờ duyệt -->
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card stat-card p-3 bg-white">
-                        <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info me-3">
-                                <i class="bi bi-envelope-paper fs-3"></i>
-                            </div>
-                            <div>
-                                <h6 class="text-muted mb-1 small text-uppercase">Đơn chờ duyệt</h6>
-                                <h3 class="fw-bold mb-0 text-danger">1</h3>
+                    <a th:href="@{/admin/registrations(filter='pending')}" class="text-decoration-none">
+                        <div class="card stat-card p-3 bg-white h-100" th:classappend="${pendingRegistrationCount > 0} ? 'border border-danger' : ''">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-danger bg-opacity-10 p-3 text-danger me-3">
+                                    <i class="bi bi-file-earmark-check-fill fs-3"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-muted mb-1 small text-uppercase">Đơn chờ duyệt</h6>
+                                    <h3 class="fw-bold mb-0" th:classappend="${pendingRegistrationCount > 0} ? 'text-danger' : 'text-dark'" th:text="${pendingRegistrationCount}">
+                                        0
+                                    </h3>
+                                </div>
                             </div>
                         </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Khu vực 1: Đơn đăng ký học mới nhất cần phê duyệt -->
+            <div class="card table-card bg-white mb-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-bell-fill text-warning me-2"></i>Đơn đăng ký học mới nhất cần phê duyệt
+                    </h5>
+                    <a th:href="@{/admin/registrations}" class="btn btn-outline-primary btn-sm">Xem tất cả đơn</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Phụ huynh</th>
+                                    <th>Học sinh</th>
+                                    <th>Lớp đăng ký</th>
+                                    <th>Ngày nộp</th>
+                                    <th>Ghi chú</th>
+                                    <th class="text-end pe-4">Phê duyệt nhanh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(recentPendingRegistrations)}">
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="bi bi-check2-circle fs-3 text-success d-block mb-1"></i>
+                                        Hiện không có đơn đăng ký nào đang chờ duyệt.
+                                    </td>
+                                </tr>
+                                <tr th:each="r : ${recentPendingRegistrations}">
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-dark" th:text="${r.parent.user.fullName}">Hoàng Tiến Dũng</div>
+                                        <small class="text-muted" th:text="${r.parent.user.phone}">0912345678</small>
+                                    </td>
+                                    <td>
+                                        <strong class="text-primary" th:text="${r.student.fullName}">Hoàng Nam</strong>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark" th:text="${r.classEntity.name}">Toán 10</div>
+                                        <small class="text-success fw-semibold" th:text="${#numbers.formatDecimal(r.classEntity.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
+                                    </td>
+                                    <td>
+                                        <span class="small text-muted" th:text="${#temporals.format(r.registrationDate, 'dd/MM/yyyy HH:mm')}">01/09/2026</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-secondary" th:text="${r.note != null && !r.note.empty ? r.note : '---'}"></small>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <form th:action="@{/admin/registrations/approve/{id}(id=${r.id})}" method="post" class="d-inline"
+                                              onsubmit="return confirm('Duyệt đơn này và thêm học sinh vào lớp?')">
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="bi bi-check-lg me-1"></i>Duyệt
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Khối thông báo khởi tạo thành công -->
-            <div class="alert alert-success border-0 shadow-sm p-4 rounded-3">
-                <h5 class="fw-bold"><i class="bi bi-check-circle-fill me-2 text-success"></i>Hệ thống đã kết nối MySQL thành công!</h5>
-                <p class="mb-2">Bạn đã đăng nhập thành công với vai trò <strong>ROLE_ADMIN</strong>. Cơ sở dữ liệu <code>educenter_db</code> đã được kết nối với tài khoản quản trị.</p>
-                <hr>
-                <small class="text-muted">Spring Security và Thymeleaf đã sẵn sàng hoạt động cho Phase tiếp theo.</small>
+            <!-- Khu vực 2: Thao tác nhanh & Thông tin trung tâm -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white h-100">
+                        <h5 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Thao tác nhanh
+                        </h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a th:href="@{/admin/classes/add}" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-easel2-fill me-1"></i>Mở Lớp học mới
+                            </a>
+                            <a th:href="@{/admin/schedules/add}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-calendar-plus-fill me-1"></i>Xếp Lịch học
+                            </a>
+                            <a th:href="@{/admin/tuition/add}" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-receipt me-1"></i>Tạo phiếu thu Học phí
+                            </a>
+                            <a th:href="@{/admin/students/add}" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-person-plus-fill me-1"></i>Thêm Học sinh
+                            </a>
+                            <a th:href="@{/admin/teachers/add}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-person-badge-fill me-1"></i>Thêm Giáo viên
+                            </a>
+                            <a th:href="@{/admin/subjects/add}" class="btn btn-outline-dark btn-sm">
+                                <i class="bi bi-book-half me-1"></i>Thêm Môn học
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white h-100">
+                        <h5 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-info-circle-fill text-primary me-2"></i>Thông tin hệ thống
+                        </h5>
+                        <p class="text-muted small mb-2">
+                            <strong>Đơn vị:</strong> Trung tâm Bồi dưỡng Văn hóa & Luyện thi EduCenter
+                        </p>
+                        <p class="text-muted small mb-2">
+                            <strong>Chức năng:</strong> Quản lý học sinh, giáo viên, lớp học, TKB chống trùng lịch, điểm danh, điểm số, học phí & thanh toán VNPay
+                        </p>
+                        <p class="text-muted small mb-0">
+                            <strong>Trạng thái:</strong> <span class="badge bg-success-subtle text-success">Sẵn sàng vận hành</span>
+                        </p>
+                    </div>
+                </div>
             </div>
         </main>
     </div>

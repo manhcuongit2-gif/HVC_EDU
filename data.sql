@@ -1,11 +1,3 @@
--- =======================================================
--- HỆ THỐNG QUẢN LÝ TRUNG TÂM HỌC THÊM EDUCENTER
--- FILE: data.sql (DỮ LIỆU MẪU ĐỂ TEST HỆ THỐNG)
--- Mật khẩu mặc định cho TẤT CẢ tài khoản là: 123456
--- Chuỗi mã hóa BCrypt của 123456:
--- $2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG
--- =======================================================
-
 USE `educenter_db`;
 
 -- 1. BẢNG roles

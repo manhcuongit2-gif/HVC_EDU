@@ -6,6 +6,23 @@
     <title>Cổng thông tin Phụ huynh - EduCenter</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        .content-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -13,61 +30,167 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <div class="container py-4">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center pb-2 mb-4 border-bottom">
         <div>
-            <h2 class="h3 fw-bold text-dark">Cổng thông tin Phụ huynh</h2>
-            <p class="text-muted mb-0">Xin chào phụ huynh: <strong th:text="${currentUser.fullName}">Phụ huynh</strong></p>
+            <h2 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-person-heart text-danger me-2"></i>Cổng thông tin Phụ huynh
+            </h2>
+            <p class="text-muted mb-0">Xin chào phụ huynh: <strong class="text-dark" th:text="${currentUser.fullName}">Hoàng Tiến Dũng</strong></p>
         </div>
         <span class="badge bg-primary p-2 fs-6">
-            <i class="bi bi-person-heart me-1"></i> Quyền Phụ huynh
+            <i class="bi bi-shield-check me-1"></i> Quyền Phụ huynh
         </span>
     </div>
 
-    <div class="row g-4">
+    <!-- Alert thông báo học phí chưa nộp nếu có -->
+    <div th:if="${unpaidCount > 0}" class="alert alert-warning border-warning d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-warning"></i>
+            Bạn có <strong th:text="${unpaidCount}">1</strong> khoản học phí chưa thanh toán cho con em. Vui lòng thanh toán trực tuyến qua VNPay.
+        </div>
+        <a th:href="@{/parent/tuition}" class="btn btn-warning btn-sm fw-bold">
+            <i class="bi bi-credit-card-fill me-1"></i>Thanh toán ngay
+        </a>
+    </div>
+
+    <!-- 4 Cards truy cập nhanh -->
+    <div class="row g-4 mb-4">
         <!-- Card 1: Quản lý con -->
-        <div class="col-md-3">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body text-center p-4">
-                    <i class="bi bi-person-lines-fill text-primary fs-1 mb-3"></i>
-                    <h5 class="fw-bold">Hồ sơ con cái</h5>
-                    <p class="text-muted small">Xem danh sách các con đang học</p>
-                    <button class="btn btn-outline-primary btn-sm w-100" disabled>Xem hồ sơ</button>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card stat-card h-100 bg-white p-3 text-center">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary d-inline-flex mx-auto mb-3">
+                    <i class="bi bi-person-lines-fill fs-2"></i>
                 </div>
+                <h5 class="fw-bold text-dark">Hồ sơ con cái</h5>
+                <p class="text-muted small">Quản lý hồ sơ <strong th:text="${#lists.size(myChildren)}">2</strong> con</p>
+                <a th:href="@{/parent/children}" class="btn btn-outline-primary btn-sm w-100 mt-auto">Xem chi tiết</a>
             </div>
         </div>
 
         <!-- Card 2: Đăng ký học -->
-        <div class="col-md-3">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body text-center p-4">
-                    <i class="bi bi-journal-plus text-success fs-1 mb-3"></i>
-                    <h5 class="fw-bold">Đăng ký lớp học</h5>
-                    <p class="text-muted small">Đăng ký môn Toán, Lý, Hóa cho con</p>
-                    <button class="btn btn-outline-success btn-sm w-100" disabled>Đăng ký ngay</button>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card stat-card h-100 bg-white p-3 text-center">
+                <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success d-inline-flex mx-auto mb-3">
+                    <i class="bi bi-journal-plus fs-2"></i>
                 </div>
+                <h5 class="fw-bold text-dark">Đăng ký lớp học</h5>
+                <p class="text-muted small">Đăng ký môn Toán, Lý, Hóa</p>
+                <a th:href="@{/parent/register-class}" class="btn btn-outline-success btn-sm w-100 mt-auto">Đăng ký ngay</a>
             </div>
         </div>
 
         <!-- Card 3: Kết quả học tập -->
-        <div class="col-md-3">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body text-center p-4">
-                    <i class="bi bi-clipboard2-data-fill text-warning fs-1 mb-3"></i>
-                    <h5 class="fw-bold">Kết quả học tập</h5>
-                    <p class="text-muted small">Theo dõi điểm số và chuyên cần</p>
-                    <button class="btn btn-outline-warning btn-sm w-100" disabled>Xem kết quả</button>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card stat-card h-100 bg-white p-3 text-center">
+                <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning d-inline-flex mx-auto mb-3">
+                    <i class="bi bi-clipboard2-data-fill fs-2"></i>
                 </div>
+                <h5 class="fw-bold text-dark">Kết quả & Điểm danh</h5>
+                <p class="text-muted small">Theo dõi điểm số và chuyên cần</p>
+                <a th:href="@{/parent/grades}" class="btn btn-outline-warning btn-sm w-100 mt-auto">Xem kết quả</a>
             </div>
         </div>
 
         <!-- Card 4: Học phí & VNPay -->
-        <div class="col-md-3">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body text-center p-4">
-                    <i class="bi bi-credit-card-2-front-fill text-danger fs-1 mb-3"></i>
-                    <h5 class="fw-bold">Học phí & VNPay</h5>
-                    <p class="text-muted small">Tra cứu và thanh toán học phí online</p>
-                    <button class="btn btn-outline-danger btn-sm w-100" disabled>Thanh toán</button>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card stat-card h-100 bg-white p-3 text-center">
+                <div class="rounded-circle bg-danger bg-opacity-10 p-3 text-danger d-inline-flex mx-auto mb-3">
+                    <i class="bi bi-credit-card-2-front-fill fs-2"></i>
+                </div>
+                <h5 class="fw-bold text-dark">Học phí & VNPay</h5>
+                <p class="text-muted small">Thanh toán an toàn, tức thì</p>
+                <a th:href="@{/parent/tuition}" class="btn btn-outline-danger btn-sm w-100 mt-auto">Đóng học phí</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hàng nội dung chi tiết: Danh sách con & Trạng thái đơn đăng ký gần đây -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card content-card bg-white h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-people-fill text-primary me-2"></i>Hồ sơ các con
+                    </h5>
+                    <a th:href="@{/parent/children}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Thêm con
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Họ và tên</th>
+                                    <th>Trường học</th>
+                                    <th>Khối lớp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(myChildren)}">
+                                    <td colspan="3" class="text-center py-4 text-muted">
+                                        Chưa có hồ sơ con. Vui lòng thêm con để đăng ký học.
+                                    </td>
+                                </tr>
+                                <tr th:each="c : ${myChildren}">
+                                    <td class="ps-3">
+                                        <strong class="text-dark" th:text="${c.fullName}">Hoàng Nam</strong>
+                                        <small class="text-muted d-block" th:text="${c.gender} + ' • ' + ${#temporals.format(c.dateOfBirth, 'dd/MM/yyyy')}"></small>
+                                    </td>
+                                    <td th:text="${c.school != null ? c.school : '---'}">THPT Chuyên Sư Phạm</td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary" th:text="${c.gradeLevel != null ? c.gradeLevel : '---'}">Lớp 10</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card content-card bg-white h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-file-earmark-text-fill text-success me-2"></i>Lịch sử đăng ký lớp
+                    </h5>
+                    <a th:href="@{/parent/registrations}" class="btn btn-outline-secondary btn-sm">Xem tất cả</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Học sinh</th>
+                                    <th>Lớp học</th>
+                                    <th class="text-center">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(myRegistrations)}">
+                                    <td colspan="3" class="text-center py-4 text-muted">
+                                        Chưa có đơn đăng ký lớp học nào.
+                                    </td>
+                                </tr>
+                                <tr th:each="r : ${myRegistrations}">
+                                    <td class="ps-3">
+                                        <strong class="text-dark" th:text="${r.student.fullName}">Hoàng Nam</strong>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold text-primary" th:text="${r.classEntity.name}">Toán 10</span>
+                                        <small class="text-muted d-block" th:text="${#temporals.format(r.registrationDate, 'dd/MM/yyyy')}"></small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span th:if="${r.status == 'PENDING'}" class="badge bg-warning-subtle text-warning-emphasis px-2 py-1">Chờ duyệt</span>
+                                        <span th:if="${r.status == 'APPROVED'}" class="badge bg-success-subtle text-success px-2 py-1">Đã duyệt</span>
+                                        <span th:if="${r.status == 'REJECTED'}" class="badge bg-danger-subtle text-danger px-2 py-1">Từ chối</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

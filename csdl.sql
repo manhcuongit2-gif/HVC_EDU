@@ -1,9 +1,3 @@
--- =======================================================
--- HỆ THỐNG QUẢN LÝ TRUNG TÂM HỌC THÊM EDUCENTER
--- FILE: csdl.sql (CẤU TRÚC CƠ SỞ DỮ LIỆU)
--- Tương thích: MySQL 8.0+
--- =======================================================
-
 CREATE DATABASE IF NOT EXISTS `educenter_db` 
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;

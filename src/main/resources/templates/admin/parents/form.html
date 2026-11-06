@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${parentDTO.id != null} ? 'Cập nhật Phụ huynh - EduCenter' : 'Thêm Phụ huynh Mới - EduCenter'">Thêm/Sửa Phụ huynh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #212529;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            border-radius: 6px;
+            margin: 2px 10px;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: #ffffff;
+            background-color: #0d6efd;
+        }
+        .sidebar .nav-link i {
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+        .form-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            max-width: 800px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navbar dùng chung -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Admin dùng chung -->
+        <div th:replace="~{fragments/sidebar-admin :: sidebar('parents')}"></div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-center pb-2 mb-4 border-bottom">
+                <div>
+                    <h2 class="h3 fw-bold text-dark mb-1">
+                        <i class="bi me-2 text-danger" th:classappend="${parentDTO.id != null} ? 'bi-pencil-square' : 'bi-person-plus-fill'"></i>
+                        <span th:text="${parentDTO.id != null} ? 'Cập nhật Phụ huynh' : 'Thêm Phụ huynh Mới'">Tiêu đề</span>
+                    </h2>
+                    <p class="text-muted mb-0">Điền thông tin tài khoản và thông tin liên hệ của phụ huynh học sinh</p>
+                </div>
+                <a th:href="@{/admin/parents}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+                </a>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card form-card bg-white mx-auto">
+                <div class="card-body p-4">
+                    <form th:action="${parentDTO.id != null} ? @{'/admin/parents/edit/' + ${parentDTO.id}} : @{/admin/parents/add}" 
+                          th:object="${parentDTO}" 
+                          method="post">
+
+                        <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                            <i class="bi bi-person-circle me-2"></i>Thông tin tài khoản & Cá nhân
+                        </h5>
+
+                        <div class="row g-3">
+                            <!-- Tên đăng nhập -->
+                            <div class="col-md-6">
+                                <label for="username" class="form-label fw-semibold">
+                                    Tên đăng nhập <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="username" 
+                                       th:field="*{username}" 
+                                       th:readonly="${parentDTO.id != null}"
+                                       th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''" 
+                                       placeholder="Ví dụ: ph_nguyenvanb">
+                                <div class="invalid-feedback" th:errors="*{username}"></div>
+                                <div class="form-text text-muted" th:if="${parentDTO.id != null}">Tên đăng nhập không thể thay đổi sau khi tạo.</div>
+                            </div>
+
+                            <!-- Mật khẩu -->
+                            <div class="col-md-6">
+                                <label for="password" class="form-label fw-semibold">
+                                    Mật khẩu 
+                                    <span th:if="${parentDTO.id == null}" class="text-muted small">(để trống = mặc định 123456)</span>
+                                    <span th:if="${parentDTO.id != null}" class="text-muted small">(để trống nếu không đổi)</span>
+                                </label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       th:field="*{password}" 
+                                       placeholder="••••••••">
+                            </div>
+
+                            <!-- Họ và tên -->
+                            <div class="col-md-6">
+                                <label for="fullName" class="form-label fw-semibold">
+                                    Họ và tên phụ huynh <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="fullName" 
+                                       th:field="*{fullName}" 
+                                       th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''" 
+                                       placeholder="Ví dụ: Hoàng Tiến Dũng">
+                                <div class="invalid-feedback" th:errors="*{fullName}"></div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold">
+                                    Email <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       th:field="*{email}" 
+                                       th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''" 
+                                       placeholder="phuhuynh@gmail.com">
+                                <div class="invalid-feedback" th:errors="*{email}"></div>
+                            </div>
+
+                            <!-- Số điện thoại -->
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label fw-semibold">Số điện thoại</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="phone" 
+                                       th:field="*{phone}" 
+                                       th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''" 
+                                       placeholder="0912345678">
+                                <div class="invalid-feedback" th:errors="*{phone}"></div>
+                            </div>
+
+                            <!-- Nghề nghiệp -->
+                            <div class="col-md-6">
+                                <label for="occupation" class="form-label fw-semibold">Nghề nghiệp</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="occupation" 
+                                       th:field="*{occupation}" 
+                                       placeholder="Ví dụ: Kỹ sư, Kế toán, Kinh doanh...">
+                            </div>
+
+                            <!-- Địa chỉ -->
+                            <div class="col-12">
+                                <label for="address" class="form-label fw-semibold">Địa chỉ liên hệ</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="address" 
+                                       th:field="*{address}" 
+                                       placeholder="Số nhà, đường phố, Quận/Huyện, Hà Nội...">
+                            </div>
+
+                            <!-- Ghi chú -->
+                            <div class="col-12">
+                                <label for="note" class="form-label fw-semibold">Ghi chú về học sinh / gia đình</label>
+                                <textarea class="form-control" 
+                                          id="note" 
+                                          rows="3" 
+                                          th:field="*{note}" 
+                                          placeholder="Phụ huynh em Nguyễn Văn An, mong muốn đăng ký lớp Toán và Lý..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
+                            <a th:href="@{/admin/parents}" class="btn btn-light px-4">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check-lg me-1"></i>
+                                <span th:text="${parentDTO.id != null} ? 'Lưu thay đổi' : 'Thêm phụ huynh'">Lưu</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
