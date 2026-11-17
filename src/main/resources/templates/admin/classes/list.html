@@ -98,13 +98,14 @@
                                     <th>Giáo viên phụ trách</th>
                                     <th class="text-center" style="width: 120px;">Sĩ số</th>
                                     <th style="min-width: 130px;">Học phí</th>
+                                    <th style="min-width: 140px;">Đơn giá / buổi</th>
                                     <th class="text-center" style="width: 140px;">Trạng thái</th>
                                     <th style="width: 170px;" class="text-end pe-4">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:if="${#lists.isEmpty(classes)}">
-                                    <td colspan="8" class="text-center py-4 text-muted">
+                                    <td colspan="9" class="text-center py-4 text-muted">
                                         <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                         Chưa có lớp học nào trong hệ thống.
                                     </td>
@@ -144,6 +145,7 @@
                                             1,200,000 đ
                                         </span>
                                     </td>
+                                    <td><span class="fw-semibold text-primary" th:text="${c.sessionFee != null ? #numbers.formatDecimal(c.sessionFee, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Chưa cấu hình'}"></span></td>
                                     <td class="text-center">
                                         <span th:if="${c.status == 'ACTIVE'}" class="badge badge-active px-3 py-2 rounded-pill">
                                             <i class="bi bi-check-circle me-1"></i>Đang mở

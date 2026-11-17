@@ -120,7 +120,19 @@
                                     <div class="invalid-feedback" th:if="${#fields.hasErrors('maxStudents')}" th:errors="*{maxStudents}"></div>
                                 </div>
 
-                                <!-- Học phí -->
+                                  <!-- Đơn giá theo buổi dùng cho tính học phí tự động -->
+                                  <div class="col-md-4">
+                                      <label for="sessionFee" class="form-label fw-semibold">Đơn giá mỗi buổi (VNĐ) <span class="text-danger">*</span></label>
+                                      <div class="input-group">
+                                          <input type="number" step="1000" class="form-control" id="sessionFee" th:field="*{sessionFee}" min="0"
+                                                 placeholder="VD: 150000"
+                                                 th:classappend="${#fields.hasErrors('sessionFee')} ? 'is-invalid' : ''">
+                                          <span class="input-group-text">VNĐ</span>
+                                          <div class="invalid-feedback" th:if="${#fields.hasErrors('sessionFee')}" th:errors="*{sessionFee}"></div>
+                                      </div>
+                                  </div>
+
+                                  <!-- Học phí khóa cũ, giữ lại cho các phiếu thu thủ công hiện có -->
                                 <div class="col-md-4">
                                     <label for="tuitionFee" class="form-label fw-semibold">Học phí (VNĐ / Khóa) <span class="text-danger">*</span></label>
                                     <div class="input-group">

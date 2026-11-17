@@ -27,6 +27,10 @@ public class ClassStudent {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate enrolledDate = LocalDate.now();
 
+    @Column(name = "dropped_date")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate droppedDate;
+
     @Column(name = "status", length = 20, nullable = false)
     private String status = "ACTIVE"; // ACTIVE, DROPPED
 
@@ -50,6 +54,9 @@ public class ClassStudent {
 
     public LocalDate getEnrolledDate() { return enrolledDate; }
     public void setEnrolledDate(LocalDate enrolledDate) { this.enrolledDate = enrolledDate; }
+
+    public LocalDate getDroppedDate() { return droppedDate; }
+    public void setDroppedDate(LocalDate droppedDate) { this.droppedDate = droppedDate; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

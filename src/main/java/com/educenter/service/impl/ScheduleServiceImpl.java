@@ -8,6 +8,7 @@ import com.educenter.repository.ClassRepository;
 import com.educenter.repository.RoomRepository;
 import com.educenter.repository.ScheduleRepository;
 import com.educenter.service.ScheduleService;
+import com.educenter.service.ClassSessionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +21,16 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ClassRepository classRepository;
     private final RoomRepository roomRepository;
+    private final ClassSessionService classSessionService;
 
     public ScheduleServiceImpl(ScheduleRepository scheduleRepository,
                                ClassRepository classRepository,
-                               RoomRepository roomRepository) {
+                               RoomRepository roomRepository,
+                               ClassSessionService classSessionService) {
         this.scheduleRepository = scheduleRepository;
         this.classRepository = classRepository;
         this.roomRepository = roomRepository;
+        this.classSessionService = classSessionService;
     }
 
     @Override
@@ -116,7 +120,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         s.setEndTime(dto.getEndTime());
         s.setActive(dto.getActive() != null ? dto.getActive() : true);
 
-        return scheduleRepository.save(s);
+        Schedule saved = scheduleRepository.save(s);
+        classSessionService.synchronizeClass(classEntity.getId());
+        return saved;
     }
 
     @Override
@@ -138,15 +144,17 @@ public class ScheduleServiceImpl implements ScheduleService {
         s.setEndTime(dto.getEndTime());
         s.setActive(dto.getActive());
 
-        return scheduleRepository.save(s);
+        Schedule saved = scheduleRepository.save(s);
+        classSessionService.synchronizeClass(classEntity.getId());
+        return saved;
     }
 
     @Override
     @Transactional
     public void deleteSchedule(Long id) {
-        if (!scheduleRepository.existsById(id)) {
-            throw new IllegalArgumentException("Không tìm thấy lịch học với ID: " + id);
-        }
+        Schedule schedule = getScheduleById(id);
+        classSessionService.beforeScheduleDelete(id);
         scheduleRepository.deleteById(id);
+        classSessionService.synchronizeClass(schedule.getClassEntity().getId());
     }
 }

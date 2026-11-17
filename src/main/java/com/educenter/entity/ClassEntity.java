@@ -47,6 +47,9 @@ public class ClassEntity {
     @DecimalMin(value = "0.0", inclusive = true, message = "Học phí không được âm")
     private BigDecimal tuitionFee;
 
+    @Column(name = "session_fee", precision = 12, scale = 2)
+    private BigDecimal sessionFee;
+
     @Column(name = "status", length = 20, nullable = false)
     private String status = "ACTIVE"; // ACTIVE, FINISHED, CANCELLED
 
@@ -88,6 +91,9 @@ public class ClassEntity {
 
     public BigDecimal getTuitionFee() { return tuitionFee; }
     public void setTuitionFee(BigDecimal tuitionFee) { this.tuitionFee = tuitionFee; }
+
+    public BigDecimal getSessionFee() { return sessionFee; }
+    public void setSessionFee(BigDecimal sessionFee) { this.sessionFee = sessionFee; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

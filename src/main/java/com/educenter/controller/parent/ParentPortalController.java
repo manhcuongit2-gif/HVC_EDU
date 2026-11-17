@@ -6,6 +6,7 @@ import com.educenter.security.CustomUserDetails;
 import com.educenter.service.ClassService;
 import com.educenter.service.RegistrationService;
 import com.educenter.service.TuitionService;
+import com.educenter.service.StudentReportService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -29,6 +30,7 @@ public class ParentPortalController {
     private final GradeRepository gradeRepository;
     private final AttendanceRepository attendanceRepository;
     private final ScheduleRepository scheduleRepository;
+    private final StudentReportService studentReportService;
 
     public ParentPortalController(ParentRepository parentRepository,
                                   StudentRepository studentRepository,
@@ -38,7 +40,8 @@ public class ParentPortalController {
                                   TuitionService tuitionService,
                                   GradeRepository gradeRepository,
                                   AttendanceRepository attendanceRepository,
-                                  ScheduleRepository scheduleRepository) {
+                                  ScheduleRepository scheduleRepository,
+                                  StudentReportService studentReportService) {
         this.parentRepository = parentRepository;
         this.studentRepository = studentRepository;
         this.classRepository = classRepository;
@@ -48,6 +51,7 @@ public class ParentPortalController {
         this.gradeRepository = gradeRepository;
         this.attendanceRepository = attendanceRepository;
         this.scheduleRepository = scheduleRepository;
+        this.studentReportService = studentReportService;
     }
 
     @GetMapping("/dashboard")
@@ -176,6 +180,16 @@ public class ParentPortalController {
         model.addAttribute("studentGrades", studentGrades);
         model.addAttribute("studentAttendances", studentAttendances);
         return "parent/grades";
+    }
+
+    @GetMapping("/reports")
+    public String reports(@AuthenticationPrincipal CustomUserDetails userDetails,
+                          @RequestParam(defaultValue = "session") String view, Model model) {
+        model.addAttribute("currentUser", userDetails);
+        model.addAttribute("view", "monthly".equals(view) ? "monthly" : "session");
+        model.addAttribute("sessionReports", studentReportService.getPublishedSessionReportsForParent(userDetails.getId()));
+        model.addAttribute("monthlyReports", studentReportService.getPublishedMonthlyReportsForParent(userDetails.getId()));
+        return "parent/reports";
     }
 
     @GetMapping("/tuition")

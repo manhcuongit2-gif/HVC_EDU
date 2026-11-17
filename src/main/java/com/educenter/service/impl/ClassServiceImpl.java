@@ -12,31 +12,38 @@ import com.educenter.repository.StudentRepository;
 import com.educenter.repository.SubjectRepository;
 import com.educenter.repository.TeacherRepository;
 import com.educenter.service.ClassService;
+import com.educenter.service.ClassSessionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 public class ClassServiceImpl implements ClassService {
+
+    private static final ZoneId APP_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final ClassRepository classRepository;
     private final ClassStudentRepository classStudentRepository;
     private final SubjectRepository subjectRepository;
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
+    private final ClassSessionService classSessionService;
 
     public ClassServiceImpl(ClassRepository classRepository,
                             ClassStudentRepository classStudentRepository,
                             SubjectRepository subjectRepository,
                             TeacherRepository teacherRepository,
-                            StudentRepository studentRepository) {
+                            StudentRepository studentRepository,
+                            ClassSessionService classSessionService) {
         this.classRepository = classRepository;
         this.classStudentRepository = classStudentRepository;
         this.subjectRepository = subjectRepository;
         this.teacherRepository = teacherRepository;
         this.studentRepository = studentRepository;
+        this.classSessionService = classSessionService;
     }
 
     @Override
@@ -73,12 +80,15 @@ public class ClassServiceImpl implements ClassService {
         c.setTeacher(teacher);
         c.setMaxStudents(classDTO.getMaxStudents());
         c.setTuitionFee(classDTO.getTuitionFee());
+        c.setSessionFee(classDTO.getSessionFee());
         c.setStatus(classDTO.getStatus() != null ? classDTO.getStatus() : "ACTIVE");
         c.setStartDate(classDTO.getStartDate());
         c.setEndDate(classDTO.getEndDate());
         c.setDescription(classDTO.getDescription());
 
-        return classRepository.save(c);
+        ClassEntity saved = classRepository.save(c);
+        classSessionService.synchronizeClass(saved.getId());
+        return saved;
     }
 
     @Override
@@ -100,12 +110,15 @@ public class ClassServiceImpl implements ClassService {
         c.setTeacher(teacher);
         c.setMaxStudents(classDTO.getMaxStudents());
         c.setTuitionFee(classDTO.getTuitionFee());
+        c.setSessionFee(classDTO.getSessionFee());
         c.setStatus(classDTO.getStatus());
         c.setStartDate(classDTO.getStartDate());
         c.setEndDate(classDTO.getEndDate());
         c.setDescription(classDTO.getDescription());
 
-        return classRepository.save(c);
+        ClassEntity saved = classRepository.save(c);
+        classSessionService.synchronizeClass(saved.getId());
+        return saved;
     }
 
     @Override
@@ -146,13 +159,14 @@ public class ClassServiceImpl implements ClassService {
                 throw new IllegalArgumentException("Học sinh này đã có trong danh sách lớp");
             } else {
                 cs.setStatus("ACTIVE");
-                cs.setEnrolledDate(LocalDate.now());
+                cs.setEnrolledDate(LocalDate.now(APP_ZONE));
+                cs.setDroppedDate(null);
                 classStudentRepository.save(cs);
                 return;
             }
         }
 
-        ClassStudent cs = new ClassStudent(c, student, LocalDate.now(), "ACTIVE");
+        ClassStudent cs = new ClassStudent(c, student, LocalDate.now(APP_ZONE), "ACTIVE");
         classStudentRepository.save(cs);
     }
 
@@ -161,7 +175,10 @@ public class ClassServiceImpl implements ClassService {
     public void removeStudentFromClass(Long classId, Long studentId) {
         var existing = classStudentRepository.findByClassEntityIdAndStudentId(classId, studentId);
         if (existing.isPresent()) {
-            classStudentRepository.delete(existing.get());
+            ClassStudent enrollment = existing.get();
+            enrollment.setStatus("DROPPED");
+            enrollment.setDroppedDate(LocalDate.now(APP_ZONE));
+            classStudentRepository.save(enrollment);
         }
     }
 

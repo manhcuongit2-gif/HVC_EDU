@@ -1,54 +1,148 @@
 package com.educenter.controller.admin;
 
+import com.educenter.dto.CalendarDay;
 import com.educenter.dto.ScheduleDTO;
+import com.educenter.entity.ClassEntity;
+import com.educenter.entity.ClassSession;
 import com.educenter.entity.Schedule;
+import com.educenter.repository.MonthlyStudentReportRepository;
 import com.educenter.service.ClassService;
+import com.educenter.service.ClassSessionService;
 import com.educenter.service.RoomService;
 import com.educenter.service.ScheduleService;
+import com.educenter.service.StudentReportService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/schedules")
 public class AdminScheduleController {
 
+    private static final ZoneId APP_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
     private final ScheduleService scheduleService;
     private final ClassService classService;
     private final RoomService roomService;
+    private final ClassSessionService classSessionService;
+    private final StudentReportService studentReportService;
+    private final MonthlyStudentReportRepository monthlyReportRepository;
 
-    public AdminScheduleController(ScheduleService scheduleService,
-                                   ClassService classService,
-                                   RoomService roomService) {
+    public AdminScheduleController(ScheduleService scheduleService, ClassService classService,
+                                   RoomService roomService, ClassSessionService classSessionService,
+                                   StudentReportService studentReportService,
+                                   MonthlyStudentReportRepository monthlyReportRepository) {
         this.scheduleService = scheduleService;
         this.classService = classService;
         this.roomService = roomService;
+        this.classSessionService = classSessionService;
+        this.studentReportService = studentReportService;
+        this.monthlyReportRepository = monthlyReportRepository;
     }
 
     @GetMapping
-    public String listSchedules(Model model) {
-        List<Schedule> schedules = scheduleService.getAllSchedules();
-        model.addAttribute("schedules", schedules);
+    public String calendar(@RequestParam(required = false) String month,
+                           @RequestParam(required = false) Long classId, Model model) {
+        YearMonth selectedMonth = parseMonth(month);
+        LocalDate first = selectedMonth.atDay(1);
+        LocalDate gridStart = first.minusDays(first.getDayOfWeek().getValue() - 1L);
+        List<ClassSession> sessions = classSessionService.findBetween(first, selectedMonth.atEndOfMonth(), classId);
+        Map<LocalDate, List<ClassSession>> byDate = sessions.stream().collect(Collectors.groupingBy(ClassSession::getSessionDate));
+        List<CalendarDay> calendarDays = new ArrayList<>();
+        for (int day = 0; day < 42; day++) {
+            LocalDate date = gridStart.plusDays(day);
+            calendarDays.add(new CalendarDay(date, byDate.getOrDefault(date, List.of()), YearMonth.from(date).equals(selectedMonth)));
+        }
+        List<ClassEntity> classes = classService.getAllClasses();
+        model.addAttribute("month", selectedMonth.toString());
+        model.addAttribute("previousMonth", selectedMonth.minusMonths(1));
+        model.addAttribute("nextMonth", selectedMonth.plusMonths(1));
+        model.addAttribute("selectedClassId", classId);
+        model.addAttribute("classes", classes);
+        model.addAttribute("calendarDays", calendarDays);
+        model.addAttribute("classesMissingDates", classes.stream().filter(c -> c.getStartDate() == null || c.getEndDate() == null).toList());
+        return "admin/schedules/calendar";
+    }
+
+    @GetMapping("/templates")
+    public String scheduleTemplates(Model model) {
+        model.addAttribute("schedules", scheduleService.getAllSchedules());
         return "admin/schedules/list";
+    }
+
+    @GetMapping("/monthly")
+    public String monthlyReports(@RequestParam(required = false) String month,
+                                 @RequestParam(required = false) Long classId, Model model) {
+        YearMonth selectedMonth = parseMonth(month);
+        model.addAttribute("month", selectedMonth.toString());
+        model.addAttribute("classes", classService.getAllClasses());
+        model.addAttribute("selectedClassId", classId);
+        model.addAttribute("reports", classId == null
+                ? monthlyReportRepository.findAllPublishedForMonth(selectedMonth.atDay(1))
+                : monthlyReportRepository.findPublishedForClassAndMonth(classId, selectedMonth.atDay(1)));
+        return "admin/schedules/monthly-reports";
+    }
+
+    @GetMapping("/session/{id}")
+    public String viewSession(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("session", classSessionService.getById(id));
+            model.addAttribute("reports", studentReportService.getAdminSessionReports(id));
+            model.addAttribute("rooms", roomService.findAllActive());
+            return "admin/schedules/session";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/admin/schedules";
+        }
+    }
+
+    @PostMapping("/session/{id}/cancel")
+    public String cancelSession(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            classSessionService.cancel(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã hủy buổi học.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/schedules/session/" + id;
+    }
+
+    @PostMapping("/session/{id}/reschedule")
+    public String rescheduleSession(@PathVariable Long id,
+                                    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+                                    @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime startTime,
+                                    @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime endTime,
+                                    @RequestParam Long roomId, RedirectAttributes redirectAttributes) {
+        try {
+            classSessionService.reschedule(id, date, startTime, endTime, roomId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã đổi lịch buổi học.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/schedules/session/" + id;
     }
 
     @GetMapping("/add")
     public String showAddForm(@RequestParam(required = false) Long classId, Model model) {
         ScheduleDTO dto = new ScheduleDTO();
-        if (classId != null) {
-            dto.setClassId(classId);
-        }
-        dto.setDayOfWeek(2); // Default Thứ Hai
+        if (classId != null) dto.setClassId(classId);
+        dto.setDayOfWeek(2);
         dto.setStartTime(LocalTime.of(17, 30));
         dto.setEndTime(LocalTime.of(19, 30));
         dto.setActive(true);
-
         model.addAttribute("scheduleDTO", dto);
         model.addAttribute("classes", classService.getActiveClasses());
         model.addAttribute("rooms", roomService.findAllActive());
@@ -58,25 +152,18 @@ public class AdminScheduleController {
 
     @PostMapping("/add")
     public String addSchedule(@Valid @ModelAttribute("scheduleDTO") ScheduleDTO dto,
-                              BindingResult bindingResult,
-                              Model model,
-                              RedirectAttributes redirectAttributes) {
+                              BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("classes", classService.getActiveClasses());
-            model.addAttribute("rooms", roomService.findAllActive());
-            model.addAttribute("isEdit", false);
+            fillScheduleForm(model, false);
             return "admin/schedules/form";
         }
-
         try {
             scheduleService.saveSchedule(dto);
-            redirectAttributes.addFlashAttribute("successMessage", "Xếp lịch học thành công! Không có xung đột trùng lịch.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xếp lịch tuần và sinh các buổi theo thời hạn lớp.");
             return "redirect:/admin/schedules";
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("classes", classService.getActiveClasses());
-            model.addAttribute("rooms", roomService.findAllActive());
-            model.addAttribute("isEdit", false);
+            fillScheduleForm(model, false);
             return "admin/schedules/form";
         }
     }
@@ -93,11 +180,8 @@ public class AdminScheduleController {
             dto.setStartTime(s.getStartTime());
             dto.setEndTime(s.getEndTime());
             dto.setActive(s.getActive());
-
             model.addAttribute("scheduleDTO", dto);
-            model.addAttribute("classes", classService.getActiveClasses());
-            model.addAttribute("rooms", roomService.findAllActive());
-            model.addAttribute("isEdit", true);
+            fillScheduleForm(model, true);
             return "admin/schedules/form";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -106,27 +190,19 @@ public class AdminScheduleController {
     }
 
     @PostMapping("/edit/{id}")
-    public String updateSchedule(@PathVariable Long id,
-                                 @Valid @ModelAttribute("scheduleDTO") ScheduleDTO dto,
-                                 BindingResult bindingResult,
-                                 Model model,
-                                 RedirectAttributes redirectAttributes) {
+    public String updateSchedule(@PathVariable Long id, @Valid @ModelAttribute("scheduleDTO") ScheduleDTO dto,
+                                 BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("classes", classService.getActiveClasses());
-            model.addAttribute("rooms", roomService.findAllActive());
-            model.addAttribute("isEdit", true);
+            fillScheduleForm(model, true);
             return "admin/schedules/form";
         }
-
         try {
             scheduleService.updateSchedule(id, dto);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật lịch học thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật lịch tuần; các buổi tương lai chưa có báo cáo được đồng bộ.");
             return "redirect:/admin/schedules";
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("classes", classService.getActiveClasses());
-            model.addAttribute("rooms", roomService.findAllActive());
-            model.addAttribute("isEdit", true);
+            fillScheduleForm(model, true);
             return "admin/schedules/form";
         }
     }
@@ -135,10 +211,24 @@ public class AdminScheduleController {
     public String deleteSchedule(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             scheduleService.deleteSchedule(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Xóa lịch học thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xóa mẫu lịch tuần; lịch sử buổi đã qua được giữ lại.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/admin/schedules";
+    }
+
+    private void fillScheduleForm(Model model, boolean edit) {
+        model.addAttribute("classes", classService.getActiveClasses());
+        model.addAttribute("rooms", roomService.findAllActive());
+        model.addAttribute("isEdit", edit);
+    }
+
+    private YearMonth parseMonth(String value) {
+        try {
+            return value == null || value.isBlank() ? YearMonth.now(APP_ZONE) : YearMonth.parse(value);
+        } catch (RuntimeException e) {
+            return YearMonth.now(APP_ZONE);
+        }
     }
 }

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lịch học tháng - EduCenter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(130px,1fr)); }
+        .calendar-cell { min-height:150px; border:1px solid #dee2e6; padding:8px; background:#fff; }
+        .calendar-cell.outside { background:#f4f5f7; color:#89919a; }
+        .session-chip { display:block; font-size:.76rem; line-height:1.25; padding:6px; margin:5px 0; border-radius:6px; text-decoration:none; }
+        @media (max-width:900px) { .calendar-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .weekday { display:none; } }
+    </style>
+</head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container-fluid"><div class="row">
+    <div th:replace="~{fragments/sidebar-admin :: sidebar('schedules')}"></div>
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-3 gap-2">
+            <div><h1 class="h3 fw-bold mb-1"><i class="bi bi-calendar3 text-primary me-2"></i>Lịch học theo tháng</h1>
+                <p class="text-muted mb-0">Mỗi ô lịch là một buổi học cụ thể; chọn buổi để xem báo cáo.</p></div>
+            <div class="d-flex flex-wrap gap-2"><a th:href="@{/admin/schedules/monthly}" class="btn btn-outline-success">Báo cáo tháng</a><a th:href="@{/admin/schedules/templates}" class="btn btn-outline-secondary">Mẫu lịch tuần</a><a th:href="@{/admin/schedules/add}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Thêm lịch tuần</a></div>
+        </div>
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${!#lists.isEmpty(classesMissingDates)}" class="alert alert-warning">
+            Một số lớp chưa có đủ ngày bắt đầu và kết thúc nên chưa thể sinh buổi:
+            <span th:each="c,iter : ${classesMissingDates}"><span th:text="${c.name}"></span><span th:if="${!iter.last}">, </span></span>.
+        </div>
+        <div class="card border-0 shadow-sm mb-3"><div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="btn-group">
+                <a class="btn btn-outline-secondary" th:href="@{/admin/schedules(month=${previousMonth},classId=${selectedClassId})}"><i class="bi bi-chevron-left"></i></a>
+                <span class="btn btn-light fw-bold" th:text="${month}">2026-11</span>
+                <a class="btn btn-outline-secondary" th:href="@{/admin/schedules(month=${nextMonth},classId=${selectedClassId})}"><i class="bi bi-chevron-right"></i></a>
+            </div>
+            <form method="get" th:action="@{/admin/schedules}" class="d-flex gap-2">
+                <input type="month" class="form-control" name="month" th:value="${month}">
+                <select class="form-select" name="classId"><option value="">Tất cả lớp</option>
+                    <option th:each="c : ${classes}" th:value="${c.id}" th:selected="${selectedClassId != null && selectedClassId == c.id}" th:text="${c.name}"></option>
+                </select><button class="btn btn-outline-primary">Lọc</button>
+            </form>
+        </div></div>
+        <div class="calendar-grid weekday text-center fw-semibold text-secondary">
+            <div class="p-2">Thứ Hai</div><div class="p-2">Thứ Ba</div><div class="p-2">Thứ Tư</div><div class="p-2">Thứ Năm</div><div class="p-2">Thứ Sáu</div><div class="p-2">Thứ Bảy</div><div class="p-2">Chủ Nhật</div>
+        </div>
+        <div class="calendar-grid shadow-sm">
+            <section th:each="day : ${calendarDays}" class="calendar-cell" th:classappend="${day.inMonth} ? '' : ' outside'">
+                <div class="fw-bold" th:text="${#temporals.format(day.date,'d')}">1</div>
+                <a th:each="session : ${day.sessions}" th:href="@{/admin/schedules/session/{id}(id=${session.id})}"
+                   class="session-chip" th:classappend="${session.status == 'CANCELLED'} ? ' bg-secondary-subtle text-secondary' : (${session.publishedAt != null} ? ' bg-success-subtle text-success-emphasis' : ' bg-primary-subtle text-primary-emphasis')">
+                    <strong th:text="${session.startTime} + ' ' + ${session.classEntity.name}">17:30 Toán</strong>
+                    <span class="d-block" th:text="${session.room != null ? session.room.name : 'Chưa có phòng'}"></span>
+                    <span class="d-block" th:if="${session.status == 'CANCELLED'}">Đã hủy</span>
+                    <span class="d-block" th:if="${session.status != 'CANCELLED' && session.publishedAt == null}">Chưa công bố báo cáo</span>
+                    <span class="d-block" th:if="${session.publishedAt != null}">Đã công bố</span>
+                </a>
+            </section>
+        </div>
+    </main>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body></html>

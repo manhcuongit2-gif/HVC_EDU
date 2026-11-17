@@ -138,6 +138,7 @@
                                     <th>Học sinh</th>
                                     <th>Phụ huynh</th>
                                     <th>Lớp học</th>
+                                    <th>Kỳ học phí</th>
                                     <th>Số tiền</th>
                                     <th>Hạn nộp</th>
                                     <th class="text-center" style="width: 150px;">Trạng thái</th>
@@ -146,7 +147,7 @@
                             </thead>
                             <tbody>
                                 <tr th:if="${#lists.isEmpty(tuitions)}">
-                                    <td colspan="8" class="text-center py-4 text-muted">
+                                    <td colspan="9" class="text-center py-4 text-muted">
                                         <i class="bi bi-receipt fs-3 d-block mb-2"></i>
                                         Chưa có khoản thu học phí nào trong hệ thống.
                                     </td>
@@ -166,6 +167,13 @@
                                         <small class="text-muted" th:text="${t.description}"></small>
                                     </td>
                                     <td>
+                                        <span th:if="${t.billingPeriod != null}" th:text="${#temporals.format(t.billingPeriod,'MM/yyyy')}"></span>
+                                        <form th:if="${t.billingPeriod == null}" method="post" th:action="@{/admin/tuition/assign-period/{id}(id=${t.id})}" class="d-flex gap-1">
+                                            <input type="month" name="month" class="form-control form-control-sm" required>
+                                            <button class="btn btn-sm btn-outline-primary">Gán</button>
+                                        </form>
+                                    </td>
+                                    <td>
                                         <span class="fw-bold text-primary fs-6" th:text="${#numbers.formatDecimal(t.amount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
                                             1,200,000 đ
                                         </span>
@@ -183,6 +191,7 @@
                                         <span th:if="${t.status == 'PROCESSING'}" class="badge bg-info-subtle text-info px-3 py-2 rounded-pill">
                                             <i class="bi bi-clock-history me-1"></i>Đang xử lý
                                         </span>
+                                        <span th:if="${t.status == 'CANCELLED'}" class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill">Đã hủy</span>
                                     </td>
                                     <td class="text-end pe-4">
                                         <div th:if="${t.status == 'UNPAID'}">

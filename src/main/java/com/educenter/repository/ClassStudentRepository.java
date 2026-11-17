@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface ClassStudentRepository extends JpaRepository<ClassStudent, Long> {
     List<ClassStudent> findByClassEntityId(Long classId);
     List<ClassStudent> findByClassEntityIdAndStatus(Long classId, String status);
+    List<ClassStudent> findByClassEntityIdOrderByStudentFullNameAsc(Long classId);
     List<ClassStudent> findByStudentId(Long studentId);
     List<ClassStudent> findByStudentParentUserId(Long userId);
     long countByClassEntityIdAndStatus(Long classId, String status);

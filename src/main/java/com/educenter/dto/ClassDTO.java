@@ -32,6 +32,10 @@ public class ClassDTO {
     @DecimalMin(value = "0.0", inclusive = true, message = "Học phí không được âm")
     private BigDecimal tuitionFee;
 
+    @NotNull(message = "Vui lòng nhập đơn giá mỗi buổi")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Đơn giá mỗi buổi không được âm")
+    private BigDecimal sessionFee;
+
     private String status = "ACTIVE";
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
@@ -62,6 +66,9 @@ public class ClassDTO {
 
     public BigDecimal getTuitionFee() { return tuitionFee; }
     public void setTuitionFee(BigDecimal tuitionFee) { this.tuitionFee = tuitionFee; }
+
+    public BigDecimal getSessionFee() { return sessionFee; }
+    public void setSessionFee(BigDecimal sessionFee) { this.sessionFee = sessionFee; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

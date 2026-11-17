@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Controller
@@ -78,6 +79,17 @@ public class AdminTuitionController {
         try {
             tuitionService.markAsPaid(id, paymentMethod, "ADMIN_CONFIRM_" + System.currentTimeMillis(), note);
             redirectAttributes.addFlashAttribute("successMessage", "Xác nhận đóng học phí thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/tuition";
+    }
+
+    @PostMapping("/assign-period/{id}")
+    public String assignPeriod(@PathVariable Long id, @RequestParam String month, RedirectAttributes redirectAttributes) {
+        try {
+            tuitionService.assignBillingPeriod(id, YearMonth.parse(month));
+            redirectAttributes.addFlashAttribute("successMessage", "Đã gắn khoản thu cũ vào kỳ " + month + ".");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

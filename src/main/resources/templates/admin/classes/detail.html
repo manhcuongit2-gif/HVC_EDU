@@ -104,6 +104,10 @@
                                 <strong class="text-success fs-5" th:text="${#numbers.formatDecimal(classEntity.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.200.000 đ</strong>
                             </li>
                             <li class="mb-3">
+                                <small class="text-muted d-block">Đơn giá mỗi buổi:</small>
+                                <strong class="text-primary fs-5" th:text="${classEntity.sessionFee != null ? #numbers.formatDecimal(classEntity.sessionFee, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Chưa cấu hình'}"></strong>
+                            </li>
+                            <li class="mb-3">
                                 <small class="text-muted d-block">Thời gian khóa học:</small>
                                 <span class="fw-semibold text-dark">
                                     <span th:text="${classEntity.startDate != null ? #temporals.format(classEntity.startDate, 'dd/MM/yyyy') : '---'}"></span>
