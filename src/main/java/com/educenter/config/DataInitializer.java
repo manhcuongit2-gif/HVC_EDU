@@ -77,12 +77,15 @@ public class DataInitializer implements CommandLineRunner {
             User u = new User();
             u.setUsername("admin");
             u.setEmail("admin@educenter.edu.vn");
-            u.setFullName("Quản Trị Viên EduCenter");
+            u.setFullName("Quản Trị Viên Luyện Thi Hùng Cường");
             u.setPhone("0988000001");
             u.setRole(adminRole);
             u.setActive(true);
             return u;
         });
+        if ("Quản Trị Viên EduCenter".equals(admin.getFullName())) {
+            admin.setFullName("Quản Trị Viên Luyện Thi Hùng Cường");
+        }
         admin.setPassword(passwordEncoder.encode("123456"));
         admin.setActive(true);
         userRepository.save(admin);

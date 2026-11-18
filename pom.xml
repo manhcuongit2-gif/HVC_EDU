@@ -14,8 +14,8 @@
     <groupId>com.educenter</groupId>
     <artifactId>educenter</artifactId>
     <version>1.0.0</version>
-    <name>EduCenter</name>
-    <description>Hệ thống Website Quản lý Trung tâm Học thêm EduCenter</description>
+    <name>Luyện Thi Hùng Cường</name>
+    <description>Hệ thống Website Quản lý Trung tâm Học thêm Luyện Thi Hùng Cường</description>
 
     <properties>
         <java.version>21</java.version>

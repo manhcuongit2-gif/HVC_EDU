@@ -9,7 +9,7 @@ INSERT INTO `roles` (`id`, `name`, `description`) VALUES
 -- 2. BẢNG users (Tài khoản)
 -- Password mặc định: 123456
 INSERT INTO `users` (`id`, `username`, `password`, `email`, `full_name`, `phone`, `address`, `role_id`, `active`) VALUES
-(1, 'admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'admin@educenter.edu.vn', 'Quản Trị Viên EduCenter', '0988000001', 'Hà Nội', 1, 1),
+(1, 'admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'admin@educenter.edu.vn', 'Quản Trị Viên Luyện Thi Hùng Cường', '0988000001', 'Hà Nội', 1, 1),
 (2, 'gv_toan', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'tranvantoan@educenter.edu.vn', 'ThS. Trần Văn Toán', '0988000002', 'Cầu Giấy, Hà Nội', 2, 1),
 (3, 'gv_ly', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'lethily@educenter.edu.vn', 'Cô Lê Thị Lý', '0988000003', 'Bắc Từ Liêm, Hà Nội', 2, 1),
 (4, 'gv_hoa', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'phamvanhoa@educenter.edu.vn', 'ThS. Phạm Văn Hóa', '0988000004', 'Nam Từ Liêm, Hà Nội', 2, 1),
