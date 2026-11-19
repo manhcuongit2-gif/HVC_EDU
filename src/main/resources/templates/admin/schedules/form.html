@@ -82,7 +82,7 @@
                                         th:classappend="${#fields.hasErrors('classId')} ? 'is-invalid' : ''">
                                     <option value="">-- Chọn lớp học --</option>
                                     <option th:each="c : ${classes}" th:value="${c.id}"
-                                            th:text="${c.name} + ' (GV: ' + ${c.teacher.user.fullName} + ')'">
+                                            th:text="|${c.name} (GV: ${c.teacher.user.fullName})|">
                                         Toán 10 - Nâng Cao
                                     </option>
                                 </select>
@@ -96,7 +96,7 @@
                                         th:classappend="${#fields.hasErrors('roomId')} ? 'is-invalid' : ''">
                                     <option value="">-- Chọn phòng học --</option>
                                     <option th:each="r : ${rooms}" th:value="${r.id}"
-                                            th:text="${r.name} + ' (' + ${r.location} + ' - Sức chứa: ' + ${r.capacity} + ')'">
+                                            th:text="|${r.name} (${r.location} - Sức chứa: ${r.capacity})|">
                                         Phòng P101
                                     </option>
                                 </select>

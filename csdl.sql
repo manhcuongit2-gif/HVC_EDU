@@ -4,27 +4,14 @@ COLLATE utf8mb4_unicode_ci;
 
 USE `educenter_db`;
 
--- Xóa các bảng cũ theo thứ tự khóa ngoại (nếu đã tồn tại)
-DROP TABLE IF EXISTS `payments`;
-DROP TABLE IF EXISTS `tuition`;
-DROP TABLE IF EXISTS `grades`;
-DROP TABLE IF EXISTS `attendance`;
-DROP TABLE IF EXISTS `schedules`;
-DROP TABLE IF EXISTS `registrations`;
-DROP TABLE IF EXISTS `class_students`;
-DROP TABLE IF EXISTS `classes`;
-DROP TABLE IF EXISTS `rooms`;
-DROP TABLE IF EXISTS `subjects`;
-DROP TABLE IF EXISTS `students`;
-DROP TABLE IF EXISTS `teachers`;
-DROP TABLE IF EXISTS `parents`;
-DROP TABLE IF EXISTS `users`;
-DROP TABLE IF EXISTS `roles`;
+-- CHÚ Ý: Phiên bản này giữ nguyên dữ liệu hiện có.
+-- KHÔNG DROP TABLE, KHÔNG tạo lại các bảng đã tồn tại.
+-- Có thể chạy trên DB mới hoặc cập nhật schema DB cũ (xem phần đồng bộ ở cuối).
 
 -- =======================================================
 -- 1. BẢNG roles (Vai trò người dùng)
 -- =======================================================
-CREATE TABLE `roles` (
+CREATE TABLE IF NOT EXISTS `roles` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(50) NOT NULL UNIQUE,
     `description` VARCHAR(255) NULL
@@ -33,7 +20,7 @@ CREATE TABLE `roles` (
 -- =======================================================
 -- 2. BẢNG users (Tài khoản người dùng)
 -- =======================================================
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(50) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
@@ -51,7 +38,7 @@ CREATE TABLE `users` (
 -- =======================================================
 -- 3. BẢNG parents (Hồ sơ phụ huynh)
 -- =======================================================
-CREATE TABLE `parents` (
+CREATE TABLE IF NOT EXISTS `parents` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT NOT NULL UNIQUE,
     `occupation` VARCHAR(100) NULL,
@@ -63,7 +50,7 @@ CREATE TABLE `parents` (
 -- =======================================================
 -- 4. BẢNG teachers (Hồ sơ giáo viên)
 -- =======================================================
-CREATE TABLE `teachers` (
+CREATE TABLE IF NOT EXISTS `teachers` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT NOT NULL UNIQUE,
     `specialization` VARCHAR(100) NULL,
@@ -76,7 +63,7 @@ CREATE TABLE `teachers` (
 -- =======================================================
 -- 5. BẢNG students (Hồ sơ học sinh)
 -- =======================================================
-CREATE TABLE `students` (
+CREATE TABLE IF NOT EXISTS `students` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `full_name` VARCHAR(100) NOT NULL,
     `date_of_birth` DATE NULL,
@@ -94,7 +81,7 @@ CREATE TABLE `students` (
 -- =======================================================
 -- 6. BẢNG subjects (Môn học)
 -- =======================================================
-CREATE TABLE `subjects` (
+CREATE TABLE IF NOT EXISTS `subjects` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(50) NOT NULL UNIQUE,
     `description` VARCHAR(500) NULL,
@@ -105,7 +92,7 @@ CREATE TABLE `subjects` (
 -- =======================================================
 -- 7. BẢNG rooms (Phòng học)
 -- =======================================================
-CREATE TABLE `rooms` (
+CREATE TABLE IF NOT EXISTS `rooms` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(50) NOT NULL UNIQUE,
     `capacity` INT NOT NULL,
@@ -117,7 +104,7 @@ CREATE TABLE `rooms` (
 -- =======================================================
 -- 8. BẢNG classes (Lớp học)
 -- =======================================================
-CREATE TABLE `classes` (
+CREATE TABLE IF NOT EXISTS `classes` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(100) NOT NULL,
     `subject_id` BIGINT NOT NULL,
@@ -138,7 +125,7 @@ CREATE TABLE `classes` (
 -- =======================================================
 -- 9. BẢNG class_students (Học sinh trong lớp - Bảng trung gian N-N)
 -- =======================================================
-CREATE TABLE `class_students` (
+CREATE TABLE IF NOT EXISTS `class_students` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `class_id` BIGINT NOT NULL,
     `student_id` BIGINT NOT NULL,
@@ -153,7 +140,7 @@ CREATE TABLE `class_students` (
 -- =======================================================
 -- 10. BẢNG registrations (Đơn đăng ký học)
 -- =======================================================
-CREATE TABLE `registrations` (
+CREATE TABLE IF NOT EXISTS `registrations` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `parent_id` BIGINT NOT NULL,
     `student_id` BIGINT NOT NULL,
@@ -174,7 +161,7 @@ CREATE TABLE `registrations` (
 -- =======================================================
 -- 11. BẢNG schedules (Lịch học / Thời khóa biểu)
 -- =======================================================
-CREATE TABLE `schedules` (
+CREATE TABLE IF NOT EXISTS `schedules` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `class_id` BIGINT NOT NULL,
     `room_id` BIGINT NOT NULL,
@@ -188,9 +175,9 @@ CREATE TABLE `schedules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =======================================================
--- 11.1 BẢNG class_sessions (Các buổi học cụ thể được sinh từ lịch tuần)
+-- 11.1, 11.2, 11.3. BẢNG LỊCH BUỔI HỌC VÀ BÁO CÁO
 -- =======================================================
-CREATE TABLE `class_sessions` (
+CREATE TABLE IF NOT EXISTS `class_sessions` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `class_id` BIGINT NOT NULL,
     `schedule_id` BIGINT NULL,
@@ -213,10 +200,7 @@ CREATE TABLE `class_sessions` (
     CONSTRAINT `fk_class_sessions_publisher` FOREIGN KEY (`published_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =======================================================
--- 11.2 BẢNG session_student_reports (Báo cáo từng học sinh theo buổi)
--- =======================================================
-CREATE TABLE `session_student_reports` (
+CREATE TABLE IF NOT EXISTS `session_student_reports` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `session_id` BIGINT NOT NULL,
     `student_id` BIGINT NOT NULL,
@@ -238,10 +222,7 @@ CREATE TABLE `session_student_reports` (
     CONSTRAINT `chk_session_good_count` CHECK (`good_evaluation_count` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =======================================================
--- 11.3 BẢNG monthly_student_reports (Tổng kết tháng theo học sinh)
--- =======================================================
-CREATE TABLE `monthly_student_reports` (
+CREATE TABLE IF NOT EXISTS `monthly_student_reports` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `class_id` BIGINT NOT NULL,
     `student_id` BIGINT NOT NULL,
@@ -267,7 +248,7 @@ CREATE TABLE `monthly_student_reports` (
 -- =======================================================
 -- 12. BẢNG attendance (Điểm danh học sinh)
 -- =======================================================
-CREATE TABLE `attendance` (
+CREATE TABLE IF NOT EXISTS `attendance` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `class_id` BIGINT NOT NULL,
     `student_id` BIGINT NOT NULL,
@@ -286,7 +267,7 @@ CREATE TABLE `attendance` (
 -- =======================================================
 -- 13. BẢNG grades (Bảng điểm kết quả học tập)
 -- =======================================================
-CREATE TABLE `grades` (
+CREATE TABLE IF NOT EXISTS `grades` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `class_id` BIGINT NOT NULL,
     `student_id` BIGINT NOT NULL,
@@ -308,7 +289,7 @@ CREATE TABLE `grades` (
 -- =======================================================
 -- 14. BẢNG tuition (Khoản học phí cần nộp)
 -- =======================================================
-CREATE TABLE `tuition` (
+CREATE TABLE IF NOT EXISTS `tuition` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `student_id` BIGINT NOT NULL,
     `class_id` BIGINT NOT NULL,
@@ -329,7 +310,7 @@ CREATE TABLE `tuition` (
 -- =======================================================
 -- 15. BẢNG payments (Giao dịch thanh toán học phí)
 -- =======================================================
-CREATE TABLE `payments` (
+CREATE TABLE IF NOT EXISTS `payments` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `tuition_id` BIGINT NOT NULL,
     `amount` DECIMAL(12,2) NOT NULL,
@@ -343,3 +324,128 @@ CREATE TABLE `payments` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_payments_tuition` FOREIGN KEY (`tuition_id`) REFERENCES `tuition` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =======================================================
+-- 15.1. TÀI LIỆU HỌC TẬP THEO LỚP
+-- =======================================================
+CREATE TABLE IF NOT EXISTS `learning_materials` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `class_id` BIGINT NOT NULL,
+    `title` VARCHAR(150) NOT NULL,
+    `description` VARCHAR(1000) NULL,
+    `stored_filename` VARCHAR(100) NULL,
+    `original_filename` VARCHAR(255) NULL,
+    `content_type` VARCHAR(100) NULL,
+    `file_size` BIGINT NULL,
+    `external_url` VARCHAR(2048) NULL,
+    `created_by` BIGINT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_learning_materials_class` (`class_id`, `created_at`),
+    CONSTRAINT `fk_learning_materials_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_learning_materials_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `chk_learning_material_source` CHECK (`stored_filename` IS NOT NULL OR `external_url` IS NOT NULL)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =======================================================
+-- 15.2. HỘI THOẠI RIÊNG GIỮA PHỤ HUYNH VÀ GIÁO VIÊN THEO LỚP
+-- =======================================================
+CREATE TABLE IF NOT EXISTS `parent_teacher_conversations` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `class_id` BIGINT NOT NULL,
+    `parent_id` BIGINT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uk_parent_teacher_conversation` (`class_id`, `parent_id`),
+    CONSTRAINT `fk_conversations_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_conversations_parent` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `parent_teacher_messages` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `conversation_id` BIGINT NOT NULL,
+    `sender_id` BIGINT NOT NULL,
+    `content` VARCHAR(2000) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_parent_teacher_messages_conversation` (`conversation_id`, `created_at`),
+    CONSTRAINT `fk_parent_teacher_messages_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `parent_teacher_conversations` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_parent_teacher_messages_sender` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =======================================================
+-- 16. ĐỒNG BỘ CỘT CHO CƠ SỞ DỮ LIỆU ĐÃ CÓ DỮ LIỆU
+-- =======================================================
+-- Những CREATE TABLE IF NOT EXISTS ở trên chỉ tạo các bảng mới.
+-- Với các bảng cũ, đoạn dưới CHỈ thêm cột / chỉ mục nếu chưa tồn tại.
+-- Các ALTER TABLE không xóa dữ liệu của bảng.
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS `hvc_schema_patch_20261118`$$
+CREATE PROCEDURE `hvc_schema_patch_20261118`()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classes' AND COLUMN_NAME = 'session_fee'
+    ) THEN
+        ALTER TABLE `classes` ADD COLUMN `session_fee` DECIMAL(12,2) NULL AFTER `tuition_fee`;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'class_students' AND COLUMN_NAME = 'dropped_date'
+    ) THEN
+        ALTER TABLE `class_students` ADD COLUMN `dropped_date` DATE NULL AFTER `enrolled_date`;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tuition' AND COLUMN_NAME = 'billing_period'
+    ) THEN
+        ALTER TABLE `tuition` ADD COLUMN `billing_period` DATE NULL AFTER `description`;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tuition' AND COLUMN_NAME = 'billing_sequence'
+    ) THEN
+        ALTER TABLE `tuition` ADD COLUMN `billing_sequence` INT NULL AFTER `billing_period`;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tuition' AND COLUMN_NAME = 'auto_generated'
+    ) THEN
+        ALTER TABLE `tuition` ADD COLUMN `auto_generated` TINYINT(1) NOT NULL DEFAULT 0 AFTER `billing_sequence`;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tuition'
+          AND INDEX_NAME = 'uk_tuition_period_sequence'
+    ) THEN
+        ALTER TABLE `tuition`
+          ADD UNIQUE KEY `uk_tuition_period_sequence`
+          (`student_id`, `class_id`, `billing_period`, `billing_sequence`);
+    END IF;
+END$$
+DELIMITER ;
+
+CALL `hvc_schema_patch_20261118`();
+DROP PROCEDURE IF EXISTS `hvc_schema_patch_20261118`;
+
+-- =======================================================
+-- 17. KIỂM TRA SAU KHI CHẠY
+-- =======================================================
+SHOW COLUMNS FROM `classes` LIKE 'session_fee';
+SHOW COLUMNS FROM `tuition` LIKE 'billing_period';
+SHOW COLUMNS FROM `tuition` LIKE 'billing_sequence';
+SHOW COLUMNS FROM `tuition` LIKE 'auto_generated';
+-- Kiểm tra tồn tại đối tượng; chức năng thực tế cần được kiểm thử sau khi chạy.
+SHOW COLUMNS FROM `class_students` LIKE 'dropped_date';
+SHOW TABLES LIKE 'class_sessions';
+SHOW TABLES LIKE 'session_student_reports';
+SHOW TABLES LIKE 'monthly_student_reports';
+SHOW INDEX FROM `tuition` WHERE Key_name = 'uk_tuition_period_sequence';
+SHOW TABLES LIKE 'learning_materials';
+SHOW TABLES LIKE 'parent_teacher_conversations';
+SHOW TABLES LIKE 'parent_teacher_messages';

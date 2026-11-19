@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tài liệu học tập</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+<body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"><div><h1 class="h3">Tài liệu học tập</h1><p class="text-muted mb-0">Tài liệu của các lớp con đang theo học.</p></div><a th:href="@{/parent/dashboard}" class="btn btn-outline-secondary">Dashboard</a></div>
+    <form class="card card-body mb-3" method="get" th:action="@{/parent/materials}"><div class="row g-2 align-items-end">
+        <div class="col-md-10"><label class="form-label">Lọc theo lớp</label><select class="form-select" name="classId"><option value="">Tất cả lớp</option><option th:each="c : ${classes}" th:value="${c.id}" th:selected="${selectedClassId != null && selectedClassId == c.id}" th:text="${c.name}"></option></select></div><div class="col-md-2"><button class="btn btn-primary w-100">Lọc</button></div>
+    </div></form>
+    <div th:if="${#lists.isEmpty(materials)}" class="alert alert-info">Chưa có tài liệu cho lớp của con.</div>
+    <div class="row g-3"><div class="col-lg-6" th:each="m : ${materials}"><article class="card border-0 shadow-sm h-100"><div class="card-body">
+        <div class="d-flex justify-content-between gap-2"><h2 class="h5" th:text="${m.title}"></h2><span class="badge text-bg-primary" th:text="${m.classEntity.name}"></span></div>
+        <p class="text-muted" th:if="${m.description != null}" th:text="${m.description}" style="white-space:pre-line"></p>
+        <a th:if="${m.storedFilename != null}" th:href="@{/parent/materials/{id}/file(id=${m.id})}" class="btn btn-outline-primary btn-sm">Tải <span th:text="${m.originalFilename}"></span></a>
+        <a th:if="${m.externalUrl != null}" th:href="${m.externalUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm">Mở liên kết</a>
+    </div></article></div></div>
+</main></body></html>

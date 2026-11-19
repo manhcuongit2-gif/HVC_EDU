@@ -7,6 +7,7 @@ import com.educenter.service.ClassService;
 import com.educenter.service.RegistrationService;
 import com.educenter.service.TuitionService;
 import com.educenter.service.StudentReportService;
+import com.educenter.service.ClassSessionService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Controller
@@ -31,6 +34,8 @@ public class ParentPortalController {
     private final AttendanceRepository attendanceRepository;
     private final ScheduleRepository scheduleRepository;
     private final StudentReportService studentReportService;
+    private final ClassSessionService classSessionService;
+    private final ClassSessionRepository classSessionRepository;
 
     public ParentPortalController(ParentRepository parentRepository,
                                   StudentRepository studentRepository,
@@ -41,7 +46,9 @@ public class ParentPortalController {
                                   GradeRepository gradeRepository,
                                   AttendanceRepository attendanceRepository,
                                   ScheduleRepository scheduleRepository,
-                                  StudentReportService studentReportService) {
+                                  StudentReportService studentReportService,
+                                  ClassSessionService classSessionService,
+                                  ClassSessionRepository classSessionRepository) {
         this.parentRepository = parentRepository;
         this.studentRepository = studentRepository;
         this.classRepository = classRepository;
@@ -52,6 +59,8 @@ public class ParentPortalController {
         this.attendanceRepository = attendanceRepository;
         this.scheduleRepository = scheduleRepository;
         this.studentReportService = studentReportService;
+        this.classSessionService = classSessionService;
+        this.classSessionRepository = classSessionRepository;
     }
 
     @GetMapping("/dashboard")
@@ -62,6 +71,31 @@ public class ParentPortalController {
 
         long unpaidCount = myTuitions.stream().filter(t -> "UNPAID".equals(t.getStatus())).count();
         List<Registration> myRegistrations = registrationService.getRegistrationsByParentUserId(userDetails.getId());
+        List<SessionStudentReport> publishedReports = studentReportService.getPublishedSessionReportsForParent(userDetails.getId());
+        Map<Long, SessionStudentReport> latestReports = new HashMap<>();
+        for (SessionStudentReport report : publishedReports) {
+            latestReports.putIfAbsent(report.getStudent().getId(), report);
+        }
+
+        if (!myChildren.isEmpty()) classSessionService.synchronizeAllClasses();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalTime now = LocalTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        Map<Long, ClassSession> upcomingSessions = new HashMap<>();
+        for (Student child : myChildren) {
+            ClassSession closest = null;
+            for (ClassStudent enrollment : classStudentRepository.findByStudentId(child.getId())) {
+                if (!"ACTIVE".equals(enrollment.getStatus())) continue;
+                if (enrollment.getEnrolledDate() != null && enrollment.getEnrolledDate().isAfter(today)) continue;
+                List<ClassSession> upcoming = classSessionRepository.findUpcomingForClass(
+                        enrollment.getClassEntity().getId(), today, now);
+                if (!upcoming.isEmpty() && (closest == null || upcoming.get(0).getSessionDate().isBefore(closest.getSessionDate())
+                        || (upcoming.get(0).getSessionDate().equals(closest.getSessionDate())
+                        && upcoming.get(0).getStartTime().isBefore(closest.getStartTime())))) {
+                    closest = upcoming.get(0);
+                }
+            }
+            if (closest != null) upcomingSessions.put(child.getId(), closest);
+        }
 
         model.addAttribute("currentUser", userDetails);
         model.addAttribute("parent", parent);
@@ -69,6 +103,8 @@ public class ParentPortalController {
         model.addAttribute("myTuitions", myTuitions);
         model.addAttribute("unpaidCount", unpaidCount);
         model.addAttribute("myRegistrations", myRegistrations);
+        model.addAttribute("latestReports", latestReports);
+        model.addAttribute("upcomingSessions", upcomingSessions);
         return "parent/dashboard";
     }
 
@@ -162,8 +198,8 @@ public class ParentPortalController {
         return "parent/registrations";
     }
 
-    @GetMapping("/grades")
-    public String myChildrenGrades(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+    @GetMapping("/results")
+    public String results(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         Parent parent = parentRepository.findByUserId(userDetails.getId()).orElse(null);
         List<Student> children = (parent != null) ? studentRepository.findByParentId(parent.getId()) : Collections.emptyList();
 
@@ -179,17 +215,19 @@ public class ParentPortalController {
         model.addAttribute("children", children);
         model.addAttribute("studentGrades", studentGrades);
         model.addAttribute("studentAttendances", studentAttendances);
-        return "parent/grades";
+        model.addAttribute("sessionReports", studentReportService.getPublishedSessionReportsForParent(userDetails.getId()));
+        model.addAttribute("monthlyReports", studentReportService.getPublishedMonthlyReportsForParent(userDetails.getId()));
+        return "parent/results";
+    }
+
+    @GetMapping("/grades")
+    public String oldGradesPath() {
+        return "redirect:/parent/results";
     }
 
     @GetMapping("/reports")
-    public String reports(@AuthenticationPrincipal CustomUserDetails userDetails,
-                          @RequestParam(defaultValue = "session") String view, Model model) {
-        model.addAttribute("currentUser", userDetails);
-        model.addAttribute("view", "monthly".equals(view) ? "monthly" : "session");
-        model.addAttribute("sessionReports", studentReportService.getPublishedSessionReportsForParent(userDetails.getId()));
-        model.addAttribute("monthlyReports", studentReportService.getPublishedMonthlyReportsForParent(userDetails.getId()));
-        return "parent/reports";
+    public String oldReportsPath() {
+        return "redirect:/parent/results";
     }
 
     @GetMapping("/tuition")

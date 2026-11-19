@@ -15,6 +15,14 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
     Optional<ClassSession> findByScheduleIdAndOccurrenceDate(Long scheduleId, LocalDate occurrenceDate);
     List<ClassSession> findByClassEntityIdAndSessionDateBetweenOrderBySessionDateAscStartTimeAsc(Long classId, LocalDate from, LocalDate to);
     List<ClassSession> findBySessionDateBetweenOrderBySessionDateAscStartTimeAsc(LocalDate from, LocalDate to);
+    Optional<ClassSession> findFirstByClassEntityIdAndSessionDateGreaterThanEqualAndStatusNotOrderBySessionDateAscStartTimeAsc(
+            Long classId, LocalDate from, String excludedStatus);
+
+    @Query("select s from ClassSession s where s.classEntity.id = :classId and s.status <> 'CANCELLED' " +
+            "and (s.sessionDate > :today or (s.sessionDate = :today and s.startTime >= :time)) " +
+            "order by s.sessionDate, s.startTime")
+    List<ClassSession> findUpcomingForClass(@Param("classId") Long classId, @Param("today") LocalDate today,
+                                            @Param("time") java.time.LocalTime time);
 
     @Query("select s from ClassSession s where s.classEntity.teacher.user.id = :userId and s.sessionDate between :from and :to order by s.sessionDate, s.startTime")
     List<ClassSession> findForTeacherBetween(@Param("userId") Long userId, @Param("from") LocalDate from, @Param("to") LocalDate to);

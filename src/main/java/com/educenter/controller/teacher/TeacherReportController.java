@@ -61,7 +61,7 @@ public class TeacherReportController {
         try {
             ClassSession session = studentReportService.getTeacherSession(id, user.getId());
             model.addAttribute("currentUser", user);
-            model.addAttribute("session", session);
+            model.addAttribute("classSession", session);
             model.addAttribute("reports", studentReportService.getTeacherSessionReports(id, user.getId()));
             return "teacher/session-report";
         } catch (Exception e) {
@@ -72,17 +72,17 @@ public class TeacherReportController {
 
     @PostMapping("/session/{id}")
     public String saveSession(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user,
-                              @RequestParam List<Long> studentIds,
-                              @RequestParam List<String> attendanceStatuses,
-                              @RequestParam List<String> homeworkScores,
-                              @RequestParam List<String> comments,
-                              @RequestParam List<String> goodEvaluationCounts,
-                              @RequestParam List<String> notes,
+                              @RequestParam(required = false) List<Long> studentIds,
+                              @RequestParam(required = false) List<String> attendanceStatuses,
+                              @RequestParam(required = false) List<String> homeworkScores,
+                              @RequestParam(required = false) List<String> comments,
+                              @RequestParam(required = false) List<String> goodEvaluationCounts,
+                              @RequestParam(required = false) List<String> notes,
                               @RequestParam(defaultValue = "false") boolean publish,
                               RedirectAttributes redirect) {
         try {
-            studentReportService.saveSessionReports(id, user.getId(), studentIds, attendanceStatuses,
-                    homeworkScores, comments, goodEvaluationCounts, notes);
+            studentReportService.saveSessionReports(id, user.getId(), emptyIfNull(studentIds), emptyIfNull(attendanceStatuses),
+                    emptyIfNull(homeworkScores), emptyIfNull(comments), emptyIfNull(goodEvaluationCounts), emptyIfNull(notes));
             if (publish) studentReportService.publishSession(id, user.getId());
             redirect.addFlashAttribute("successMessage", publish ? "Đã công bố báo cáo buổi học cho phụ huynh." : "Đã lưu bản nháp báo cáo.");
         } catch (Exception e) {
@@ -112,5 +112,9 @@ public class TeacherReportController {
         } catch (RuntimeException e) {
             return YearMonth.now(APP_ZONE);
         }
+    }
+
+    private <T> List<T> emptyIfNull(List<T> values) {
+        return values == null ? List.of() : values;
     }
 }

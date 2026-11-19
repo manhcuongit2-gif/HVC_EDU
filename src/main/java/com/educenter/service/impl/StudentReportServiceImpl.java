@@ -81,6 +81,7 @@ public class StudentReportServiceImpl implements StudentReportService {
         if ("CANCELLED".equals(session.getStatus())) throw new IllegalArgumentException("Buổi học đã bị hủy.");
 
         List<SessionStudentReport> reports = ensureReportRows(session);
+        if (reports.isEmpty()) throw new IllegalArgumentException("Lớp chưa có học sinh được ghi danh tại ngày học này.");
         validateListLengths(reports.size(), studentIds, attendanceStatuses, homeworkScores, comments, goodEvaluationCounts, notes);
         Map<Long, SessionStudentReport> byStudent = new HashMap<>();
         for (SessionStudentReport report : reports) byStudent.put(report.getStudent().getId(), report);

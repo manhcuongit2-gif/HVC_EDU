@@ -99,7 +99,7 @@ public class AdminScheduleController {
     @GetMapping("/session/{id}")
     public String viewSession(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
-            model.addAttribute("session", classSessionService.getById(id));
+            model.addAttribute("classSession", classSessionService.getById(id));
             model.addAttribute("reports", studentReportService.getAdminSessionReports(id));
             model.addAttribute("rooms", roomService.findAllActive());
             return "admin/schedules/session";

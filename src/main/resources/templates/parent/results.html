@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kết quả điểm danh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+        <div><h1 class="h3">Kết quả điểm danh</h1><p class="text-muted mb-0">Báo cáo và kết quả học tập của các con.</p></div>
+        <a th:href="@{/parent/dashboard}" class="btn btn-outline-secondary">Dashboard</a>
+    </div>
+    <ul class="nav nav-tabs mb-3" id="resultTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sessionResults" type="button">Kết quả điểm danh</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#monthlyResults" type="button">Tổng kết tháng</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#gradesResults" type="button">Bảng điểm & chuyên cần</button></li>
+    </ul>
+    <div class="tab-content">
+        <section class="tab-pane fade show active" id="sessionResults">
+            <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table table-striped align-middle mb-0">
+                <thead class="table-light"><tr><th>Ngày</th><th>Học sinh</th><th>Lớp</th><th>Điểm danh</th><th>BTVN</th><th>Nhận xét</th><th>Điểm Cộng</th><th>Ghi chú</th></tr></thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(sessionReports)}"><td colspan="8" class="text-center text-muted py-4">Chưa có báo cáo buổi học được công bố.</td></tr>
+                <tr th:each="r : ${sessionReports}">
+                    <td th:text="${#temporals.format(r.classSession.sessionDate,'dd/MM/yyyy')}"></td>
+                    <td th:text="${r.student.fullName}"></td><td th:text="${r.classSession.classEntity.name}"></td>
+                    <td th:text="${r.attendanceStatus == 'PRESENT' ? 'Có mặt' : (r.attendanceStatus == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></td>
+                    <td th:text="${r.homeworkScore != null ? r.homeworkScore : '—'}"></td><td th:text="${r.comment}"></td>
+                    <td th:text="${r.goodEvaluationCount}"></td><td th:text="${r.note != null ? r.note : '—'}"></td>
+                </tr>
+                </tbody>
+            </table></div></div>
+        </section>
+        <section class="tab-pane fade" id="monthlyResults">
+            <div class="row g-3">
+                <div th:if="${#lists.isEmpty(monthlyReports)}" class="col-12"><div class="alert alert-info">Chưa có báo cáo tháng được công bố.</div></div>
+                <div th:each="r : ${monthlyReports}" class="col-lg-6">
+                    <article class="card border-0 shadow-sm h-100"><div class="card-header bg-white d-flex justify-content-between">
+                        <strong th:text="${r.student.fullName}"></strong><span th:text="${r.classEntity.name}"></span>
+                    </div><div class="card-body">
+                        <p class="text-muted" th:text="${#temporals.format(r.reportMonth,'MM/yyyy')}"></p>
+                        <p class="mb-1"><strong>Có mặt:</strong> <span th:text="${r.presentCount}"></span> · <strong>Vắng:</strong> <span th:text="${r.absentCount}"></span> · <strong>Có phép:</strong> <span th:text="${r.excusedCount}"></span></p>
+                        <p class="mb-1"><strong>Điểm BTVN trung bình:</strong> <span th:text="${r.homeworkAverage != null ? r.homeworkAverage : 'Chưa có điểm'}"></span></p>
+                        <p class="mb-2"><strong>Điểm cộng:</strong> <span th:text="${r.goodEvaluationCount}"></span></p><hr>
+                        <p class="mb-0" style="white-space:pre-line" th:text="${r.teacherComment}"></p>
+                    </div></article>
+                </div>
+            </div>
+        </section>
+        <section class="tab-pane fade" id="gradesResults">
+            <div th:if="${#lists.isEmpty(children)}" class="alert alert-info">Bạn chưa có hồ sơ con em nào trong hệ thống.</div>
+            <article class="card border-0 shadow-sm mb-4" th:each="c : ${children}">
+                <div class="card-header bg-white"><h2 class="h5 mb-0" th:text="${c.fullName}"></h2></div>
+                <div class="card-body">
+                    <h3 class="h6 fw-bold">Bảng điểm</h3>
+                    <div class="table-responsive mb-4"><table class="table table-bordered align-middle">
+                        <thead class="table-light"><tr><th>Lớp</th><th>Kiểm tra</th><th>Giữa kỳ</th><th>Cuối kỳ</th><th>Điểm TB</th><th>Học lực</th><th>Nhận xét</th></tr></thead>
+                        <tbody><tr th:if="${#lists.isEmpty(studentGrades[c.id])}"><td colspan="7" class="text-center text-muted">Chưa có dữ liệu điểm.</td></tr>
+                        <tr th:each="g : ${studentGrades[c.id]}"><td th:text="${g.classEntity.name}"></td><td th:text="${g.testScore != null ? g.testScore : '—'}"></td><td th:text="${g.midtermScore != null ? g.midtermScore : '—'}"></td><td th:text="${g.finalScore != null ? g.finalScore : '—'}"></td><td th:text="${g.averageScore != null ? g.averageScore : '—'}"></td><td th:text="${g.academicPerformance}"></td><td th:text="${g.note != null ? g.note : '—'}"></td></tr></tbody>
+                    </table></div>
+                    <h3 class="h6 fw-bold">Lịch sử điểm danh cũ</h3>
+                    <div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th>Ngày học</th><th>Lớp</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
+                        <tbody><tr th:if="${#lists.isEmpty(studentAttendances[c.id])}"><td colspan="4" class="text-center text-muted">Chưa có lịch sử điểm danh.</td></tr>
+                        <tr th:each="a : ${studentAttendances[c.id]}"><td th:text="${#temporals.format(a.attendanceDate,'dd/MM/yyyy')}"></td><td th:text="${a.classEntity.name}"></td><td th:text="${a.status == 'PRESENT' ? 'Có mặt' : (a.status == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></td><td th:text="${a.note != null ? a.note : '—'}"></td></tr></tbody>
+                    </table></div>
+                </div>
+            </article>
+        </section>
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body></html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Hội thoại</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>.message-list{min-height:260px;max-height:60vh;overflow:auto}.message-bubble{max-width:80%;white-space:pre-wrap;overflow-wrap:anywhere}</style></head>
+<body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-4"><a th:href="${backUrl}" class="btn btn-outline-secondary btn-sm mb-3">← Danh sách hội thoại</a>
+    <div class="card border-0 shadow-sm"><div class="card-header bg-white"><h1 class="h5 mb-0" th:text="${title}"></h1></div>
+        <div class="card-body message-list"><div th:if="${#lists.isEmpty(messages)}" class="text-center text-muted py-5">Chưa có tin nhắn. Hãy gửi lời nhắn đầu tiên.</div>
+            <div th:each="message : ${messages}" class="mb-3" th:classappend="${message.sender.id == currentUser.id} ? ' text-end' : ''">
+                <div class="message-bubble d-inline-block text-start rounded p-3" th:classappend="${message.sender.id == currentUser.id} ? ' bg-primary text-white' : ' bg-white border'">
+                    <div class="small fw-semibold mb-1" th:text="${message.sender.fullName}"></div><div th:text="${message.content}"></div>
+                    <time class="small opacity-75" th:text="${#temporals.format(message.createdAt,'dd/MM/yyyy HH:mm')}"></time>
+                </div>
+            </div>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger m-3 mb-0" th:text="${errorMessage}"></div>
+        <form class="card-footer bg-white" method="post" th:action="${postUrl}"><div class="input-group"><textarea name="content" class="form-control" rows="2" maxlength="2000" placeholder="Nhập tin nhắn..." required></textarea><button class="btn btn-primary">Gửi</button></div></form>
+    </div>
+</main></body></html>

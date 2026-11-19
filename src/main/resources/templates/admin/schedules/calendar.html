@@ -48,13 +48,13 @@
         <div class="calendar-grid shadow-sm">
             <section th:each="day : ${calendarDays}" class="calendar-cell" th:classappend="${day.inMonth} ? '' : ' outside'">
                 <div class="fw-bold" th:text="${#temporals.format(day.date,'d')}">1</div>
-                <a th:each="session : ${day.sessions}" th:href="@{/admin/schedules/session/{id}(id=${session.id})}"
-                   class="session-chip" th:classappend="${session.status == 'CANCELLED'} ? ' bg-secondary-subtle text-secondary' : (${session.publishedAt != null} ? ' bg-success-subtle text-success-emphasis' : ' bg-primary-subtle text-primary-emphasis')">
-                    <strong th:text="${session.startTime} + ' ' + ${session.classEntity.name}">17:30 Toán</strong>
-                    <span class="d-block" th:text="${session.room != null ? session.room.name : 'Chưa có phòng'}"></span>
-                    <span class="d-block" th:if="${session.status == 'CANCELLED'}">Đã hủy</span>
-                    <span class="d-block" th:if="${session.status != 'CANCELLED' && session.publishedAt == null}">Chưa công bố báo cáo</span>
-                    <span class="d-block" th:if="${session.publishedAt != null}">Đã công bố</span>
+                <a th:each="classSession : ${day.sessions}" th:href="@{/admin/schedules/session/{id}(id=${classSession.id})}"
+                   class="session-chip" th:classappend="${classSession.status == 'CANCELLED'} ? ' bg-secondary-subtle text-secondary' : (${classSession.publishedAt != null} ? ' bg-success-subtle text-success-emphasis' : ' bg-primary-subtle text-primary-emphasis')">
+                    <strong th:text="|${classSession.startTime} ${classSession.classEntity.name}|">17:30 Toán</strong>
+                    <span class="d-block" th:text="${classSession.room != null ? classSession.room.name : 'Chưa có phòng'}"></span>
+                    <span class="d-block" th:if="${classSession.status == 'CANCELLED'}">Đã hủy</span>
+                    <span class="d-block" th:if="${classSession.status != 'CANCELLED' && classSession.publishedAt == null}">Chưa công bố báo cáo</span>
+                    <span class="d-block" th:if="${classSession.publishedAt != null}">Đã công bố</span>
                 </a>
             </section>
         </div>

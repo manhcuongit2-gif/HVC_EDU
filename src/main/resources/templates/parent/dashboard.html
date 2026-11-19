@@ -54,7 +54,7 @@
         </a>
     </div>
 
-    <!-- 4 Cards truy cập nhanh -->
+    <!-- Truy cập nhanh -->
     <div class="row g-4 mb-4">
         <!-- Card 1: Quản lý con -->
         <div class="col-sm-6 col-lg-3">
@@ -86,9 +86,9 @@
                 <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning d-inline-flex mx-auto mb-3">
                     <i class="bi bi-clipboard2-data-fill fs-2"></i>
                 </div>
-                <h5 class="fw-bold text-dark">Kết quả & Điểm danh</h5>
+                <h5 class="fw-bold text-dark">Kết quả điểm danh</h5>
                 <p class="text-muted small">Theo dõi điểm số và chuyên cần</p>
-                <a th:href="@{/parent/grades}" class="btn btn-outline-warning btn-sm w-100 mt-auto">Xem kết quả</a>
+                <a th:href="@{/parent/results}" class="btn btn-outline-warning btn-sm w-100 mt-auto">Xem kết quả</a>
             </div>
         </div>
 
@@ -104,18 +104,48 @@
             </div>
         </div>
 
-        <!-- Báo cáo từng buổi và tháng -->
+        <!-- Tài liệu -->
         <div class="col-sm-6 col-lg-3">
             <div class="card stat-card h-100 bg-white p-3 text-center">
                 <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info d-inline-flex mx-auto mb-3">
-                    <i class="bi bi-journal-text fs-2"></i>
+                    <i class="bi bi-file-earmark-text fs-2"></i>
                 </div>
-                <h5 class="fw-bold text-dark">Báo cáo học tập</h5>
-                <p class="text-muted small">Xem nhận xét theo buổi và theo tháng</p>
-                <a th:href="@{/parent/reports}" class="btn btn-outline-info btn-sm w-100 mt-auto">Xem báo cáo</a>
+                <h5 class="fw-bold text-dark">Tài liệu</h5>
+                <p class="text-muted small">Tài liệu của lớp các con đang học</p>
+                <a th:href="@{/parent/materials}" class="btn btn-outline-info btn-sm w-100 mt-auto">Xem tài liệu</a>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card stat-card h-100 bg-white p-3 text-center">
+                <div class="rounded-circle bg-secondary bg-opacity-10 p-3 text-secondary d-inline-flex mx-auto mb-3"><i class="bi bi-chat-dots fs-2"></i></div>
+                <h5 class="fw-bold text-dark">Nhắn tin giáo viên</h5>
+                <p class="text-muted small">Trao đổi riêng theo từng lớp</p>
+                <a th:href="@{/parent/messages}" class="btn btn-outline-secondary btn-sm w-100 mt-auto">Mở tin nhắn</a>
             </div>
         </div>
     </div>
+
+    <section class="card content-card bg-white mb-4">
+        <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Báo cáo gần nhất và lịch học sắp tới</h5></div>
+        <div class="card-body"><div th:if="${#lists.isEmpty(myChildren)}" class="text-muted">Chưa có hồ sơ học sinh.</div>
+            <div class="row g-3" th:unless="${#lists.isEmpty(myChildren)}">
+                <div class="col-lg-6" th:each="c : ${myChildren}"><article class="border rounded p-3 h-100">
+                    <h6 class="fw-bold" th:text="${c.fullName}"></h6>
+                    <div th:if="${latestReports[c.id] != null}" class="small mb-3">
+                        <div class="text-muted">Báo cáo đã công bố gần nhất · <span th:text="${#temporals.format(latestReports[c.id].classSession.sessionDate,'dd/MM/yyyy')}"></span></div>
+                        <strong th:text="${latestReports[c.id].classSession.classEntity.name}"></strong>
+                        <span> · Điểm danh: </span><span th:text="${latestReports[c.id].attendanceStatus == 'PRESENT' ? 'Có mặt' : (latestReports[c.id].attendanceStatus == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></span>
+                        <div th:text="${latestReports[c.id].comment}"></div>
+                    </div>
+                    <div th:if="${latestReports[c.id] == null}" class="small text-muted mb-3">Chưa có báo cáo buổi học được công bố.</div>
+                    <div th:if="${upcomingSessions[c.id] != null}" class="small"><div class="text-muted">Buổi học sắp tới</div><strong th:text="${upcomingSessions[c.id].classEntity.name}"></strong>
+                        <span> · </span><span th:text="${#temporals.format(upcomingSessions[c.id].sessionDate,'dd/MM/yyyy')}"></span><span> · </span><span th:text="${upcomingSessions[c.id].startTime}"></span></div>
+                    <div th:if="${upcomingSessions[c.id] == null}" class="small text-muted">Chưa có lịch học sắp tới.</div>
+                </article></div>
+            </div>
+            <a th:href="@{/parent/results}" class="btn btn-primary btn-sm mt-3">Xem Kết quả điểm danh</a>
+        </div>
+    </section>
 
     <!-- Hàng nội dung chi tiết: Danh sách con & Trạng thái đơn đăng ký gần đây -->
     <div class="row g-4">
