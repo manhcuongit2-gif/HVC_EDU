@@ -54,6 +54,28 @@
         </a>
     </div>
 
+    <section class="card content-card bg-white mb-4">
+        <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Báo cáo gần nhất và lịch học sắp tới</h5></div>
+        <div class="card-body"><div th:if="${#lists.isEmpty(myChildren)}" class="text-muted">Chưa có hồ sơ học sinh.</div>
+            <div class="row g-3" th:unless="${#lists.isEmpty(myChildren)}">
+                <div class="col-lg-6" th:each="c : ${myChildren}"><article class="border rounded p-3 h-100">
+                    <h6 class="fw-bold" th:text="${c.fullName}"></h6>
+                    <div th:if="${latestReports[c.id] != null}" class="small mb-3">
+                        <div class="text-muted">Báo cáo đã công bố gần nhất · <span th:text="${#temporals.format(latestReports[c.id].classSession.sessionDate,'dd/MM/yyyy')}"></span></div>
+                        <strong th:text="${latestReports[c.id].classSession.classEntity.name}"></strong>
+                        <span> · Điểm danh: </span><span th:text="${latestReports[c.id].attendanceStatus == 'PRESENT' ? 'Có mặt' : (latestReports[c.id].attendanceStatus == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></span>
+                        <div th:text="${latestReports[c.id].comment}"></div>
+                    </div>
+                    <div th:if="${latestReports[c.id] == null}" class="small text-muted mb-3">Chưa có báo cáo buổi học được công bố.</div>
+                    <div th:if="${upcomingSessions[c.id] != null}" class="small"><div class="text-muted">Buổi học sắp tới</div><strong th:text="${upcomingSessions[c.id].classEntity.name}"></strong>
+                        <span> · </span><span th:text="${#temporals.format(upcomingSessions[c.id].sessionDate,'dd/MM/yyyy')}"></span><span> · </span><span th:text="${upcomingSessions[c.id].startTime}"></span></div>
+                    <div th:if="${upcomingSessions[c.id] == null}" class="small text-muted">Chưa có lịch học sắp tới.</div>
+                </article></div>
+            </div>
+            <a th:href="@{/parent/results}" class="btn btn-primary btn-sm mt-3">Xem Kết quả điểm danh</a>
+        </div>
+    </section>
+
     <!-- Truy cập nhanh -->
     <div class="row g-4 mb-4">
         <!-- Card 1: Quản lý con -->
@@ -124,28 +146,6 @@
             </div>
         </div>
     </div>
-
-    <section class="card content-card bg-white mb-4">
-        <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Báo cáo gần nhất và lịch học sắp tới</h5></div>
-        <div class="card-body"><div th:if="${#lists.isEmpty(myChildren)}" class="text-muted">Chưa có hồ sơ học sinh.</div>
-            <div class="row g-3" th:unless="${#lists.isEmpty(myChildren)}">
-                <div class="col-lg-6" th:each="c : ${myChildren}"><article class="border rounded p-3 h-100">
-                    <h6 class="fw-bold" th:text="${c.fullName}"></h6>
-                    <div th:if="${latestReports[c.id] != null}" class="small mb-3">
-                        <div class="text-muted">Báo cáo đã công bố gần nhất · <span th:text="${#temporals.format(latestReports[c.id].classSession.sessionDate,'dd/MM/yyyy')}"></span></div>
-                        <strong th:text="${latestReports[c.id].classSession.classEntity.name}"></strong>
-                        <span> · Điểm danh: </span><span th:text="${latestReports[c.id].attendanceStatus == 'PRESENT' ? 'Có mặt' : (latestReports[c.id].attendanceStatus == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></span>
-                        <div th:text="${latestReports[c.id].comment}"></div>
-                    </div>
-                    <div th:if="${latestReports[c.id] == null}" class="small text-muted mb-3">Chưa có báo cáo buổi học được công bố.</div>
-                    <div th:if="${upcomingSessions[c.id] != null}" class="small"><div class="text-muted">Buổi học sắp tới</div><strong th:text="${upcomingSessions[c.id].classEntity.name}"></strong>
-                        <span> · </span><span th:text="${#temporals.format(upcomingSessions[c.id].sessionDate,'dd/MM/yyyy')}"></span><span> · </span><span th:text="${upcomingSessions[c.id].startTime}"></span></div>
-                    <div th:if="${upcomingSessions[c.id] == null}" class="small text-muted">Chưa có lịch học sắp tới.</div>
-                </article></div>
-            </div>
-            <a th:href="@{/parent/results}" class="btn btn-primary btn-sm mt-3">Xem Kết quả điểm danh</a>
-        </div>
-    </section>
 
     <!-- Hàng nội dung chi tiết: Danh sách con & Trạng thái đơn đăng ký gần đây -->
     <div class="row g-4">

@@ -5,6 +5,7 @@ import com.educenter.security.CustomUserDetails;
 import com.educenter.service.LearningMaterialService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,10 +19,15 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/parent/materials")
 public class ParentMaterialController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParentMaterialController.class);
 
     private final LearningMaterialService materialService;
 
@@ -34,12 +40,20 @@ public class ParentMaterialController {
                         @RequestParam(required = false) Long classId, Model model) {
         try {
             model.addAttribute("currentUser", user);
+            model.addAttribute("selectedClassId", classId);
             model.addAttribute("classes", materialService.findParentClasses(user.getId()));
             model.addAttribute("materials", materialService.findForParent(user.getId(), classId));
-            model.addAttribute("selectedClassId", classId);
             return "parent/materials";
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } catch (DataAccessException e) {
+            LOGGER.error("Could not load learning materials for parent user {}", user.getId(), e);
+            model.addAttribute("currentUser", user);
+            model.addAttribute("classes", List.of());
+            model.addAttribute("materials", List.of());
+            model.addAttribute("selectedClassId", classId);
+            model.addAttribute("errorMessage", "Không thể tải tài liệu lúc này. Vui lòng thử lại sau.");
+            return "parent/materials";
         }
     }
 

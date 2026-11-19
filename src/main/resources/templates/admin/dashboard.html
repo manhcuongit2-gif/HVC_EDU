@@ -57,6 +57,7 @@
 
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
                 <div>
                     <h2 class="h3 fw-bold text-dark mb-1">Bảng điều khiển Quản trị</h2>
@@ -219,6 +220,9 @@
                             </a>
                             <a th:href="@{/admin/materials}" class="btn btn-outline-success btn-sm">
                                 <i class="bi bi-file-earmark-text me-1"></i>Quản lý Tài liệu
+                            </a>
+                            <a th:href="@{/admin/messages}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-chat-dots me-1"></i>Trao đổi với giáo viên
                             </a>
                             <a th:href="@{/admin/tuition/add}" class="btn btn-outline-danger btn-sm">
                                 <i class="bi bi-receipt me-1"></i>Tạo phiếu thu Học phí

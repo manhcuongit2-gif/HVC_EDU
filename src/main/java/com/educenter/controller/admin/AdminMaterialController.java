@@ -6,6 +6,7 @@ import com.educenter.security.CustomUserDetails;
 import com.educenter.service.LearningMaterialService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,10 +19,15 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/admin/materials")
 public class AdminMaterialController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdminMaterialController.class);
 
     private final LearningMaterialService materialService;
     private final ClassRepository classRepository;
@@ -34,7 +40,13 @@ public class AdminMaterialController {
     @GetMapping
     public String index(@AuthenticationPrincipal CustomUserDetails user, Model model) {
         model.addAttribute("currentUser", user);
-        model.addAttribute("materials", materialService.findAllForAdmin());
+        try {
+            model.addAttribute("materials", materialService.findAllForAdmin());
+        } catch (DataAccessException e) {
+            LOGGER.error("Could not load learning materials for admin", e);
+            model.addAttribute("materials", List.of());
+            model.addAttribute("errorMessage", "Không thể tải tài liệu lúc này. Vui lòng thử lại sau.");
+        }
         return "admin/materials/list";
     }
 

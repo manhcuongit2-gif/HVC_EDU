@@ -5,6 +5,7 @@ import com.educenter.security.CustomUserDetails;
 import com.educenter.service.LearningMaterialService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,10 +18,15 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/teacher/materials")
 public class TeacherMaterialController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeacherMaterialController.class);
 
     private final LearningMaterialService materialService;
 
@@ -31,7 +37,13 @@ public class TeacherMaterialController {
     @GetMapping
     public String index(@AuthenticationPrincipal CustomUserDetails user, Model model) {
         model.addAttribute("currentUser", user);
-        model.addAttribute("materials", materialService.findForTeacher(user.getId()));
+        try {
+            model.addAttribute("materials", materialService.findForTeacher(user.getId()));
+        } catch (DataAccessException e) {
+            LOGGER.error("Could not load learning materials for teacher user {}", user.getId(), e);
+            model.addAttribute("materials", List.of());
+            model.addAttribute("errorMessage", "Không thể tải tài liệu lúc này. Vui lòng thử lại sau.");
+        }
         return "teacher/materials/list";
     }
 

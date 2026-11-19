@@ -373,6 +373,31 @@ CREATE TABLE IF NOT EXISTS `parent_teacher_messages` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =======================================================
+-- 15.3. HỘI THOẠI RIÊNG GIỮA GIÁO VIÊN VÀ ADMIN
+-- =======================================================
+CREATE TABLE IF NOT EXISTS `teacher_admin_conversations` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `teacher_user_id` BIGINT NOT NULL,
+    `admin_user_id` BIGINT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uk_teacher_admin_conversation` (`teacher_user_id`, `admin_user_id`),
+    CONSTRAINT `fk_teacher_admin_conversations_teacher` FOREIGN KEY (`teacher_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_teacher_admin_conversations_admin` FOREIGN KEY (`admin_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `teacher_admin_messages` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `conversation_id` BIGINT NOT NULL,
+    `sender_id` BIGINT NOT NULL,
+    `content` VARCHAR(2000) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_teacher_admin_messages_conversation` (`conversation_id`, `created_at`),
+    CONSTRAINT `fk_teacher_admin_messages_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `teacher_admin_conversations` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_teacher_admin_messages_sender` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =======================================================
 -- 16. ĐỒNG BỘ CỘT CHO CƠ SỞ DỮ LIỆU ĐÃ CÓ DỮ LIỆU
 -- =======================================================
 -- Những CREATE TABLE IF NOT EXISTS ở trên chỉ tạo các bảng mới.
@@ -449,3 +474,5 @@ SHOW INDEX FROM `tuition` WHERE Key_name = 'uk_tuition_period_sequence';
 SHOW TABLES LIKE 'learning_materials';
 SHOW TABLES LIKE 'parent_teacher_conversations';
 SHOW TABLES LIKE 'parent_teacher_messages';
+SHOW TABLES LIKE 'teacher_admin_conversations';
+SHOW TABLES LIKE 'teacher_admin_messages';

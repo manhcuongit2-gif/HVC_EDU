@@ -1,20 +1,22 @@
 package com.educenter.controller.parent;
 
 import com.educenter.dto.ConversationPage;
-import com.educenter.entity.ClassEntity;
 import com.educenter.security.CustomUserDetails;
 import com.educenter.service.ParentTeacherMessageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
 
 @Controller
 @RequestMapping("/parent/messages")
 public class ParentMessageController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParentMessageController.class);
 
     private final ParentTeacherMessageService messageService;
 
@@ -40,11 +42,17 @@ public class ParentMessageController {
             model.addAttribute("title", page.conversation().getClassEntity().getName());
             model.addAttribute("postUrl", "/parent/messages/" + classId);
             model.addAttribute("backUrl", "/parent/messages");
+            model.addAttribute("backLabel", "Danh sách hội thoại");
+            model.addAttribute("canSend", true);
             return "messages/thread";
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             redirect.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Could not open parent to teacher conversation for class {}", classId, e);
+            redirect.addFlashAttribute("errorMessage", "Không thể mở hội thoại lúc này. Vui lòng thử lại sau.");
             return "redirect:/parent/messages";
         }
+        return "redirect:/parent/messages";
     }
 
     @PostMapping("/{classId}")
@@ -52,8 +60,11 @@ public class ParentMessageController {
                        @AuthenticationPrincipal CustomUserDetails user, RedirectAttributes redirect) {
         try {
             messageService.sendAsParent(user.getId(), classId, content);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             redirect.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Could not save parent to teacher message for class {}", classId, e);
+            redirect.addFlashAttribute("errorMessage", "Không thể gửi tin nhắn lúc này. Vui lòng thử lại sau.");
         }
         return "redirect:/parent/messages/" + classId;
     }

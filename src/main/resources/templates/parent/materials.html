@@ -5,6 +5,7 @@
 <body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div>
 <main class="container py-4">
     <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"><div><h1 class="h3">Tài liệu học tập</h1><p class="text-muted mb-0">Tài liệu của các lớp con đang theo học.</p></div><a th:href="@{/parent/dashboard}" class="btn btn-outline-secondary">Dashboard</a></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
     <form class="card card-body mb-3" method="get" th:action="@{/parent/materials}"><div class="row g-2 align-items-end">
         <div class="col-md-10"><label class="form-label">Lọc theo lớp</label><select class="form-select" name="classId"><option value="">Tất cả lớp</option><option th:each="c : ${classes}" th:value="${c.id}" th:selected="${selectedClassId != null && selectedClassId == c.id}" th:text="${c.name}"></option></select></div><div class="col-md-2"><button class="btn btn-primary w-100">Lọc</button></div>
     </div></form>

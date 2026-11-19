@@ -3,8 +3,11 @@ package com.educenter;
 import com.educenter.dto.CalendarDay;
 import com.educenter.entity.ClassEntity;
 import com.educenter.entity.ClassSession;
+import com.educenter.entity.Role;
 import com.educenter.entity.Teacher;
+import com.educenter.entity.TeacherAdminMessage;
 import com.educenter.entity.User;
+import com.educenter.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -19,6 +22,7 @@ import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.Locale;
 import java.util.List;
@@ -111,6 +115,57 @@ class TemplateRenderingTest {
 
         assertTrue(html.contains("Toán lớp 7"));
         assertTrue(html.contains("Giáo viên phụ trách"));
+    }
+
+    @Test
+    void rendersTeacherAdminConversationThread() {
+        User teacherUser = new User();
+        teacherUser.setId(12L);
+        teacherUser.setFullName("Teacher");
+        teacherUser.setRole(new Role(2, "ROLE_TEACHER", "Teacher"));
+        TeacherAdminMessage message = new TeacherAdminMessage();
+        message.setSender(teacherUser);
+        message.setContent("Hello admin");
+        message.setCreatedAt(LocalDateTime.of(2026, 11, 19, 10, 0));
+
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(teacherUser));
+        context.setVariable("title", "Admin conversation");
+        context.setVariable("messages", List.of(message));
+        context.setVariable("postUrl", "/teacher/admin-messages");
+        context.setVariable("backUrl", "/teacher/dashboard");
+        context.setVariable("backLabel", "Dashboard");
+        context.setVariable("canSend", true);
+
+        String html = templateEngine.process("messages/thread", context);
+
+        assertTrue(html.contains("Admin conversation"));
+        assertTrue(html.contains("Hello admin"));
+        assertTrue(html.contains("/teacher/admin-messages"));
+    }
+
+    @Test
+    void rendersAdminTeacherConversationList() {
+        User adminUser = new User();
+        adminUser.setId(1L);
+        adminUser.setFullName("Admin");
+        adminUser.setRole(new Role(1, "ROLE_ADMIN", "Admin"));
+        User teacherUser = new User();
+        teacherUser.setId(12L);
+        teacherUser.setFullName("Math teacher");
+        teacherUser.setRole(new Role(2, "ROLE_TEACHER", "Teacher"));
+        Teacher teacher = new Teacher();
+        teacher.setUser(teacherUser);
+        teacher.setSpecialization("Mathematics");
+
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(adminUser));
+        context.setVariable("teachers", List.of(teacher));
+
+        String html = templateEngine.process("admin/messages/list", context);
+
+        assertTrue(html.contains("Math teacher"));
+        assertTrue(html.contains("/admin/messages/12"));
     }
 
     private WebContext webContext() {
