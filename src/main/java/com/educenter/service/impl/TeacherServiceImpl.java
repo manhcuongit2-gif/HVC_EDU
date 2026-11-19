@@ -68,7 +68,7 @@ public class TeacherServiceImpl implements TeacherService {
         user.setActive(dto.getActive() != null ? dto.getActive() : true);
         User savedUser = userRepository.save(user);
 
-        // Tạo hồ sơ Giáo viên
+        // Tạo hồ sơ Người dạy
         Teacher teacher = new Teacher();
         teacher.setUser(savedUser);
         teacher.setSpecialization(dto.getSpecialization());
@@ -82,7 +82,7 @@ public class TeacherServiceImpl implements TeacherService {
     @Transactional
     public Teacher updateTeacher(Long id, TeacherDTO dto) {
         Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên với ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dạy với ID: " + id));
 
         User user = teacher.getUser();
         user.setFullName(dto.getFullName());
@@ -108,7 +108,7 @@ public class TeacherServiceImpl implements TeacherService {
     @Transactional
     public void setStudentManagementPermission(Long id, boolean enabled) {
         Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giáo viên."));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dạy."));
         teacher.setCanManageStudents(enabled);
         teacherRepository.save(teacher);
     }
@@ -117,7 +117,7 @@ public class TeacherServiceImpl implements TeacherService {
     @Transactional
     public void toggleActive(Long id) {
         Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên với ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dạy với ID: " + id));
         User user = teacher.getUser();
         user.setActive(!user.getActive());
         userRepository.save(user);

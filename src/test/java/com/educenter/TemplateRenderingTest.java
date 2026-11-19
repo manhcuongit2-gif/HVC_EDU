@@ -1,8 +1,12 @@
 package com.educenter;
 
 import com.educenter.dto.CalendarDay;
+import com.educenter.dto.AdminExcelImportRow;
+import com.educenter.dto.ChatPage;
 import com.educenter.dto.TeacherEarningRow;
 import com.educenter.dto.TeacherEarningsPage;
+import com.educenter.entity.ChatConversation;
+import com.educenter.entity.ChatMember;
 import com.educenter.entity.ClassEntity;
 import com.educenter.entity.ClassSession;
 import com.educenter.entity.Role;
@@ -31,6 +35,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -51,8 +56,14 @@ class TemplateRenderingTest {
 
     @Test
     void rendersAdminScheduleCalendarWithSessions() {
+        User teacherUser = new User();
+        teacherUser.setFullName("Nguoi day");
+        Teacher teacher = new Teacher();
+        teacher.setUser(teacherUser);
         ClassEntity classEntity = new ClassEntity();
+        classEntity.setId(9L);
         classEntity.setName("Toán lớp 7");
+        classEntity.setTeacher(teacher);
         ClassSession session = new ClassSession();
         session.setId(17L);
         session.setClassEntity(classEntity);
@@ -68,6 +79,9 @@ class TemplateRenderingTest {
         context.setVariable("classes", List.of());
         context.setVariable("classesMissingDates", List.of());
         context.setVariable("calendarDays", List.of(new CalendarDay(LocalDate.of(2026, 11, 19), List.of(session), true)));
+        context.setVariable("reportStatusView", false);
+        context.setVariable("classColors", Map.of(9L, "#2563eb"));
+        context.setVariable("sessionVisualStates", Map.of(17L, "normal-mode"));
 
         String html = templateEngine.process("admin/schedules/calendar", context);
 
@@ -244,6 +258,114 @@ class TemplateRenderingTest {
         assertTrue(html.contains("school-mark"));
         assertTrue(html.contains("bi-book-half"));
         assertTrue(html.contains("TRUNG TÂM HỌC TẬP"));
+    }
+
+    @Test
+    void rendersChatInboxWithoutConversations() {
+        User parent = testUser(51L, "Parent", "ROLE_PARENT");
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(parent));
+        context.setVariable("search", "");
+        context.setVariable("conversations", List.of());
+        context.setVariable("contacts", List.of());
+        context.setVariable("createLabel", "New conversation");
+
+        String html = templateEngine.process("chat/index", context);
+
+        assertTrue(html.contains("chat-inbox-layout"));
+        assertTrue(html.contains("/chat/new"));
+    }
+
+    @Test
+    void rendersEmptyChatThread() {
+        User parent = testUser(51L, "Parent", "ROLE_PARENT");
+        ChatConversation conversation = new ChatConversation();
+        conversation.setTitle("Parent conversation");
+        conversation.setConversationType("PARENT");
+        conversation.setCreatedBy(parent);
+        ChatMember currentMember = new ChatMember();
+        currentMember.setConversation(conversation);
+        currentMember.setUser(parent);
+        ChatPage page = new ChatPage(conversation, currentMember, List.of(currentMember), List.of(), "Teacher");
+
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(parent));
+        context.setVariable("search", "");
+        context.setVariable("conversations", List.of());
+        context.setVariable("contacts", List.of());
+        context.setVariable("reactionChoices", List.of("thumbs-up"));
+        context.setVariable("chatPage", page);
+        context.setVariable("reactionsByMessage", Map.of());
+        context.setVariable("currentConversationId", 3L);
+        context.setVariable("pollUrl", "/chat/3/api/messages");
+        context.setVariable("sendUrl", "/chat/3/messages");
+
+        String html = templateEngine.process("chat/thread", context);
+
+        assertTrue(html.contains("Parent conversation"));
+        assertTrue(html.contains("chat-thread-window"));
+        assertTrue(html.contains("/chat/3/messages"));
+    }
+
+    @Test
+    void rendersParentScheduleCalendar() {
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(testUser(51L, "Parent", "ROLE_PARENT")));
+        context.setVariable("children", List.of());
+        context.setVariable("selectedStudentId", null);
+        context.setVariable("selectedMonth", "2026-11");
+        context.setVariable("monthLabel", "11/2026");
+        context.setVariable("previousMonth", YearMonth.of(2026, 10));
+        context.setVariable("nextMonth", YearMonth.of(2026, 12));
+        context.setVariable("todayMonth", "2026-11");
+        context.setVariable("calendarDays", List.of());
+
+        String html = templateEngine.process("parent/schedule", context);
+
+        assertTrue(html.contains("calendar-grid"));
+        assertTrue(html.contains("Lịch học của con"));
+    }
+
+    @Test
+    void rendersAdminExcelImportPageWithoutPreview() {
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(testUser(1L, "Admin", "ROLE_ADMIN")));
+        context.setVariable("previewType", "parents");
+        context.setVariable("previewRows", null);
+        context.setVariable("importResult", null);
+
+        String html = templateEngine.process("admin/import", context);
+
+        assertTrue(html.contains("/admin/import/preview"));
+        assertTrue(html.contains("parents.xlsx"));
+    }
+
+    @Test
+    void rendersAdminExcelImportPreviewRows() {
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(testUser(1L, "Admin", "ROLE_ADMIN")));
+        context.setVariable("previewType", "parents");
+        context.setVariable("previewRows", List.of(new AdminExcelImportRow(2,
+                List.of("parent01", "Parent One", "parent@example.com", "0900000000", "Address", "secret", "", ""),
+                true, "Valid")));
+        context.setVariable("importResult", null);
+        context.setVariable("previewLabel", "Parents");
+        context.setVariable("importId", "batch-1");
+        context.setVariable("validRowCount", 1);
+
+        String html = templateEngine.process("admin/import", context);
+
+        assertTrue(html.contains("Parents"));
+        assertTrue(html.contains("parent01"));
+        assertTrue(html.contains("batch-1"));
+    }
+
+    private User testUser(Long id, String fullName, String roleName) {
+        User user = new User();
+        user.setId(id);
+        user.setFullName(fullName);
+        user.setRole(new Role(null, roleName, roleName));
+        return user;
     }
 
     private WebContext webContext() {

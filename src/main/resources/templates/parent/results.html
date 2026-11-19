@@ -21,14 +21,14 @@
     <div class="tab-content">
         <section class="tab-pane fade show active" id="sessionResults">
             <div class="card border-0 shadow-sm"><div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2"><strong>Kết quả điểm danh đã công bố</strong><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-success" th:href="@{/parent/results/export(view='session',format='xlsx')}">Xuất Excel</a><a class="btn btn-sm btn-outline-danger" th:href="@{/parent/results/export(view='session',format='pdf')}">Xuất PDF</a></div></div><div class="table-responsive"><table class="table table-striped align-middle mb-0">
-                <thead class="table-light"><tr><th>Ngày</th><th>Học sinh</th><th>Lớp</th><th>Điểm danh</th><th>BTVN</th><th>Nhận xét</th><th>Điểm Cộng</th><th>Ghi chú</th></tr></thead>
+                <thead class="table-light"><tr><th>Ngày</th><th>Học sinh</th><th>Lớp</th><th>Điểm danh</th><th>BTVN</th><th class="bg-primary text-white">Nhận xét buổi học</th><th>Điểm Cộng</th><th>Ghi chú</th></tr></thead>
                 <tbody>
                 <tr th:if="${#lists.isEmpty(sessionReports)}"><td colspan="8" class="text-center text-muted py-4">Chưa có báo cáo buổi học được công bố.</td></tr>
                 <tr th:each="r : ${sessionReports}">
                     <td th:text="|${r.classSession.weekdayDisplay}, ${#temporals.format(r.classSession.sessionDate,'dd/MM/yyyy')}|"></td>
-                    <td th:text="${r.student.fullName}"></td><td th:text="${r.classSession.classEntity.name}"></td>
+                    <td th:text="${r.student.fullName}"></td><td><strong th:text="${r.classSession.classEntity.name}"></strong><small class="d-block text-muted" th:text="${r.classSession.classEntity.subject.name + ' · ' + r.classSession.classEntity.teacher.user.fullName}"></small></td>
                     <td th:text="${r.attendanceStatus == 'PRESENT' ? 'Có mặt' : (r.attendanceStatus == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></td>
-                    <td th:text="${r.homeworkScore != null ? r.homeworkScore : '—'}"></td><td th:text="${r.comment}"></td>
+                    <td th:text="${r.homeworkScore != null ? r.homeworkScore : '—'}"></td><td class="bg-primary-subtle" style="min-width:220px;white-space:pre-line" th:text="${r.comment}"></td>
                     <td th:text="${r.goodEvaluationCount}"></td><td th:text="${r.note != null ? r.note : '—'}"></td>
                 </tr>
                 </tbody>
@@ -66,7 +66,7 @@
                     <div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">
                         <thead class="table-light"><tr><th>Ngày học</th><th>Lớp</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
                         <tbody><tr th:if="${#lists.isEmpty(studentAttendances[c.id])}"><td colspan="4" class="text-center text-muted">Chưa có lịch sử điểm danh.</td></tr>
-                        <tr th:each="a : ${studentAttendances[c.id]}"><td th:text="${#temporals.format(a.attendanceDate,'dd/MM/yyyy')}"></td><td th:text="${a.classEntity.name}"></td><td th:text="${a.status == 'PRESENT' ? 'Có mặt' : (a.status == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></td><td th:text="${a.note != null ? a.note : '—'}"></td></tr></tbody>
+                        <tr th:each="a : ${studentAttendances[c.id]}"><td th:text="|${a.weekdayDisplay}, ${#temporals.format(a.attendanceDate,'dd/MM/yyyy')}|"></td><td th:text="${a.classEntity.name}"></td><td th:text="${a.status == 'PRESENT' ? 'Có mặt' : (a.status == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></td><td th:text="${a.note != null ? a.note : '—'}"></td></tr></tbody>
                     </table></div>
                 </div>
             </article>

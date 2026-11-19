@@ -14,6 +14,7 @@
             background:
                 radial-gradient(circle at 12% 16%, rgba(239, 189, 82, .22), transparent 24rem),
                 radial-gradient(circle at 88% 82%, rgba(40, 120, 200, .2), transparent 26rem),
+                url('/images/classroom-study.svg') right 4vw bottom 1rem / min(52vw, 760px) auto no-repeat,
                 linear-gradient(135deg, #e9f1f8 0%, #f6f3e9 100%);
             min-height: 100vh;
             display: flex;
@@ -49,7 +50,7 @@
             width: 54px;
             height: 30px;
             border-radius: 4px;
-            background: repeating-linear-gradient(0deg, #f0c75e 0 5px, #fff1bd 5px 8px);
+            background: linear-gradient(135deg, #f0c75e, #ffe9ad);
             transform: rotate(8deg);
             opacity: .95;
         }
@@ -67,7 +68,9 @@
             z-index: -1;
             inset: 0;
             opacity: .13;
-            background: repeating-linear-gradient(0deg, transparent 0 28px, #fff 29px, transparent 30px);
+            background: radial-gradient(circle at 14% 24%, rgba(255,255,255,.35) 0 2px, transparent 3px),
+                        radial-gradient(circle at 78% 68%, rgba(255,255,255,.26) 0 3px, transparent 4px),
+                        radial-gradient(ellipse at 84% 18%, rgba(255,255,255,.15), transparent 32%);
         }
         .login-header i {
             font-size: 3rem;

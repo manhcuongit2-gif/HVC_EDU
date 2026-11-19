@@ -72,12 +72,14 @@ public class ClassServiceImpl implements ClassService {
         Subject subject = subjectRepository.findById(classDTO.getSubjectId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy môn học"));
         Teacher teacher = teacherRepository.findById(classDTO.getTeacherId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giáo viên"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dạy"));
+        Teacher assistant = findAssistant(classDTO.getAssistantTeacherId(), teacher);
 
         ClassEntity c = new ClassEntity();
         c.setName(classDTO.getName());
         c.setSubject(subject);
         c.setTeacher(teacher);
+        c.setAssistantTeacher(assistant);
         c.setMaxStudents(classDTO.getMaxStudents());
         c.setTuitionFee(classDTO.getTuitionFee());
         c.setSessionFee(classDTO.getSessionFee());
@@ -103,11 +105,13 @@ public class ClassServiceImpl implements ClassService {
         Subject subject = subjectRepository.findById(classDTO.getSubjectId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy môn học"));
         Teacher teacher = teacherRepository.findById(classDTO.getTeacherId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giáo viên"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dạy"));
+        Teacher assistant = findAssistant(classDTO.getAssistantTeacherId(), teacher);
 
         c.setName(classDTO.getName());
         c.setSubject(subject);
         c.setTeacher(teacher);
+        c.setAssistantTeacher(assistant);
         c.setMaxStudents(classDTO.getMaxStudents());
         c.setTuitionFee(classDTO.getTuitionFee());
         c.setSessionFee(classDTO.getSessionFee());
@@ -188,5 +192,14 @@ public class ClassServiceImpl implements ClassService {
             return classRepository.existsByName(name);
         }
         return classRepository.existsByNameAndIdNot(name, excludeId);
+    }
+
+    private Teacher findAssistant(Long assistantId, Teacher primaryTeacher) {
+        if (assistantId == null) return null;
+        Teacher assistant = teacherRepository.findById(assistantId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dạy hỗ trợ."));
+        if (assistant.getId().equals(primaryTeacher.getId())) throw new IllegalArgumentException("Người dạy hỗ trợ phải khác người dạy phụ trách.");
+        if (!Boolean.TRUE.equals(assistant.getUser().getActive())) throw new IllegalArgumentException("Tài khoản người dạy hỗ trợ đang bị khóa.");
+        return assistant;
     }
 }

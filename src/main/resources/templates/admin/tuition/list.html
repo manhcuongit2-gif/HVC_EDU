@@ -43,9 +43,14 @@
                     </h2>
                     <p class="text-muted mb-0">Theo dõi doanh thu, phát sinh học phí và quản lý thanh toán trực tuyến</p>
                 </div>
-                <a th:href="@{/admin/tuition/add}" class="btn btn-primary d-flex align-items-center">
-                    <i class="bi bi-plus-circle me-2"></i>Tạo khoản thu học phí
-                </a>
+                <div class="d-flex flex-wrap gap-2">
+                    <form th:action="@{/admin/tuition/notify-all}" method="post" onsubmit="return confirm('Gửi thông báo gộp tới tất cả phụ huynh đang có học phí chưa thanh toán?')">
+                        <button type="submit" class="btn btn-outline-primary"><i class="bi bi-bell me-1"></i>Nhắc học phí tất cả</button>
+                    </form>
+                    <a th:href="@{/admin/tuition/add}" class="btn btn-primary d-flex align-items-center">
+                        <i class="bi bi-plus-circle me-2"></i>Tạo khoản thu học phí
+                    </a>
+                </div>
             </div>
 
             <!-- Thống kê nhanh học phí -->
@@ -184,6 +189,9 @@
                                                 <button type="submit" class="btn btn-sm btn-outline-success" title="Xác nhận thu tiền">
                                                     <i class="bi bi-check2-circle me-1"></i>Xác nhận thu
                                                 </button>
+                                            </form>
+                                            <form th:action="@{/admin/tuition/notify-parent/{id}(id=${t.student.parent.user.id})}" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Gửi nhắc học phí gộp cho phụ huynh"><i class="bi bi-bell"></i></button>
                                             </form>
                                         </div>
                                         <span th:if="${t.status == 'PAID'}" class="text-success small fw-semibold">

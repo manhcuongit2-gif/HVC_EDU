@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Repository
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
@@ -13,4 +14,5 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     List<Registration> findByParentIdOrderByRegistrationDateDesc(Long parentId);
     List<Registration> findByParentUserIdOrderByRegistrationDateDesc(Long userId);
     long countByStatus(String status);
+    long countByRegistrationDateBetween(LocalDateTime from, LocalDateTime to);
 }

@@ -10,6 +10,8 @@ import com.educenter.repository.ParentTeacherConversationRepository;
 import com.educenter.repository.ParentTeacherMessageRepository;
 import com.educenter.repository.TeacherAdminConversationRepository;
 import com.educenter.repository.TeacherAdminMessageRepository;
+import com.educenter.repository.ChatMemberRepository;
+import com.educenter.repository.ChatMessageRepository;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -25,8 +27,10 @@ class MessageNotificationServiceImplTest {
     private final ParentTeacherMessageRepository parentMessages = mock(ParentTeacherMessageRepository.class);
     private final TeacherAdminConversationRepository adminConversations = mock(TeacherAdminConversationRepository.class);
     private final TeacherAdminMessageRepository adminMessages = mock(TeacherAdminMessageRepository.class);
+    private final ChatMemberRepository chatMembers = mock(ChatMemberRepository.class);
+    private final ChatMessageRepository chatMessages = mock(ChatMessageRepository.class);
     private final MessageNotificationServiceImpl service = new MessageNotificationServiceImpl(
-            parentConversations, parentMessages, adminConversations, adminMessages);
+            parentConversations, parentMessages, adminConversations, adminMessages, chatMembers, chatMessages);
 
     @Test
     void parentGetsUnreadSenderAndConversationLink() {

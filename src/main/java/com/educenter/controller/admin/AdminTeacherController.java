@@ -22,7 +22,7 @@ public class AdminTeacherController {
         this.teacherService = teacherService;
     }
 
-    // Danh sách giáo viên
+    // Danh sách người dạy
     @GetMapping
     public String list(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         model.addAttribute("currentUser", userDetails);
@@ -30,7 +30,7 @@ public class AdminTeacherController {
         return "admin/teachers/list";
     }
 
-    // Form thêm mới giáo viên
+    // Form thêm mới người dạy
     @GetMapping("/add")
     public String showAddForm(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         model.addAttribute("currentUser", userDetails);
@@ -38,7 +38,7 @@ public class AdminTeacherController {
         return "admin/teachers/form";
     }
 
-    // Xử lý thêm mới giáo viên
+    // Xử lý thêm mới người dạy
     @PostMapping("/add")
     public String addTeacher(@Valid @ModelAttribute("teacherDTO") TeacherDTO dto,
                              BindingResult result,
@@ -61,11 +61,11 @@ public class AdminTeacherController {
         }
 
         teacherService.createTeacher(dto);
-        redirectAttributes.addFlashAttribute("successMessage", "Thêm giáo viên \"" + dto.getFullName() + "\" thành công!");
+        redirectAttributes.addFlashAttribute("successMessage", "Thêm người dạy \"" + dto.getFullName() + "\" thành công!");
         return "redirect:/admin/teachers";
     }
 
-    // Form sửa thông tin giáo viên
+    // Form sửa thông tin người dạy
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id,
                                @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -73,7 +73,7 @@ public class AdminTeacherController {
                                RedirectAttributes redirectAttributes) {
         Teacher teacher = teacherService.findById(id).orElse(null);
         if (teacher == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy giáo viên với ID: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy người dạy với ID: " + id);
             return "redirect:/admin/teachers";
         }
 
@@ -94,7 +94,7 @@ public class AdminTeacherController {
         return "admin/teachers/form";
     }
 
-    // Xử lý cập nhật thông tin giáo viên
+    // Xử lý cập nhật thông tin người dạy
     @PostMapping("/edit/{id}")
     public String updateTeacher(@PathVariable Long id,
                                 @Valid @ModelAttribute("teacherDTO") TeacherDTO dto,
@@ -104,7 +104,7 @@ public class AdminTeacherController {
                                 RedirectAttributes redirectAttributes) {
         Teacher existing = teacherService.findById(id).orElse(null);
         if (existing == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy giáo viên!");
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy người dạy!");
             return "redirect:/admin/teachers";
         }
 
@@ -121,7 +121,7 @@ public class AdminTeacherController {
         }
 
         teacherService.updateTeacher(id, dto);
-        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật thông tin giáo viên \"" + dto.getFullName() + "\" thành công!");
+        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật thông tin người dạy \"" + dto.getFullName() + "\" thành công!");
         return "redirect:/admin/teachers";
     }
 
@@ -130,12 +130,12 @@ public class AdminTeacherController {
     public String toggleActive(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Teacher teacher = teacherService.findById(id).orElse(null);
         if (teacher == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy giáo viên!");
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy người dạy!");
             return "redirect:/admin/teachers";
         }
         teacherService.toggleActive(id);
         String status = teacher.getUser().getActive() ? "Đã khóa" : "Đã kích hoạt";
-        redirectAttributes.addFlashAttribute("successMessage", status + " tài khoản giáo viên \"" + teacher.getUser().getFullName() + "\"!");
+        redirectAttributes.addFlashAttribute("successMessage", status + " tài khoản người dạy \"" + teacher.getUser().getFullName() + "\"!");
         return "redirect:/admin/teachers";
     }
 
@@ -145,8 +145,8 @@ public class AdminTeacherController {
         try {
             teacherService.setStudentManagementPermission(id, enabled);
             redirectAttributes.addFlashAttribute("successMessage", enabled
-                    ? "Đã cấp quyền quản lý danh sách học sinh cho giáo viên."
-                    : "Đã thu hồi quyền quản lý danh sách học sinh của giáo viên.");
+                    ? "Đã cấp quyền quản lý danh sách học sinh cho người dạy."
+                    : "Đã thu hồi quyền quản lý danh sách học sinh của người dạy.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

@@ -8,6 +8,7 @@ import com.educenter.service.AttendanceService;
 import com.educenter.service.ClassService;
 import com.educenter.service.GradeService;
 import com.educenter.service.ScheduleService;
+import com.educenter.service.ClassSessionService;
 import com.educenter.util.VietnameseDateFormatter;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +19,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.DayOfWeek;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,31 +35,37 @@ public class TeacherClassController {
     private final AttendanceService attendanceService;
     private final GradeService gradeService;
     private final ScheduleService scheduleService;
+    private final ClassSessionService classSessionService;
 
     public TeacherClassController(ClassRepository classRepository,
                                   TeacherRepository teacherRepository,
                                   ClassService classService,
                                   AttendanceService attendanceService,
                                   GradeService gradeService,
-                                  ScheduleService scheduleService) {
+                                  ScheduleService scheduleService,
+                                  ClassSessionService classSessionService) {
         this.classRepository = classRepository;
         this.teacherRepository = teacherRepository;
         this.classService = classService;
         this.attendanceService = attendanceService;
         this.gradeService = gradeService;
         this.scheduleService = scheduleService;
+        this.classSessionService = classSessionService;
     }
 
     @GetMapping("/classes")
     public String myClasses(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         List<ClassEntity> classes = classRepository.findByTeacherUserId(userDetails.getId());
         Map<Long, Long> studentCounts = new HashMap<>();
+        Map<Long, List<Schedule>> schedulesByClassId = new HashMap<>();
         for (ClassEntity c : classes) {
             studentCounts.put(c.getId(), classService.getStudentCountInClass(c.getId()));
+            schedulesByClassId.put(c.getId(), scheduleService.getSchedulesByClassId(c.getId()));
         }
 
         model.addAttribute("classes", classes);
         model.addAttribute("studentCounts", studentCounts);
+        model.addAttribute("schedulesByClassId", schedulesByClassId);
         model.addAttribute("currentUser", userDetails);
         model.addAttribute("canManageStudents", teacherRepository.findByUserId(userDetails.getId())
                 .map(Teacher::isCanManageStudents).orElse(false));
@@ -155,10 +164,41 @@ public class TeacherClassController {
     }
 
     @GetMapping("/schedules")
-    public String mySchedules(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
-        List<Schedule> schedules = scheduleService.getSchedulesByTeacherUserId(userDetails.getId());
-        model.addAttribute("schedules", schedules);
+    public String mySchedules(@AuthenticationPrincipal CustomUserDetails userDetails,
+                              @RequestParam(required = false) String view,
+                              @RequestParam(required = false) String date,
+                              Model model) {
+        String selectedView = "month".equalsIgnoreCase(view) ? "month" : "week";
+        LocalDate anchor = parseScheduleDate(date);
+        LocalDate from = selectedView.equals("month")
+                ? anchor.withDayOfMonth(1)
+                : anchor.with(DayOfWeek.MONDAY);
+        LocalDate to = selectedView.equals("month")
+                ? from.plusMonths(1).minusDays(1)
+                : from.plusDays(6);
+        var sessions = classSessionService.findForTeacher(userDetails.getId(), from, to);
+        Map<Long, Long> studentCounts = new HashMap<>();
+        for (ClassSession session : sessions) {
+            studentCounts.computeIfAbsent(session.getClassEntity().getId(), classService::getStudentCountInClass);
+        }
+        LocalDate step = selectedView.equals("month") ? from.plusMonths(1) : from.plusWeeks(1);
+        LocalDate previous = selectedView.equals("month") ? from.minusMonths(1) : from.minusWeeks(1);
+        model.addAttribute("sessions", sessions);
+        model.addAttribute("studentCounts", studentCounts);
+        model.addAttribute("view", selectedView);
+        model.addAttribute("selectedDate", anchor);
+        model.addAttribute("from", from);
+        model.addAttribute("to", to);
+        model.addAttribute("previousDate", previous);
+        model.addAttribute("nextDate", step);
+        model.addAttribute("today", LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
         model.addAttribute("currentUser", userDetails);
         return "teacher/schedules";
+    }
+
+    private LocalDate parseScheduleDate(String value) {
+        if (value == null) return LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        try { return LocalDate.parse(value); }
+        catch (DateTimeParseException ignored) { return LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")); }
     }
 }

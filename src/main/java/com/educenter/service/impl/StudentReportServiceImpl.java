@@ -85,7 +85,7 @@ public class StudentReportServiceImpl implements StudentReportService {
         validateListLengths(reports.size(), studentIds, attendanceStatuses, homeworkScores, comments, goodEvaluationCounts, notes);
         Map<Long, SessionStudentReport> byStudent = new HashMap<>();
         for (SessionStudentReport report : reports) byStudent.put(report.getStudent().getId(), report);
-        User teacher = userRepository.findById(teacherUserId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản giáo viên."));
+        User teacher = userRepository.findById(teacherUserId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản người dạy."));
 
         for (int i = 0; i < studentIds.size(); i++) {
             SessionStudentReport report = byStudent.get(studentIds.get(i));
@@ -129,7 +129,7 @@ public class StudentReportServiceImpl implements StudentReportService {
         if (session.getPublishedAt() == null) {
             session.setPublishedAt(LocalDateTime.now(APP_ZONE));
             session.setPublishedBy(userRepository.findById(teacherUserId)
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản giáo viên.")));
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản người dạy.")));
             sessionRepository.save(session);
         }
         refreshPublishedMonthForSession(session);
@@ -173,7 +173,7 @@ public class StudentReportServiceImpl implements StudentReportService {
                 .stream().filter(this::hasEnded).toList();
         List<ClassSession> missing = dueSessions.stream().filter(s -> s.getPublishedAt() == null).toList();
         if (!missing.isEmpty()) {
-            throw new IllegalArgumentException("Còn " + missing.size() + " buổi đã kết thúc chưa được giáo viên công bố báo cáo.");
+            throw new IllegalArgumentException("Còn " + missing.size() + " buổi đã kết thúc chưa được người dạy công bố báo cáo.");
         }
 
         List<SessionStudentReport> studentRows = sessionReportRepository.findPublishedForStudentAndMonth(
@@ -188,7 +188,7 @@ public class StudentReportServiceImpl implements StudentReportService {
         report.setTeacherComment(comment.trim());
         report.setPublishedAt(LocalDateTime.now(APP_ZONE));
         report.setPublishedBy(userRepository.findById(teacherUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản giáo viên.")));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản người dạy.")));
         report.setUpdatedBy(report.getPublishedBy());
         recalculateMonthlySummary(report, month);
         monthlyReportRepository.save(report);

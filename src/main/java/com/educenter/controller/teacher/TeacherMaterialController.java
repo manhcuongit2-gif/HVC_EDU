@@ -123,6 +123,6 @@ public class TeacherMaterialController {
         model.addAttribute("material", material);
         model.addAttribute("actionUrl", material == null ? "/teacher/materials/add" : "/teacher/materials/edit/" + material.getId());
         model.addAttribute("returnUrl", "/teacher/materials");
-        model.addAttribute("roleLabel", "Giáo viên");
+        model.addAttribute("roleLabel", "Người dạy");
     }
 }

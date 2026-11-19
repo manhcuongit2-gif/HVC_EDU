@@ -46,6 +46,21 @@
                 </div>
             </div>
 
+            <form th:action="@{/admin/statistics}" method="get" class="card border-0 shadow-sm mb-4"><div class="card-body d-flex flex-wrap align-items-end gap-3">
+                <div><label class="form-label fw-semibold" for="periodMode">Kỳ thống kê</label><select id="periodMode" name="period" class="form-select"><option value="month" th:selected="${period == 'month'}">Theo tháng</option><option value="year" th:selected="${period == 'year'}">Theo năm</option></select></div>
+                <div id="monthField"><label class="form-label fw-semibold" for="month">Tháng</label><input id="month" class="form-control" type="month" name="month" th:value="${selectedMonth}"></div>
+                <div id="yearField"><label class="form-label fw-semibold" for="year">Năm</label><input id="year" class="form-control" type="number" name="year" min="2000" max="2100" th:value="${selectedYear}"></div>
+                <button class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Xem báo cáo</button>
+                <span class="small text-muted ms-auto">Kỳ đang xem: <strong th:text="${periodLabel}"></strong> · Kết quả đồng bộ theo dữ liệu hiện tại.</span>
+            </div></form>
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-xl-3"><div class="card stat-card p-3 bg-white h-100"><div class="text-muted small text-uppercase">Đăng ký mới trong kỳ</div><div class="h3 fw-bold text-primary mb-1" th:text="${newRegistrationCount}">0</div><small class="text-muted">Kỳ trước: <span th:text="${previousRegistrationCount}">0</span></small></div></div>
+                <div class="col-sm-6 col-xl-3"><div class="card stat-card p-3 bg-white h-100"><div class="text-muted small text-uppercase">Học sinh mới trong kỳ</div><div class="h3 fw-bold text-info mb-1" th:text="${newStudentCount}">0</div><small class="text-muted">Tính theo ngày tạo hồ sơ.</small></div></div>
+                <div class="col-sm-6 col-xl-3"><div class="card stat-card p-3 bg-white h-100"><div class="text-muted small text-uppercase">Buổi học có báo cáo</div><div class="h3 fw-bold text-success mb-1"><span th:text="${reportedSessionCount}">0</span> / <span th:text="${sessionCount}">0</span></div><small class="text-muted">Hoàn thành <span th:text="${reportCompletionPercent}">0</span>% · Quá hạn chưa báo cáo: <span th:text="${pastUnreportedCount}">0</span></small></div></div>
+                <div class="col-sm-6 col-xl-3"><div class="card stat-card p-3 bg-white h-100"><div class="text-muted small text-uppercase">Học phí đã thu trong kỳ</div><div class="h4 fw-bold text-success mb-1" th:text="${#numbers.formatDecimal(periodPaid,0,'COMMA',0,'POINT')} + ' đ'">0 đ</div><small class="text-muted">Chưa thu: <span th:text="${#numbers.formatDecimal(periodUnpaid,0,'COMMA',0,'POINT')}">0</span> đ</small></div></div>
+            </div>
+
             <!-- 4 Thẻ thống kê -->
             <div class="row g-3 mb-4">
                 <div class="col-sm-6 col-xl-3">
@@ -68,7 +83,7 @@
                                 <i class="bi bi-person-badge-fill fs-3"></i>
                             </div>
                             <div>
-                                <h6 class="text-muted mb-1 small text-uppercase">Giáo viên</h6>
+                                <h6 class="text-muted mb-1 small text-uppercase">Người dạy</h6>
                                 <h3 class="fw-bold mb-0 text-dark" th:text="${teacherCount}">3</h3>
                             </div>
                         </div>
@@ -132,6 +147,10 @@
                     </div>
                 </div>
             </div>
+            <div class="row g-4 mt-1"><div class="col-12"><div class="chart-card">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h5 class="fw-bold text-dark mb-0"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Học phí theo tháng · <span th:text="${selectedYear}"></span></h5><small class="text-muted">So sánh tổng đã thu và chưa thu theo kỳ ghi nhận.</small></div>
+                <div style="height:320px"><canvas id="monthlyTuitionChart"></canvas></div>
+            </div></div></div>
         </main>
     </div>
 </div>
@@ -143,6 +162,9 @@
     const studentCount = /*[[${studentCount}]]*/ 5;
     const teacherCount = /*[[${teacherCount}]]*/ 3;
     const classCount = /*[[${classCount}]]*/ 3;
+    const monthlyLabels = /*[[${monthlyLabels}]]*/ [];
+    const monthlyPaid = /*[[${monthlyPaid}]]*/ [];
+    const monthlyUnpaid = /*[[${monthlyUnpaid}]]*/ [];
 
     // Biểu đồ hình tròn: Học phí
     const ctxTuition = document.getElementById('tuitionChart').getContext('2d');
@@ -167,7 +189,7 @@
     new Chart(ctxScale, {
         type: 'bar',
         data: {
-            labels: ['Học sinh', 'Giáo viên', 'Lớp học'],
+            labels: ['Học sinh', 'Người dạy', 'Lớp học'],
             datasets: [{
                 label: 'Số lượng',
                 data: [studentCount, teacherCount, classCount],
@@ -186,6 +208,20 @@
             }
         }
     });
+    new Chart(document.getElementById('monthlyTuitionChart'), {
+        type: 'bar',
+        data: { labels: monthlyLabels, datasets: [
+            { label: 'Đã thu (đ)', data: monthlyPaid, backgroundColor: '#198754', borderRadius: 6 },
+            { label: 'Chưa thu (đ)', data: monthlyUnpaid, backgroundColor: '#f0ad4e', borderRadius: 6 }
+        ] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: value => new Intl.NumberFormat('vi-VN').format(value) } } } }
+    });
+    const periodMode = document.getElementById('periodMode');
+    const refreshPeriodFields = () => {
+        document.getElementById('monthField').classList.toggle('d-none', periodMode.value === 'year');
+        document.getElementById('yearField').classList.toggle('d-none', periodMode.value !== 'year');
+    };
+    periodMode.addEventListener('change', refreshPeriodFields); refreshPeriodFields();
     /*]]>*/
 </script>
 

@@ -80,13 +80,13 @@ public class ScheduleServiceImpl implements ScheduleService {
             ));
         }
 
-        // 2. Kiểm tra trùng lịch giáo viên
+        // 2. Kiểm tra trùng lịch người dạy
         Long teacherId = classEntity.getTeacher().getId();
         List<Schedule> teacherConflicts = scheduleRepository.findTeacherConflicts(teacherId, dayOfWeek, start, end, excludeId);
         if (!teacherConflicts.isEmpty()) {
             Schedule c = teacherConflicts.get(0);
             throw new IllegalArgumentException(String.format(
-                    "TRÙNG LỊCH GIÁO VIÊN: Giáo viên '%s' đã có lịch dạy lớp '%s' vào %s (%s - %s)!",
+                    "TRÙNG LỊCH NGƯỜI DẠY: Người dạy '%s' đã có lịch dạy lớp '%s' vào %s (%s - %s)!",
                     classEntity.getTeacher().getUser().getFullName(), c.getClassEntity().getName(), c.getDayOfWeekDisplay(), c.getStartTime(), c.getEndTime()
             ));
         }

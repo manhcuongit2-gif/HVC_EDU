@@ -36,7 +36,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                                      @Param("endTime") LocalTime endTime,
                                      @Param("excludeId") Long excludeId);
 
-    // Kiểm tra trùng lịch giáo viên
+    // Kiểm tra trùng lịch người dạy
     @Query("SELECT s FROM Schedule s WHERE s.classEntity.teacher.id = :teacherId AND s.dayOfWeek = :dayOfWeek AND s.active = true " +
            "AND (:excludeId IS NULL OR s.id <> :excludeId) " +
            "AND (s.startTime < :endTime AND s.endTime > :startTime)")

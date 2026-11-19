@@ -102,10 +102,10 @@ public class TeacherAdminMessageServiceImpl implements TeacherAdminMessageServic
 
     private User requireTeacher(Long teacherUserId) {
         Teacher teacher = teacherRepository.findByUserId(teacherUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hồ sơ giáo viên."));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hồ sơ người dạy."));
         User user = teacher.getUser();
         if (user == null || !Boolean.TRUE.equals(user.getActive()) || !hasRole(user, TEACHER_ROLE)) {
-            throw new IllegalArgumentException("Tài khoản giáo viên hiện không hoạt động.");
+            throw new IllegalArgumentException("Tài khoản người dạy hiện không hoạt động.");
         }
         return user;
     }

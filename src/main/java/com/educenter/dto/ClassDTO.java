@@ -21,8 +21,10 @@ public class ClassDTO {
     @NotNull(message = "Vui lòng chọn môn học")
     private Long subjectId;
 
-    @NotNull(message = "Vui lòng chọn giáo viên phụ trách")
+    @NotNull(message = "Vui lòng chọn người dạy phụ trách")
     private Long teacherId;
+
+    private Long assistantTeacherId;
 
     @NotNull(message = "Sĩ số tối đa không được để trống")
     @Min(value = 1, message = "Sĩ số tối thiểu là 1")
@@ -60,6 +62,8 @@ public class ClassDTO {
 
     public Long getTeacherId() { return teacherId; }
     public void setTeacherId(Long teacherId) { this.teacherId = teacherId; }
+    public Long getAssistantTeacherId() { return assistantTeacherId; }
+    public void setAssistantTeacherId(Long assistantTeacherId) { this.assistantTeacherId = assistantTeacherId; }
 
     public Integer getMaxStudents() { return maxStudents; }
     public void setMaxStudents(Integer maxStudents) { this.maxStudents = maxStudents; }

@@ -7,6 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.educenter.util.VietnameseDateFormatter;
 
 @Entity
 @Table(name = "attendance", uniqueConstraints = {
@@ -61,6 +62,8 @@ public class Attendance {
 
     public LocalDate getAttendanceDate() { return attendanceDate; }
     public void setAttendanceDate(LocalDate attendanceDate) { this.attendanceDate = attendanceDate; }
+    @Transient
+    public String getWeekdayDisplay() { return VietnameseDateFormatter.weekday(attendanceDate); }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

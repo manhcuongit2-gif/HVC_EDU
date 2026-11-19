@@ -13,4 +13,5 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> findAllByOrderByIdAsc();
     List<Student> findByActiveTrue();
     List<Student> findByFullNameContainingIgnoreCase(String name);
+    long countByCreatedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
 }

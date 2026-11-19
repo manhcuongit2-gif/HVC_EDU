@@ -110,6 +110,7 @@ public class AdminClassController {
             classDTO.setName(c.getName());
             classDTO.setSubjectId(c.getSubject().getId());
             classDTO.setTeacherId(c.getTeacher().getId());
+            classDTO.setAssistantTeacherId(c.getAssistantTeacher() == null ? null : c.getAssistantTeacher().getId());
             classDTO.setMaxStudents(c.getMaxStudents());
             classDTO.setTuitionFee(c.getTuitionFee());
             classDTO.setSessionFee(c.getSessionFee());

@@ -46,6 +46,11 @@
         Bạn đang có <strong th:text="${unpaidCount}">1</strong> khoản học phí đến hạn cần thanh toán. Hãy nhấn nút <strong>"Thanh toán VNPay"</strong> để chuyển tới trang thanh toán an toàn.
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-uppercase text-muted">Tổng học phí còn phải đóng</div><div class="h3 fw-bold text-danger mb-0" th:text="${#numbers.formatDecimal(totalBalance,0,'COMMA',0,'POINT')} + ' đ'">0 đ</div></div></div></div>
+        <div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-uppercase text-muted">Tổng học phí đã thanh toán</div><div class="h3 fw-bold text-success mb-0" th:text="${#numbers.formatDecimal(totalPaid,0,'COMMA',0,'POINT')} + ' đ'">0 đ</div></div></div></div>
+    </div>
+
     <!-- Bảng danh sách học phí -->
     <div class="card table-card bg-white">
         <div class="card-body p-0">

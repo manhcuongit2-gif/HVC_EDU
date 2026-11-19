@@ -49,6 +49,7 @@
                             <th class="ps-4" style="width: 70px;">Mã</th>
                             <th style="min-width: 200px;">Tên lớp học</th>
                             <th>Môn học</th>
+                            <th>Lịch học</th>
                             <th class="text-center" style="width: 120px;">Sĩ số</th>
                             <th>Thời gian khóa học</th>
                             <th class="text-center" style="width: 130px;">Trạng thái</th>
@@ -57,7 +58,7 @@
                     </thead>
                     <tbody>
                         <tr th:if="${#lists.isEmpty(classes)}">
-                            <td colspan="7" class="text-center py-4 text-muted">
+                            <td colspan="8" class="text-center py-4 text-muted">
                                 <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                 Thầy/cô chưa có lớp học nào được phân công.
                             </td>
@@ -70,6 +71,10 @@
                             </td>
                             <td>
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle" th:text="${c.subject.name}">Toán</span>
+                            </td>
+                            <td class="small">
+                                <div th:if="${#lists.isEmpty(schedulesByClassId[c.id])}" class="text-muted">Chưa xếp lịch</div>
+                                <div th:each="schedule : ${schedulesByClassId[c.id]}" class="mb-1"><strong th:text="${schedule.dayOfWeekDisplay}"></strong> · <span th:text="|${schedule.startTime}–${schedule.endTime}|"></span><span class="text-muted" th:if="${schedule.room != null}" th:text="' · ' + ${schedule.room.name}"></span></div>
                             </td>
                             <td class="text-center">
                                 <span class="fw-bold text-dark" th:text="${studentCounts[c.id]} + ' / ' + ${c.maxStudents}">3 / 25</span>

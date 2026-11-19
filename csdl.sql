@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS `classes` (
     `name` VARCHAR(100) NOT NULL,
     `subject_id` BIGINT NOT NULL,
     `teacher_id` BIGINT NOT NULL,
+    `assistant_teacher_id` BIGINT NULL,
     `max_students` INT NOT NULL,
     `tuition_fee` DECIMAL(12,2) NOT NULL,
     `session_fee` DECIMAL(12,2) NULL,
@@ -119,7 +120,8 @@ CREATE TABLE IF NOT EXISTS `classes` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_classes_subjects` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE RESTRICT,
-    CONSTRAINT `fk_classes_teachers` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`) ON DELETE RESTRICT
+    CONSTRAINT `fk_classes_teachers` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_classes_assistant_teacher` FOREIGN KEY (`assistant_teacher_id`) REFERENCES `teachers` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =======================================================

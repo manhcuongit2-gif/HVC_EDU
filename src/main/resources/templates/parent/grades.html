@@ -73,7 +73,7 @@
                             <th style="width: 110px;">Cuối kỳ (x3)</th>
                             <th style="width: 110px;">Điểm TB</th>
                             <th style="width: 120px;">Học lực</th>
-                            <th class="text-start ps-3">Nhận xét của giáo viên</th>
+                            <th class="text-start ps-3">Nhận xét của người dạy</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -116,7 +116,7 @@
                             <td colspan="4" class="text-center py-3 text-muted">Chưa có lịch sử điểm danh</td>
                         </tr>
                         <tr th:each="att : ${studentAttendances[c.id]}">
-                            <td class="ps-3 fw-semibold text-secondary" th:text="${#temporals.format(att.attendanceDate, 'dd/MM/yyyy')}">05/10/2026</td>
+                            <td class="ps-3 fw-semibold text-secondary" th:text="|${att.weekdayDisplay}, ${#temporals.format(att.attendanceDate, 'dd/MM/yyyy')}|">Thứ Hai, 05/10/2026</td>
                             <td class="fw-bold text-dark" th:text="${att.classEntity.name}">Toán 10</td>
                             <td class="text-center">
                                 <span th:if="${att.status == 'PRESENT'}" class="badge bg-success-subtle text-success px-3 py-1 rounded-pill">

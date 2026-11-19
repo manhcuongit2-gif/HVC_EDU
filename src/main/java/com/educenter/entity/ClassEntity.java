@@ -34,8 +34,12 @@ public class ClassEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "teacher_id", nullable = false)
-    @NotNull(message = "Vui lòng chọn giáo viên phụ trách")
+    @NotNull(message = "Vui lòng chọn người dạy phụ trách")
     private Teacher teacher;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assistant_teacher_id")
+    private Teacher assistantTeacher;
 
     @Column(name = "max_students", nullable = false)
     @NotNull(message = "Sĩ số tối đa không được để trống")
@@ -85,6 +89,8 @@ public class ClassEntity {
 
     public Teacher getTeacher() { return teacher; }
     public void setTeacher(Teacher teacher) { this.teacher = teacher; }
+    public Teacher getAssistantTeacher() { return assistantTeacher; }
+    public void setAssistantTeacher(Teacher assistantTeacher) { this.assistantTeacher = assistantTeacher; }
 
     public Integer getMaxStudents() { return maxStudents; }
     public void setMaxStudents(Integer maxStudents) { this.maxStudents = maxStudents; }

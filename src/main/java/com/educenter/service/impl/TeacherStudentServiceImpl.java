@@ -113,7 +113,7 @@ public class TeacherStudentServiceImpl implements TeacherStudentService {
                 .map(teacher -> teacher.getUser() == null ? null : teacher.getUser().getId())
                 .anyMatch(otherTeacherId -> otherTeacherId != null && !Objects.equals(otherTeacherId, teacherUserId));
         if (enrolledWithOtherTeacher) {
-            throw new IllegalArgumentException("Học sinh đang học với giáo viên khác; chỉ admin mới được sửa hồ sơ dùng chung.");
+            throw new IllegalArgumentException("Học sinh đang học với người dạy khác; chỉ admin mới được sửa hồ sơ dùng chung.");
         }
         return studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy học sinh."));

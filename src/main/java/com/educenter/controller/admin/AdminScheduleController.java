@@ -27,6 +27,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.nio.charset.StandardCharsets;
 import org.springframework.http.ContentDisposition;
@@ -66,7 +67,9 @@ public class AdminScheduleController {
 
     @GetMapping
     public String calendar(@RequestParam(required = false) String month,
-                           @RequestParam(required = false) Long classId, Model model) {
+                           @RequestParam(required = false) Long classId,
+                           @RequestParam(defaultValue = "false") boolean reportStatus,
+                           Model model) {
         YearMonth selectedMonth = parseMonth(month);
         LocalDate first = selectedMonth.atDay(1);
         LocalDate gridStart = first.minusDays(first.getDayOfWeek().getValue() - 1L);
@@ -78,12 +81,31 @@ public class AdminScheduleController {
             calendarDays.add(new CalendarDay(date, byDate.getOrDefault(date, List.of()), YearMonth.from(date).equals(selectedMonth)));
         }
         List<ClassEntity> classes = classService.getAllClasses();
+        List<String> classPalette = List.of("#2563eb", "#0f9d78", "#8b5cf6", "#e77922", "#d04474", "#087f9b");
+        Map<Long, String> classColors = new HashMap<>();
+        for (int index = 0; index < classes.size(); index++) classColors.put(classes.get(index).getId(), classPalette.get(index % classPalette.size()));
+        LocalDate today = LocalDate.now(APP_ZONE);
+        java.time.LocalTime now = java.time.LocalTime.now(APP_ZONE);
+        Map<Long, String> sessionVisualStates = new HashMap<>();
+        for (ClassSession session : sessions) {
+            boolean upcoming = "CANCELLED".equals(session.getStatus()) || session.getSessionDate().isAfter(today)
+                    || (session.getSessionDate().equals(today) && session.getEndTime().isAfter(now));
+            String state = reportStatus
+                    ? (upcoming ? "upcoming-mode" : (session.getPublishedAt() != null ? "reported-mode" : "missed-mode"))
+                    : ("CANCELLED".equals(session.getStatus()) ? "bg-secondary-subtle text-secondary" : "normal-mode");
+            sessionVisualStates.put(session.getId(), state);
+        }
         model.addAttribute("month", selectedMonth.toString());
         model.addAttribute("previousMonth", selectedMonth.minusMonths(1));
         model.addAttribute("nextMonth", selectedMonth.plusMonths(1));
         model.addAttribute("selectedClassId", classId);
         model.addAttribute("classes", classes);
         model.addAttribute("calendarDays", calendarDays);
+        model.addAttribute("classColors", classColors);
+        model.addAttribute("sessionVisualStates", sessionVisualStates);
+        model.addAttribute("reportStatusView", reportStatus);
+        model.addAttribute("today", today);
+        model.addAttribute("now", java.time.LocalTime.now(APP_ZONE));
         model.addAttribute("classesMissingDates", classes.stream().filter(c -> c.getStartDate() == null || c.getEndDate() == null).toList());
         return "admin/schedules/calendar";
     }

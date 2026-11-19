@@ -39,7 +39,7 @@ public class AdminTeacherMessageController {
         } catch (DataAccessException e) {
             LOGGER.error("Could not list teachers for admin messaging", e);
             model.addAttribute("teachers", java.util.List.of());
-            model.addAttribute("errorMessage", "Không thể tải danh sách giáo viên lúc này.");
+            model.addAttribute("errorMessage", "Không thể tải danh sách người dạy lúc này.");
         }
         return "admin/messages/list";
     }
@@ -55,7 +55,7 @@ public class AdminTeacherMessageController {
             model.addAttribute("title", "Trao đổi với " + page.conversation().getTeacherUser().getFullName());
             model.addAttribute("postUrl", "/admin/messages/" + teacherUserId);
             model.addAttribute("backUrl", "/admin/messages");
-            model.addAttribute("backLabel", "Danh sách giáo viên");
+            model.addAttribute("backLabel", "Danh sách người dạy");
             model.addAttribute("canSend", true);
             return "messages/thread";
         } catch (IllegalArgumentException e) {

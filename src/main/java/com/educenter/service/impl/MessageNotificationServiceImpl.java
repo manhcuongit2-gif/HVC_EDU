@@ -6,6 +6,10 @@ import com.educenter.entity.ParentTeacherConversation;
 import com.educenter.entity.ParentTeacherMessage;
 import com.educenter.entity.TeacherAdminConversation;
 import com.educenter.entity.TeacherAdminMessage;
+import com.educenter.entity.ChatMember;
+import com.educenter.entity.ChatMessage;
+import com.educenter.repository.ChatMemberRepository;
+import com.educenter.repository.ChatMessageRepository;
 import com.educenter.repository.ParentTeacherConversationRepository;
 import com.educenter.repository.ParentTeacherMessageRepository;
 import com.educenter.repository.TeacherAdminConversationRepository;
@@ -30,15 +34,21 @@ public class MessageNotificationServiceImpl implements MessageNotificationServic
     private final ParentTeacherMessageRepository parentMessageRepository;
     private final TeacherAdminConversationRepository teacherAdminConversationRepository;
     private final TeacherAdminMessageRepository teacherAdminMessageRepository;
+    private final ChatMemberRepository chatMemberRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     public MessageNotificationServiceImpl(ParentTeacherConversationRepository parentConversationRepository,
                                           ParentTeacherMessageRepository parentMessageRepository,
                                           TeacherAdminConversationRepository teacherAdminConversationRepository,
-                                          TeacherAdminMessageRepository teacherAdminMessageRepository) {
+                                          TeacherAdminMessageRepository teacherAdminMessageRepository,
+                                          ChatMemberRepository chatMemberRepository,
+                                          ChatMessageRepository chatMessageRepository) {
         this.parentConversationRepository = parentConversationRepository;
         this.parentMessageRepository = parentMessageRepository;
         this.teacherAdminConversationRepository = teacherAdminConversationRepository;
         this.teacherAdminMessageRepository = teacherAdminMessageRepository;
+        this.chatMemberRepository = chatMemberRepository;
+        this.chatMessageRepository = chatMessageRepository;
     }
 
     @Override
@@ -95,6 +105,21 @@ public class MessageNotificationServiceImpl implements MessageNotificationServic
                             latest.getCreatedAt(), "/admin/messages/" + conversation.getTeacherUser().getId()));
                 }
             }
+        }
+
+        for (ChatMember member : chatMemberRepository.findActiveConversationsForUser(userId)) {
+            if (!member.isNotificationsEnabled()) continue;
+            ChatMessage latestUnread = chatMessageRepository
+                    .findByConversationIdAndIdGreaterThanOrderByIdAsc(member.getConversation().getId(), member.getLastReadMessageId())
+                    .stream().filter(message -> !message.getSender().getId().equals(userId))
+                    .max(Comparator.comparing(ChatMessage::getId)).orElse(null);
+            if (latestUnread == null) continue;
+            unreadCount += chatMessageRepository.countByConversationIdAndIdGreaterThanAndSenderIdNot(
+                    member.getConversation().getId(), member.getLastReadMessageId(), userId);
+            String content = latestUnread.isDeletedForAll() ? "Đã thu hồi tin nhắn" : latestUnread.getContent();
+            if (content == null && latestUnread.getOriginalFilename() != null) content = "Đã gửi tệp: " + latestUnread.getOriginalFilename();
+            items.add(new MessageNotification(latestUnread.getSender().getFullName(), preview(content),
+                    latestUnread.getCreatedAt(), "/chat/" + member.getConversation().getId()));
         }
 
         items.sort(Comparator.comparing(MessageNotification::createdAt,

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Giáo viên - Luyện Thi Hùng Cường</title>
+    <title>Quản lý Người dạy - Luyện Thi Hùng Cường</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -34,12 +34,12 @@
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
                 <div>
                     <h2 class="h3 fw-bold text-dark mb-1">
-                        <i class="bi bi-person-badge-fill text-primary me-2"></i>Quản lý Đội ngũ Giáo viên
+                        <i class="bi bi-person-badge-fill text-primary me-2"></i>Quản lý Đội ngũ Người dạy
                     </h2>
                     <p class="text-muted mb-0">Danh sách các thầy cô phụ trách giảng dạy tại trung tâm Luyện Thi Hùng Cường</p>
                 </div>
                 <a th:href="@{/admin/teachers/add}" class="btn btn-primary d-flex align-items-center">
-                    <i class="bi bi-person-plus-fill me-2"></i>Thêm giáo viên mới
+                    <i class="bi bi-person-plus-fill me-2"></i>Thêm người dạy mới
                 </a>
             </div>
 
@@ -55,7 +55,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
 
-            <!-- Bảng danh sách giáo viên -->
+            <!-- Bảng danh sách người dạy -->
             <div class="card table-card bg-white">
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -75,7 +75,7 @@
                                 <tr th:if="${#lists.isEmpty(teachers)}">
                                     <td colspan="7" class="text-center py-4 text-muted">
                                         <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                        Chưa có giáo viên nào trong hệ thống.
+                                        Chưa có người dạy nào trong hệ thống.
                                     </td>
                                 </tr>
                                 <tr th:each="t : ${teachers}">
@@ -117,14 +117,14 @@
                                     </td>
                                     <td class="text-end pe-4">
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <a th:href="@{'/admin/teachers/edit/' + ${t.id}}" class="btn btn-outline-primary" title="Chỉnh sửa giáo viên">
+                                            <a th:href="@{'/admin/teachers/edit/' + ${t.id}}" class="btn btn-outline-primary" title="Chỉnh sửa người dạy">
                                                 <i class="bi bi-pencil-square me-1"></i>Sửa
                                             </a>
                                             <a th:href="@{'/admin/teachers/toggle/' + ${t.id}}" 
                                                th:classappend="${t.user.active} ? 'btn-outline-danger' : 'btn-outline-success'"
                                                class="btn"
                                                th:title="${t.user.active} ? 'Khóa tài khoản' : 'Mở khóa tài khoản'"
-                                               onclick="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái tài khoản giáo viên này?');">
+                                               onclick="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái tài khoản người dạy này?');">
                                                 <i class="bi" th:classappend="${t.user.active} ? 'bi-lock' : 'bi-unlock'"></i>
                                                 <span th:text="${t.user.active} ? 'Khóa' : 'Mở'"></span>
                                             </a>

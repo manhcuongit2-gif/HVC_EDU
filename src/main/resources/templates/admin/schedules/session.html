@@ -13,14 +13,14 @@
     <div class="card border-0 shadow-sm mb-3"><div class="card-body">
         <h1 class="h4" th:text="${classSession.classEntity.name}">Lớp</h1>
         <p class="mb-1"><span th:text="${classSession.weekdayDisplay}"></span>, <span th:text="${#temporals.format(classSession.sessionDate,'dd/MM/yyyy')}"></span> · <span th:text="|${classSession.startTime} – ${classSession.endTime}|"></span></p>
-        <p class="text-muted mb-0">Phòng: <span th:text="${classSession.room != null ? classSession.room.name : 'Chưa có'}"></span> · Giáo viên: <span th:text="${classSession.classEntity.teacher.user.fullName}"></span></p>
+        <p class="text-muted mb-0">Phòng: <span th:text="${classSession.room != null ? classSession.room.name : 'Chưa có'}"></span> · Người dạy: <span th:text="${classSession.classEntity.teacher.user.fullName}"></span> · Hỗ trợ: <span th:text="${classSession.classEntity.assistantTeacher != null ? classSession.classEntity.assistantTeacher.user.fullName : 'Chưa phân công'}"></span></p>
         <span th:if="${classSession.status == 'CANCELLED'}" class="badge bg-secondary mt-2">Đã hủy</span>
         <span th:if="${classSession.publishedAt != null}" class="badge bg-success mt-2">Đã công bố báo cáo</span>
         <span th:if="${classSession.publishedAt == null && classSession.status != 'CANCELLED'}" class="badge bg-warning text-dark mt-2">Chưa công bố báo cáo</span>
     </div></div>
     <div class="card border-0 shadow-sm mb-3"><div class="card-header fw-bold">Báo cáo học sinh (chỉ xem)</div><div class="table-responsive">
         <table class="table table-striped align-middle mb-0"><thead><tr><th>Học sinh</th><th>Điểm danh</th><th>BTVN</th><th>Nhận xét</th><th>Lượt tốt</th><th>Ghi chú</th></tr></thead><tbody>
-        <tr th:if="${#lists.isEmpty(reports)}"><td colspan="6" class="text-center text-muted py-3">Giáo viên chưa nhập báo cáo.</td></tr>
+        <tr th:if="${#lists.isEmpty(reports)}"><td colspan="6" class="text-center text-muted py-3">Người dạy chưa nhập báo cáo.</td></tr>
         <tr th:each="r : ${reports}"><td th:text="${r.student.fullName}"></td><td th:text="${r.attendanceStatus}"></td><td th:text="${r.homeworkScore != null ? r.homeworkScore : '—'}"></td><td th:text="${r.comment}"></td><td th:text="${r.goodEvaluationCount}"></td><td th:text="${r.note != null ? r.note : '—'}"></td></tr>
         </tbody></table>
     </div></div>

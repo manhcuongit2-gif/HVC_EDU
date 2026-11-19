@@ -37,7 +37,7 @@
                         <h2 class="h3 fw-bold text-dark mb-0" th:text="${classEntity.name}">Toán 10 - Nâng Cao</h2>
                     </div>
                     <p class="text-muted mb-0">
-                        Giáo viên: <strong class="text-dark" th:text="${classEntity.teacher.user.fullName}">ThS. Trần Văn Toán</strong>
+                        Người dạy: <strong class="text-dark" th:text="${classEntity.teacher.user.fullName}">ThS. Trần Văn Toán</strong>
                         <span class="mx-2">•</span>
                         Sĩ số: <strong th:text="${studentCount} + ' / ' + ${classEntity.maxStudents}">0 / 25</strong> học sinh
                     </p>
@@ -77,10 +77,14 @@
                                 <strong class="text-dark" th:text="${classEntity.subject.name}">Toán học</strong>
                             </li>
                             <li class="mb-3">
-                                <small class="text-muted d-block">Giáo viên phụ trách:</small>
+                                <small class="text-muted d-block">Người dạy phụ trách:</small>
                                 <strong class="text-dark" th:text="${classEntity.teacher.user.fullName}">ThS. Trần Văn Toán</strong>
                                 <div class="small text-muted" th:text="${classEntity.teacher.specialization}">Chuyên Toán</div>
                             </li>
+                        <li class="mb-3">
+                            <small class="text-muted d-block">Người dạy hỗ trợ:</small>
+                            <strong class="text-dark" th:text="${classEntity.assistantTeacher != null ? classEntity.assistantTeacher.user.fullName : 'Chưa phân công'}">Chưa phân công</strong>
+                        </li>
                             <li class="mb-3">
                                 <small class="text-muted d-block">Học phí trọn gói:</small>
                                 <strong class="text-success fs-5" th:text="${#numbers.formatDecimal(classEntity.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.200.000 đ</strong>
@@ -200,7 +204,7 @@
                         <table class="table table-sm align-middle mb-0">
                             <thead><tr><th>Ngày hiệu lực</th><th class="text-end">Đơn giá/buổi</th></tr></thead>
                             <tbody>
-                            <tr th:if="${#lists.isEmpty(payRates)}"><td colspan="2" class="text-muted">Chưa cấu hình đơn giá cho giáo viên.</td></tr>
+                            <tr th:if="${#lists.isEmpty(payRates)}"><td colspan="2" class="text-muted">Chưa cấu hình đơn giá cho người dạy.</td></tr>
                             <tr th:each="rate : ${payRates}"><td th:text="${#temporals.format(rate.effectiveFrom, 'dd/MM/yyyy')}"></td><td class="text-end" th:text="${#numbers.formatDecimal(rate.rate, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td></tr>
                             </tbody>
                         </table>

@@ -234,10 +234,16 @@ public class ParentPortalController {
     public String myTuition(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         List<Tuition> tuitions = tuitionService.getTuitionByParentUserId(userDetails.getId());
         long unpaidCount = tuitions.stream().filter(t -> "UNPAID".equals(t.getStatus())).count();
+        var totalBalance = tuitions.stream().filter(t -> "UNPAID".equals(t.getStatus()) || "PROCESSING".equals(t.getStatus()))
+                .map(Tuition::getAmount).filter(Objects::nonNull).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        var totalPaid = tuitions.stream().filter(t -> "PAID".equals(t.getStatus())).map(Tuition::getAmount)
+                .filter(Objects::nonNull).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
 
         model.addAttribute("currentUser", userDetails);
         model.addAttribute("tuitions", tuitions);
         model.addAttribute("unpaidCount", unpaidCount);
+        model.addAttribute("totalBalance", totalBalance);
+        model.addAttribute("totalPaid", totalPaid);
         return "parent/tuition";
     }
 }

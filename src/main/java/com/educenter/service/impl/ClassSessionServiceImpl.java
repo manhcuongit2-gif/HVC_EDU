@@ -197,7 +197,7 @@ public class ClassSessionServiceImpl implements ClassSessionService {
         long conflicts = sessionRepository.countConflicts(date, startTime, endTime, room.getId(),
                 session.getClassEntity().getTeacher().getId(), session.getClassEntity().getId(), sessionId);
         if (conflicts > 0) {
-            throw new IllegalArgumentException("Buổi học mới bị trùng phòng, giáo viên hoặc lớp.");
+            throw new IllegalArgumentException("Buổi học mới bị trùng phòng, người dạy hoặc lớp.");
         }
         session.setSessionDate(date);
         session.setStartTime(startTime);

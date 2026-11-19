@@ -77,18 +77,25 @@
                                     <div class="invalid-feedback" th:if="${#fields.hasErrors('subjectId')}" th:errors="*{subjectId}"></div>
                                 </div>
 
-                                <!-- Chọn Giáo viên -->
+                                <!-- Chọn Người dạy -->
                                 <div class="col-md-6">
-                                    <label for="teacherId" class="form-label fw-semibold">Giáo viên phụ trách <span class="text-danger">*</span></label>
+                                    <label for="teacherId" class="form-label fw-semibold">Người dạy phụ trách <span class="text-danger">*</span></label>
                                     <select class="form-select" id="teacherId" th:field="*{teacherId}"
                                             th:classappend="${#fields.hasErrors('teacherId')} ? 'is-invalid' : ''">
-                                        <option value="">-- Chọn giáo viên phụ trách --</option>
+                                        <option value="">-- Chọn người dạy phụ trách --</option>
                                         <option th:each="t : ${teachers}" th:value="${t.id}"
                                                 th:text="${t.user.fullName} + ' (' + ${t.specialization} + ')'">
                                             ThS. Trần Văn Toán
                                         </option>
                                     </select>
                                     <div class="invalid-feedback" th:if="${#fields.hasErrors('teacherId')}" th:errors="*{teacherId}"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="assistantTeacherId" class="form-label fw-semibold">Người dạy hỗ trợ <span class="text-muted">(không bắt buộc)</span></label>
+                                    <select class="form-select" id="assistantTeacherId" th:field="*{assistantTeacherId}">
+                                        <option value="">-- Chưa phân công --</option>
+                                        <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.user.fullName + ' (' + t.specialization + ')'}">Người dạy hỗ trợ</option>
+                                    </select>
                                 </div>
                             </div>
 

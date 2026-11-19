@@ -16,6 +16,7 @@
         </a>
 
         <div class="d-flex align-items-center gap-3">
+            <a class="btn btn-outline-light btn-sm" th:href="@{/chat}" title="Mở hộp thư"><i class="bi bi-chat-dots me-1"></i><span class="d-none d-md-inline">Tin nhắn</span></a>
             <div class="message-notification">
                 <button type="button" id="messageNotificationButton" class="btn btn-outline-light btn-sm position-relative"
                         aria-expanded="false" aria-controls="messageNotificationMenu">
@@ -31,7 +32,7 @@
             </div>
             <div class="text-white text-end d-none d-sm-block">
                 <div class="fw-semibold small" th:text="${currentUser != null ? currentUser.fullName : 'Người dùng'}">Họ tên</div>
-                <span class="badge bg-light text-primary small" th:text="${currentUser != null ? currentUser.roleName : 'USER'}">ROLE</span>
+                <span class="badge bg-light text-primary small" th:text="${currentUser == null ? 'USER' : (currentUser.roleName == 'ROLE_TEACHER' ? 'NGƯỜI DẠY' : (currentUser.roleName == 'ROLE_PARENT' ? 'PHỤ HUYNH' : (currentUser.roleName == 'ROLE_ADMIN' ? 'QUẢN TRỊ VIÊN' : currentUser.roleName)))}">ROLE</span>
             </div>
 
             <form th:action="@{/logout}" method="post" class="m-0">
@@ -91,7 +92,7 @@
             .catch(() => {});
 
         refresh();
-        window.setInterval(refresh, 30000);
+        window.setInterval(refresh, 8000);
     })();
 </script>
 </th:block>

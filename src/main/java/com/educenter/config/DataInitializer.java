@@ -69,7 +69,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // 1. Roles
         Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElseGet(() -> roleRepository.save(new Role(null, "ROLE_ADMIN", "Quản trị viên")));
-        Role teacherRole = roleRepository.findByName("ROLE_TEACHER").orElseGet(() -> roleRepository.save(new Role(null, "ROLE_TEACHER", "Giáo viên")));
+        Role teacherRole = roleRepository.findByName("ROLE_TEACHER").orElseGet(() -> roleRepository.save(new Role(null, "ROLE_TEACHER", "Người dạy")));
         Role parentRole = roleRepository.findByName("ROLE_PARENT").orElseGet(() -> roleRepository.save(new Role(null, "ROLE_PARENT", "Phụ huynh")));
 
         // 2. Users: admin, gv_toan, gv_ly, gv_hoa, ph_dung, ph_lan
