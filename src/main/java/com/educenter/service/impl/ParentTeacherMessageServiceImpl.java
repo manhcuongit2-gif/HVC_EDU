@@ -71,6 +71,7 @@ public class ParentTeacherMessageServiceImpl implements ParentTeacherMessageServ
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lớp học."));
         requireParentEnrolled(parentUserId, classId);
         ParentTeacherConversation conversation = getOrCreateConversation(parent, classEntity);
+        markParentMessagesRead(conversation);
         return page(conversation);
     }
 
@@ -84,6 +85,7 @@ public class ParentTeacherMessageServiceImpl implements ParentTeacherMessageServ
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phụ huynh."));
         requireParentHasActiveStudent(parentId, classId);
         ParentTeacherConversation conversation = getOrCreateConversation(parent, classEntity);
+        markTeacherMessagesRead(conversation);
         return page(conversation);
     }
 
@@ -114,6 +116,24 @@ public class ParentTeacherMessageServiceImpl implements ParentTeacherMessageServ
     private ConversationPage page(ParentTeacherConversation conversation) {
         return new ConversationPage(conversation,
                 messageRepository.findByConversationIdOrderByCreatedAtAscIdAsc(conversation.getId()));
+    }
+
+    private void markParentMessagesRead(ParentTeacherConversation conversation) {
+        messageRepository.findTopByConversationIdOrderByIdDesc(conversation.getId()).ifPresent(message -> {
+            if (message.getId() > conversation.getParentLastReadMessageId()) {
+                conversation.setParentLastReadMessageId(message.getId());
+                conversationRepository.save(conversation);
+            }
+        });
+    }
+
+    private void markTeacherMessagesRead(ParentTeacherConversation conversation) {
+        messageRepository.findTopByConversationIdOrderByIdDesc(conversation.getId()).ifPresent(message -> {
+            if (message.getId() > conversation.getTeacherLastReadMessageId()) {
+                conversation.setTeacherLastReadMessageId(message.getId());
+                conversationRepository.save(conversation);
+            }
+        });
     }
 
     private void saveMessage(ParentTeacherConversation conversation, Long senderId, String content) {

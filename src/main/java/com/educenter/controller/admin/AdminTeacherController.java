@@ -138,4 +138,18 @@ public class AdminTeacherController {
         redirectAttributes.addFlashAttribute("successMessage", status + " tài khoản giáo viên \"" + teacher.getUser().getFullName() + "\"!");
         return "redirect:/admin/teachers";
     }
+
+    @PostMapping("/{id}/student-management")
+    public String setStudentManagement(@PathVariable Long id, @RequestParam boolean enabled,
+                                       RedirectAttributes redirectAttributes) {
+        try {
+            teacherService.setStudentManagementPermission(id, enabled);
+            redirectAttributes.addFlashAttribute("successMessage", enabled
+                    ? "Đã cấp quyền quản lý danh sách học sinh cho giáo viên."
+                    : "Đã thu hồi quyền quản lý danh sách học sinh của giáo viên.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/teachers";
+    }
 }

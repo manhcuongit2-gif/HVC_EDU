@@ -43,7 +43,7 @@
             <p class="text-muted mb-0">
                 Sĩ số: <strong th:text="${#lists.size(enrolledStudents)}">3</strong> học sinh
                 <span class="mx-2">•</span>
-                Ngày điểm danh: <strong class="text-primary" th:text="${#temporals.format(targetDate, 'dd/MM/yyyy')}">05/10/2026</strong>
+                Ngày điểm danh: <strong class="text-primary" th:text="|${targetWeekdayDisplay}, ${#temporals.format(targetDate, 'dd/MM/yyyy')}|">Thứ Hai, 05/10/2026</strong>
             </p>
         </div>
         <div class="d-flex gap-2">

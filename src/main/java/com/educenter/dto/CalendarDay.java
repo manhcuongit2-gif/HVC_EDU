@@ -1,6 +1,7 @@
 package com.educenter.dto;
 
 import com.educenter.entity.ClassSession;
+import com.educenter.util.VietnameseDateFormatter;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,6 +18,7 @@ public class CalendarDay {
     }
 
     public LocalDate getDate() { return date; }
+    public String getWeekdayDisplay() { return VietnameseDateFormatter.weekday(date); }
     public List<ClassSession> getSessions() { return sessions; }
     public boolean isInMonth() { return inMonth; }
 }

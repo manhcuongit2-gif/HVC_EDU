@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Xem trước báo cáo Excel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+<body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container-fluid px-lg-4 py-4">
+    <a th:href="@{/teacher/reports/session/{id}(id=${classSession.id})}" class="btn btn-outline-secondary btn-sm mb-3">← Quay lại báo cáo buổi học</a>
+    <h1 class="h3">Xem trước dữ liệu Excel</h1>
+    <p class="text-muted" th:text="|${classSession.classEntity.name} · ${classSession.weekdayDisplay}, ${#temporals.format(classSession.sessionDate,'dd/MM/yyyy')}|"></p>
+    <div th:if="${!preview.valid}" class="alert alert-danger"><strong>Chưa thể nhập báo cáo:</strong><ul class="mb-0 mt-2"><li th:each="error : ${preview.errors}" th:text="${error}"></li></ul></div>
+    <div th:if="${preview.valid}" class="alert alert-success">Đã kiểm tra đầy đủ học sinh và dữ liệu. Xác nhận để lưu toàn bộ thành bản nháp.</div>
+    <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table table-striped align-middle mb-0">
+        <thead><tr><th>Dòng Excel</th><th>Học sinh</th><th>Điểm danh</th><th>BTVN</th><th>Nhận xét</th><th>Điểm Cộng</th><th>Ghi chú</th></tr></thead>
+        <tbody><tr th:if="${#lists.isEmpty(preview.rows)}"><td colspan="7" class="text-center text-muted py-4">Không có dòng dữ liệu để xem trước.</td></tr>
+        <tr th:each="r : ${preview.rows}"><td th:text="${r.sourceRow}"></td><td><strong th:text="${r.studentName}"></strong><small class="d-block text-muted" th:text="|Mã ${r.studentId}|"></small></td><td th:text="${r.attendanceStatus}"></td><td th:text="${r.homeworkScore}"></td><td th:text="${r.comment}"></td><td th:text="${r.goodEvaluationCount}"></td><td th:text="${r.note}"></td></tr>
+        </tbody>
+    </table></div>
+        <div class="card-body d-flex justify-content-end gap-2"><a th:href="@{/teacher/reports/session/{id}(id=${classSession.id})}" class="btn btn-outline-secondary">Hủy</a>
+            <form th:if="${preview.valid}" method="post" th:action="@{/teacher/reports/session/{id}/import/confirm(id=${classSession.id})}">
+                <th:block th:each="r : ${preview.rows}"><input type="hidden" name="studentIds" th:value="${r.studentId}"><input type="hidden" name="attendanceStatuses" th:value="${r.attendanceStatus}"><input type="hidden" name="homeworkScores" th:value="${r.homeworkScore}"><input type="hidden" name="comments" th:value="${r.comment}"><input type="hidden" name="goodEvaluationCounts" th:value="${r.goodEvaluationCount}"><input type="hidden" name="notes" th:value="${r.note}"></th:block>
+                <button class="btn btn-primary" type="submit">Xác nhận lưu bản nháp</button>
+            </form>
+        </div>
+    </div>
+</main></body></html>

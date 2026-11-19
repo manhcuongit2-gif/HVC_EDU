@@ -11,6 +11,7 @@ import com.educenter.service.ClassSessionService;
 import com.educenter.service.RoomService;
 import com.educenter.service.ScheduleService;
 import com.educenter.service.StudentReportService;
+import com.educenter.service.ReportFileService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
@@ -27,6 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.nio.charset.StandardCharsets;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @Controller
 @RequestMapping("/admin/schedules")
@@ -40,17 +48,20 @@ public class AdminScheduleController {
     private final ClassSessionService classSessionService;
     private final StudentReportService studentReportService;
     private final MonthlyStudentReportRepository monthlyReportRepository;
+    private final ReportFileService reportFileService;
 
     public AdminScheduleController(ScheduleService scheduleService, ClassService classService,
                                    RoomService roomService, ClassSessionService classSessionService,
                                    StudentReportService studentReportService,
-                                   MonthlyStudentReportRepository monthlyReportRepository) {
+                                   MonthlyStudentReportRepository monthlyReportRepository,
+                                   ReportFileService reportFileService) {
         this.scheduleService = scheduleService;
         this.classService = classService;
         this.roomService = roomService;
         this.classSessionService = classSessionService;
         this.studentReportService = studentReportService;
         this.monthlyReportRepository = monthlyReportRepository;
+        this.reportFileService = reportFileService;
     }
 
     @GetMapping
@@ -96,6 +107,20 @@ public class AdminScheduleController {
         return "admin/schedules/monthly-reports";
     }
 
+    @GetMapping("/monthly/export")
+    public ResponseEntity<byte[]> exportMonthlyReports(@RequestParam(required = false) String month,
+                                                       @RequestParam(required = false) Long classId,
+                                                       @RequestParam(defaultValue = "xlsx") String format) {
+        YearMonth selectedMonth = parseMonth(month);
+        var reports = classId == null ? monthlyReportRepository.findAllPublishedForMonth(selectedMonth.atDay(1))
+                : monthlyReportRepository.findPublishedForClassAndMonth(classId, selectedMonth.atDay(1));
+        String title = "Báo cáo tháng " + selectedMonth;
+        boolean pdf = "pdf".equalsIgnoreCase(format);
+        byte[] bytes = pdf ? reportFileService.exportMonthlyPdf(title, reports)
+                : "xlsx".equalsIgnoreCase(format) ? reportFileService.exportMonthlyExcel(title, reports) : null;
+        return reportDownload(bytes, "bao-cao-thang-" + selectedMonth, format);
+    }
+
     @GetMapping("/session/{id}")
     public String viewSession(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
@@ -107,6 +132,17 @@ public class AdminScheduleController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/admin/schedules";
         }
+    }
+
+    @GetMapping("/session/{id}/export")
+    public ResponseEntity<byte[]> exportSessionReports(@PathVariable Long id, @RequestParam(defaultValue = "xlsx") String format) {
+        ClassSession session = classSessionService.getById(id);
+        var reports = studentReportService.getAdminSessionReports(id);
+        String title = "Báo cáo buổi học - " + session.getClassEntity().getName() + " - " + session.getSessionDate();
+        boolean pdf = "pdf".equalsIgnoreCase(format);
+        byte[] bytes = pdf ? reportFileService.exportSessionPdf(title, reports)
+                : "xlsx".equalsIgnoreCase(format) ? reportFileService.exportSessionExcel(title, reports) : null;
+        return reportDownload(bytes, "bao-cao-buoi-" + id, format);
     }
 
     @PostMapping("/session/{id}/cancel")
@@ -230,5 +266,14 @@ public class AdminScheduleController {
         } catch (RuntimeException e) {
             return YearMonth.now(APP_ZONE);
         }
+    }
+
+    private ResponseEntity<byte[]> reportDownload(byte[] bytes, String baseName, String format) {
+        if (bytes == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Định dạng tệp chỉ hỗ trợ xlsx hoặc pdf.");
+        boolean pdf = "pdf".equalsIgnoreCase(format);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(pdf ? "application/pdf" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDisposition(ContentDisposition.attachment().filename(baseName + (pdf ? ".pdf" : ".xlsx"), StandardCharsets.UTF_8).build());
+        return ResponseEntity.ok().headers(headers).body(bytes);
     }
 }

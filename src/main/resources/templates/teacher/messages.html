@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Trao đổi với phụ huynh</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" th:href="@{/css/messages.css}"></head>
 <body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div>
 <main class="container py-4"><div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"><div><h1 class="h3">Trao đổi với phụ huynh</h1><p class="text-muted mb-0">Phụ huynh có con đang học trong lớp thầy/cô phụ trách.</p></div><a th:href="@{/teacher/dashboard}" class="btn btn-outline-secondary">Dashboard</a></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
     <div th:if="${#lists.isEmpty(targets)}" class="alert alert-info">Chưa có phụ huynh trong lớp đang phụ trách.</div>
-    <div class="table-responsive card border-0 shadow-sm"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Lớp</th><th>Phụ huynh</th><th>Học sinh</th><th></th></tr></thead><tbody>
+    <div class="table-responsive card border-0 shadow-sm rounded-4 overflow-hidden message-inbox"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Lớp</th><th>Phụ huynh</th><th>Học sinh</th><th></th></tr></thead><tbody>
         <tr th:each="t : ${targets}"><td th:text="${t.classEntity.name}"></td><td th:text="${t.parent.user.fullName}"></td><td th:text="${#strings.listJoin(t.studentNames, ', ')}"></td><td class="text-end"><a class="btn btn-sm btn-primary" th:href="@{/teacher/messages/{classId}/{parentId}(classId=${t.classEntity.id},parentId=${t.parent.id})}">Mở hội thoại</a></td></tr>
     </tbody></table></div>
 </main></body></html>

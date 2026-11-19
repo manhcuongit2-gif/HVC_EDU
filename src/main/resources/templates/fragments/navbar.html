@@ -2,7 +2,13 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"></head>
 <body>
-<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<th:block th:fragment="navbar">
+<style>
+    .message-notification { position: relative; }
+    .message-notification-menu { position: absolute; z-index: 1050; top: calc(100% + .5rem); right: 0; width: min(22rem, calc(100vw - 2rem)); max-height: 22rem; overflow-y: auto; }
+    .message-notification-item { white-space: normal; }
+</style>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container-fluid px-4">
         <a class="navbar-brand fw-bold d-flex align-items-center" th:href="@{/}">
             <i class="bi bi-mortarboard-fill fs-4 me-2"></i>
@@ -10,6 +16,19 @@
         </a>
 
         <div class="d-flex align-items-center gap-3">
+            <div class="message-notification">
+                <button type="button" id="messageNotificationButton" class="btn btn-outline-light btn-sm position-relative"
+                        aria-expanded="false" aria-controls="messageNotificationMenu">
+                    <i class="bi bi-bell me-1"></i><span class="d-none d-md-inline">Thông báo</span>
+                    <span id="messageNotificationCount" class="badge rounded-pill bg-danger d-none">0</span>
+                </button>
+                <div id="messageNotificationMenu" class="message-notification-menu card shadow d-none">
+                    <div class="card-header bg-white fw-semibold">Tin nhắn mới</div>
+                    <div id="messageNotificationItems" class="list-group list-group-flush">
+                        <div class="list-group-item small text-muted">Đang tải thông báo...</div>
+                    </div>
+                </div>
+            </div>
             <div class="text-white text-end d-none d-sm-block">
                 <div class="fw-semibold small" th:text="${currentUser != null ? currentUser.fullName : 'Người dùng'}">Họ tên</div>
                 <span class="badge bg-light text-primary small" th:text="${currentUser != null ? currentUser.roleName : 'USER'}">ROLE</span>
@@ -23,5 +42,58 @@
         </div>
     </div>
 </nav>
+<script>
+    (() => {
+        const button = document.getElementById('messageNotificationButton');
+        const menu = document.getElementById('messageNotificationMenu');
+        const count = document.getElementById('messageNotificationCount');
+        const items = document.getElementById('messageNotificationItems');
+        if (!button || !menu || !count || !items) return;
+
+        button.addEventListener('click', () => {
+            const opening = menu.classList.contains('d-none');
+            menu.classList.toggle('d-none', !opening);
+            button.setAttribute('aria-expanded', String(opening));
+        });
+
+        const render = (data) => {
+            const unreadCount = Number(data.unreadCount || 0);
+            count.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+            count.classList.toggle('d-none', unreadCount === 0);
+            items.replaceChildren();
+
+            if (!data.items || data.items.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'list-group-item small text-muted';
+                empty.textContent = 'Bạn không có tin nhắn mới.';
+                items.append(empty);
+                return;
+            }
+
+            data.items.forEach((notification) => {
+                const link = document.createElement('a');
+                link.className = 'list-group-item list-group-item-action message-notification-item';
+                link.href = notification.conversationUrl;
+                const sender = document.createElement('strong');
+                sender.className = 'd-block';
+                sender.textContent = `Tin mới từ ${notification.senderName}`;
+                const preview = document.createElement('span');
+                preview.className = 'small text-muted';
+                preview.textContent = notification.preview;
+                link.append(sender, preview);
+                items.append(link);
+            });
+        };
+
+        const refresh = () => fetch('/api/notifications', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+            .then((response) => response.ok ? response.json() : Promise.reject(new Error('Notification request failed')))
+            .then(render)
+            .catch(() => {});
+
+        refresh();
+        window.setInterval(refresh, 30000);
+    })();
+</script>
+</th:block>
 </body>
 </html>

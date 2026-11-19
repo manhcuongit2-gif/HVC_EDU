@@ -26,6 +26,9 @@ public class Teacher {
     @Column(name = "experience", length = 255)
     private String experience;
 
+    @Column(name = "can_manage_students", nullable = false)
+    private boolean canManageStudents = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -46,6 +49,10 @@ public class Teacher {
 
     public String getExperience() { return experience; }
     public void setExperience(String experience) { this.experience = experience; }
+
+    public boolean isCanManageStudents() { return canManageStudents; }
+    public boolean getCanManageStudents() { return canManageStudents; }
+    public void setCanManageStudents(boolean canManageStudents) { this.canManageStudents = canManageStudents; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

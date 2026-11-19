@@ -20,12 +20,12 @@
     </ul>
     <div class="tab-content">
         <section class="tab-pane fade show active" id="sessionResults">
-            <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table table-striped align-middle mb-0">
+            <div class="card border-0 shadow-sm"><div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2"><strong>Kết quả điểm danh đã công bố</strong><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-success" th:href="@{/parent/results/export(view='session',format='xlsx')}">Xuất Excel</a><a class="btn btn-sm btn-outline-danger" th:href="@{/parent/results/export(view='session',format='pdf')}">Xuất PDF</a></div></div><div class="table-responsive"><table class="table table-striped align-middle mb-0">
                 <thead class="table-light"><tr><th>Ngày</th><th>Học sinh</th><th>Lớp</th><th>Điểm danh</th><th>BTVN</th><th>Nhận xét</th><th>Điểm Cộng</th><th>Ghi chú</th></tr></thead>
                 <tbody>
                 <tr th:if="${#lists.isEmpty(sessionReports)}"><td colspan="8" class="text-center text-muted py-4">Chưa có báo cáo buổi học được công bố.</td></tr>
                 <tr th:each="r : ${sessionReports}">
-                    <td th:text="${#temporals.format(r.classSession.sessionDate,'dd/MM/yyyy')}"></td>
+                    <td th:text="|${r.classSession.weekdayDisplay}, ${#temporals.format(r.classSession.sessionDate,'dd/MM/yyyy')}|"></td>
                     <td th:text="${r.student.fullName}"></td><td th:text="${r.classSession.classEntity.name}"></td>
                     <td th:text="${r.attendanceStatus == 'PRESENT' ? 'Có mặt' : (r.attendanceStatus == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></td>
                     <td th:text="${r.homeworkScore != null ? r.homeworkScore : '—'}"></td><td th:text="${r.comment}"></td>
@@ -35,6 +35,7 @@
             </table></div></div>
         </section>
         <section class="tab-pane fade" id="monthlyResults">
+            <div class="d-flex justify-content-end gap-2 mb-3"><a class="btn btn-sm btn-outline-success" th:href="@{/parent/results/export(view='monthly',format='xlsx')}">Xuất Excel</a><a class="btn btn-sm btn-outline-danger" th:href="@{/parent/results/export(view='monthly',format='pdf')}">Xuất PDF</a></div>
             <div class="row g-3">
                 <div th:if="${#lists.isEmpty(monthlyReports)}" class="col-12"><div class="alert alert-info">Chưa có báo cáo tháng được công bố.</div></div>
                 <div th:each="r : ${monthlyReports}" class="col-lg-6">

@@ -61,14 +61,14 @@
                 <div class="col-lg-6" th:each="c : ${myChildren}"><article class="border rounded p-3 h-100">
                     <h6 class="fw-bold" th:text="${c.fullName}"></h6>
                     <div th:if="${latestReports[c.id] != null}" class="small mb-3">
-                        <div class="text-muted">Báo cáo đã công bố gần nhất · <span th:text="${#temporals.format(latestReports[c.id].classSession.sessionDate,'dd/MM/yyyy')}"></span></div>
+                        <div class="text-muted">Báo cáo đã công bố gần nhất · <span th:text="${latestReports[c.id].classSession.weekdayDisplay}"></span>, <span th:text="${#temporals.format(latestReports[c.id].classSession.sessionDate,'dd/MM/yyyy')}"></span></div>
                         <strong th:text="${latestReports[c.id].classSession.classEntity.name}"></strong>
                         <span> · Điểm danh: </span><span th:text="${latestReports[c.id].attendanceStatus == 'PRESENT' ? 'Có mặt' : (latestReports[c.id].attendanceStatus == 'EXCUSED' ? 'Có phép' : 'Vắng')}"></span>
                         <div th:text="${latestReports[c.id].comment}"></div>
                     </div>
                     <div th:if="${latestReports[c.id] == null}" class="small text-muted mb-3">Chưa có báo cáo buổi học được công bố.</div>
                     <div th:if="${upcomingSessions[c.id] != null}" class="small"><div class="text-muted">Buổi học sắp tới</div><strong th:text="${upcomingSessions[c.id].classEntity.name}"></strong>
-                        <span> · </span><span th:text="${#temporals.format(upcomingSessions[c.id].sessionDate,'dd/MM/yyyy')}"></span><span> · </span><span th:text="${upcomingSessions[c.id].startTime}"></span></div>
+                        <span> · </span><span th:text="${upcomingSessions[c.id].weekdayDisplay}"></span>, <span th:text="${#temporals.format(upcomingSessions[c.id].sessionDate,'dd/MM/yyyy')}"></span><span> · </span><span th:text="${upcomingSessions[c.id].startTime}"></span></div>
                     <div th:if="${upcomingSessions[c.id] == null}" class="small text-muted">Chưa có lịch học sắp tới.</div>
                 </article></div>
             </div>

@@ -3,11 +3,15 @@ package com.educenter.controller.admin;
 import com.educenter.dto.ClassDTO;
 import com.educenter.entity.ClassEntity;
 import com.educenter.entity.ClassStudent;
+import com.educenter.security.CustomUserDetails;
 import com.educenter.service.ClassService;
 import com.educenter.service.StudentService;
 import com.educenter.service.SubjectService;
 import com.educenter.service.TeacherService;
+import com.educenter.service.TeacherPayService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -17,6 +21,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Controller
 @RequestMapping("/admin/classes")
@@ -26,15 +32,18 @@ public class AdminClassController {
     private final SubjectService subjectService;
     private final TeacherService teacherService;
     private final StudentService studentService;
+    private final TeacherPayService teacherPayService;
 
     public AdminClassController(ClassService classService,
                                 SubjectService subjectService,
                                 TeacherService teacherService,
-                                StudentService studentService) {
+                                StudentService studentService,
+                                TeacherPayService teacherPayService) {
         this.classService = classService;
         this.subjectService = subjectService;
         this.teacherService = teacherService;
         this.studentService = studentService;
+        this.teacherPayService = teacherPayService;
     }
 
     @GetMapping
@@ -161,6 +170,8 @@ public class AdminClassController {
             model.addAttribute("enrolledStudents", enrolledStudents);
             model.addAttribute("studentCount", studentCount);
             model.addAttribute("allStudents", studentService.findAllActive());
+            model.addAttribute("payRates", teacherPayService.getRateHistory(id));
+            model.addAttribute("payRateToday", LocalDate.now());
             return "admin/classes/detail";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -188,6 +199,21 @@ public class AdminClassController {
         try {
             classService.removeStudentFromClass(id, studentId);
             redirectAttributes.addFlashAttribute("successMessage", "Đã xóa học sinh khỏi lớp học!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/classes/" + id;
+    }
+
+    @PostMapping("/{id}/pay-rates")
+    public String addTeacherPayRate(@PathVariable Long id,
+                                    @RequestParam BigDecimal rate,
+                                    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate effectiveFrom,
+                                    @AuthenticationPrincipal CustomUserDetails user,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            teacherPayService.recordRate(user.getId(), id, rate, effectiveFrom);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã lưu đơn giá dạy cho lớp.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

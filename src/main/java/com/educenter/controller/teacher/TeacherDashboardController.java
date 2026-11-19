@@ -3,6 +3,7 @@ package com.educenter.controller.teacher;
 import com.educenter.entity.ClassEntity;
 import com.educenter.entity.Schedule;
 import com.educenter.repository.ClassRepository;
+import com.educenter.repository.TeacherRepository;
 import com.educenter.security.CustomUserDetails;
 import com.educenter.service.ClassService;
 import com.educenter.service.ScheduleService;
@@ -21,13 +22,16 @@ import java.util.Map;
 public class TeacherDashboardController {
 
     private final ClassRepository classRepository;
+    private final TeacherRepository teacherRepository;
     private final ClassService classService;
     private final ScheduleService scheduleService;
 
     public TeacherDashboardController(ClassRepository classRepository,
+                                    TeacherRepository teacherRepository,
                                     ClassService classService,
                                     ScheduleService scheduleService) {
         this.classRepository = classRepository;
+        this.teacherRepository = teacherRepository;
         this.classService = classService;
         this.scheduleService = scheduleService;
     }
@@ -52,6 +56,8 @@ public class TeacherDashboardController {
         model.addAttribute("classCount", myClasses.size());
         model.addAttribute("totalStudents", totalStudents);
         model.addAttribute("scheduleCount", mySchedules.size());
+        model.addAttribute("canManageStudents", teacherRepository.findByUserId(userDetails.getId())
+                .map(teacher -> teacher.isCanManageStudents()).orElse(false));
         return "teacher/dashboard";
     }
 }

@@ -5,19 +5,34 @@
 <body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div>
 <main class="container-fluid px-lg-4 py-4">
     <a th:href="@{/teacher/reports(month=${#temporals.format(classSession.sessionDate,'yyyy-MM')})}" class="btn btn-outline-secondary btn-sm mb-3">← Danh sách báo cáo</a>
-    <div class="d-flex justify-content-between align-items-center mb-3"><div><h1 class="h3 mb-1">Báo cáo từng buổi</h1><div class="text-muted"><strong th:text="${classSession.classEntity.name}"></strong> · <span th:text="${#temporals.format(classSession.sessionDate,'dd/MM/yyyy')}"></span> · <span th:text="|${classSession.startTime} – ${classSession.endTime}|"></span></div></div>
-        <span th:if="${classSession.publishedAt != null}" class="badge bg-success fs-6">Đã công bố cho phụ huynh</span></div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div><h1 class="h3 mb-1">Báo cáo từng buổi</h1><div class="text-muted"><strong th:text="${classSession.classEntity.name}"></strong> · <span th:text="${classSession.weekdayDisplay}"></span>, <span th:text="${#temporals.format(classSession.sessionDate,'dd/MM/yyyy')}"></span> · <span th:text="|${classSession.startTime} – ${classSession.endTime}|"></span></div></div>
+        <span th:if="${classSession.publishedAt != null}" class="badge bg-success fs-6">Đã công bố cho phụ huynh</span>
+    </div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div><div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-    <form method="post" th:action="@{/teacher/reports/session/{id}(id=${classSession.id})}" class="card border-0 shadow-sm"><div class="table-responsive">
-        <table class="table table-bordered align-middle mb-0"><thead class="table-light"><tr><th>Học sinh</th><th>Điểm danh</th><th>Điểm BTVN (0–10)</th><th>Nhận xét</th><th>Số lượt đánh giá tốt</th><th>Ghi chú</th></tr></thead><tbody>
-        <tr th:if="${#lists.isEmpty(reports)}"><td colspan="6" class="text-center text-muted py-4">Lớp chưa có học sinh được ghi danh tại ngày học này.</td></tr>
-        <tr th:each="r : ${reports}"><td><strong th:text="${r.student.fullName}"></strong><input type="hidden" name="studentIds" th:value="${r.student.id}"></td>
-            <td><select name="attendanceStatuses" class="form-select" required><option value="PRESENT" th:selected="${r.attendanceStatus == 'PRESENT'}">Có mặt</option><option value="ABSENT" th:selected="${r.attendanceStatus == 'ABSENT'}">Vắng</option><option value="EXCUSED" th:selected="${r.attendanceStatus == 'EXCUSED'}">Có phép</option></select></td>
-            <td><input type="number" min="0" max="10" step="0.01" name="homeworkScores" class="form-control" th:value="${r.homeworkScore}" placeholder="Không giao bài: để trống"></td>
-            <td><textarea name="comments" class="form-control" rows="2" required th:text="${r.comment}"></textarea></td>
-            <td><input type="number" min="0" step="1" name="goodEvaluationCounts" class="form-control" th:value="${r.goodEvaluationCount != null ? r.goodEvaluationCount : 0}" required></td>
-            <td><textarea name="notes" class="form-control" rows="2" th:text="${r.note}"></textarea></td></tr>
-        </tbody></table></div>
+    <section class="card border-0 shadow-sm mb-3"><div class="card-body d-flex flex-wrap align-items-center gap-2">
+        <strong class="me-auto">Nhập hoặc tải báo cáo</strong>
+        <a class="btn btn-sm btn-outline-success" th:href="@{/teacher/reports/session/{id}/template.xlsx(id=${classSession.id})}"><i class="bi bi-file-earmark-arrow-down me-1"></i>Tải mẫu Excel</a>
+        <a class="btn btn-sm btn-outline-primary" th:href="@{/teacher/reports/session/{id}/export(id=${classSession.id},format='xlsx')}">Xuất Excel</a>
+        <a class="btn btn-sm btn-outline-danger" th:href="@{/teacher/reports/session/{id}/export(id=${classSession.id},format='pdf')}">Xuất PDF</a>
+        <form method="post" enctype="multipart/form-data" th:action="@{/teacher/reports/session/{id}/import/preview(id=${classSession.id})}" class="d-flex flex-wrap gap-2">
+            <input type="file" name="file" class="form-control form-control-sm" accept=".xlsx,.xls" required aria-label="Chọn tệp Excel" style="max-width:260px">
+            <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-eye me-1"></i>Xem trước Excel</button>
+        </form>
+    </div></section>
+    <form method="post" th:action="@{/teacher/reports/session/{id}(id=${classSession.id})}" class="card border-0 shadow-sm">
+        <div class="table-responsive"><table class="table table-bordered align-middle mb-0">
+            <thead class="table-light"><tr><th>Học sinh</th><th>Điểm danh</th><th>Điểm BTVN (0–10)</th><th>Nhận xét</th><th>Điểm Cộng</th><th>Ghi chú</th></tr></thead><tbody>
+            <tr th:if="${#lists.isEmpty(reports)}"><td colspan="6" class="text-center text-muted py-4">Lớp chưa có học sinh được ghi danh tại ngày học này.</td></tr>
+            <tr th:each="r : ${reports}"><td><strong th:text="${r.student.fullName}"></strong><input type="hidden" name="studentIds" th:value="${r.student.id}"></td>
+                <td><select name="attendanceStatuses" class="form-select" required><option value="PRESENT" th:selected="${r.attendanceStatus == 'PRESENT'}">Có mặt</option><option value="ABSENT" th:selected="${r.attendanceStatus == 'ABSENT'}">Vắng</option><option value="EXCUSED" th:selected="${r.attendanceStatus == 'EXCUSED'}">Có phép</option></select></td>
+                <td><input type="number" min="0" max="10" step="0.01" name="homeworkScores" class="form-control" th:value="${r.homeworkScore}" placeholder="Không giao bài: để trống"></td>
+                <td><textarea name="comments" class="form-control" rows="2" required th:text="${r.comment}"></textarea></td>
+                <td><input type="number" min="0" step="1" name="goodEvaluationCounts" class="form-control" th:value="${r.goodEvaluationCount != null ? r.goodEvaluationCount : 0}" required></td>
+                <td><textarea name="notes" class="form-control" rows="2" th:text="${r.note}"></textarea></td>
+            </tr>
+            </tbody>
+        </table></div>
         <div class="card-body d-flex justify-content-end gap-2"><button class="btn btn-outline-primary" name="publish" value="false" th:disabled="${#lists.isEmpty(reports)}">Lưu bản nháp</button><button class="btn btn-primary" name="publish" value="true" th:disabled="${#lists.isEmpty(reports)}" onclick="return confirm('Công bố báo cáo cho phụ huynh?')">Lưu và công bố</button></div>
     </form>
 </main></body></html>

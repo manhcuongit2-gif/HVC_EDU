@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản lý học sinh · EduCenter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4 flex-wrap gap-2">
+        <div><h1 class="h3 mb-1">Quản lý học sinh</h1><p class="text-muted mb-0" th:text="${classEntity.name}"></p></div>
+        <a th:href="@{/teacher/classes}" class="btn btn-outline-secondary">Về danh sách lớp</a>
+    </div>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <section class="card border-0 shadow-sm h-100"><div class="card-body">
+                <h2 class="h5">Thêm hồ sơ có sẵn</h2>
+                <form method="post" th:action="@{/teacher/classes/{id}/students(id=${classEntity.id})}" class="d-flex gap-2">
+                    <select name="studentId" class="form-select" required>
+                        <option value="">Chọn học sinh</option>
+                        <option th:each="student : ${availableStudents}" th:value="${student.id}"
+                                th:text="${student.fullName} + ' · ' + ${student.parent.user.fullName}"></option>
+                    </select>
+                    <button class="btn btn-primary text-nowrap" type="submit">Thêm vào lớp</button>
+                </form>
+                <p class="small text-muted mt-2 mb-0">Học sinh được thêm vào roster của lớp này; hồ sơ phụ huynh được giữ nguyên.</p>
+            </div></section>
+        </div>
+        <div class="col-lg-6">
+            <section class="card border-0 shadow-sm h-100"><div class="card-body">
+                <h2 class="h5">Tạo hồ sơ học sinh mới</h2>
+                <form method="post" th:action="@{/teacher/classes/{id}/students/new(id=${classEntity.id})}">
+                    <div class="mb-2"><label class="form-label">Họ tên</label><input class="form-control" name="fullName" th:value="${studentForm.fullName}" required maxlength="100"></div>
+                    <div class="row g-2">
+                        <div class="col-md-6 mb-2"><label class="form-label">Ngày sinh</label><input class="form-control" type="date" name="dateOfBirth" th:value="${studentForm.dateOfBirth}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Giới tính</label><input class="form-control" name="gender" th:value="${studentForm.gender}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Số điện thoại</label><input class="form-control" name="phone" th:value="${studentForm.phone}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Khối/lớp</label><input class="form-control" name="gradeLevel" th:value="${studentForm.gradeLevel}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Trường</label><input class="form-control" name="school" th:value="${studentForm.school}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label">Phụ huynh</label>
+                            <select class="form-select" name="parentId" required><option value="">Chọn phụ huynh</option>
+                                <option th:each="parent : ${parents}" th:value="${parent.id}" th:selected="${studentForm.parentId == parent.id}" th:text="${parent.user.fullName}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary mt-2" type="submit">Tạo và thêm vào lớp</button>
+                </form>
+            </div></section>
+        </div>
+    </div>
+    <section class="card border-0 shadow-sm"><div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="fw-semibold">Học sinh đang theo học <span class="badge text-bg-light border ms-1" th:text="${#lists.size(enrolledStudents)}">0</span></div>
+        <label class="visually-hidden" for="studentSearch">Tìm học sinh</label>
+        <div class="input-group input-group-sm" style="max-width: 320px"><span class="input-group-text"><i class="bi bi-search"></i></span><input id="studentSearch" class="form-control" type="search" placeholder="Tìm tên, phụ huynh, khối..."></div>
+    </div>
+        <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>Học sinh</th><th>Khối / trường</th><th>Phụ huynh</th><th>Ngày vào lớp</th><th class="text-end">Thao tác</th></tr></thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(enrolledStudents)}"><td colspan="5" class="text-center text-muted py-4">Lớp chưa có học sinh.</td></tr>
+            <tr th:each="enrollment : ${enrolledStudents}" class="student-row">
+                <td><strong th:text="${enrollment.student.fullName}"></strong><small class="d-block text-muted" th:text="${enrollment.student.phone}"></small></td>
+                <td><span th:text="${enrollment.student.gradeLevel != null ? enrollment.student.gradeLevel : '—'}"></span><small class="d-block text-muted" th:text="${enrollment.student.school}"></small></td>
+                <td th:text="${enrollment.student.parent.user.fullName}"></td>
+                <td th:text="${#temporals.format(enrollment.enrolledDate, 'dd/MM/yyyy')}"></td>
+                <td class="text-end text-nowrap">
+                    <a class="btn btn-sm btn-outline-primary" th:href="@{/teacher/classes/{classId}/students/{studentId}/edit(classId=${classEntity.id},studentId=${enrollment.student.id})}">Sửa</a>
+                    <form class="d-inline" method="post" th:action="@{/teacher/classes/{classId}/students/{studentId}/drop(classId=${classEntity.id},studentId=${enrollment.student.id})}" onsubmit="return confirm('Gỡ học sinh khỏi lớp này? Lịch sử sẽ được giữ lại.')">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Gỡ khỏi lớp</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table></div>
+    </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const studentSearch = document.getElementById('studentSearch');
+    studentSearch?.addEventListener('input', () => {
+        const query = studentSearch.value.trim().toLocaleLowerCase('vi');
+        document.querySelectorAll('.student-row').forEach(row => {
+            row.hidden = !row.textContent.toLocaleLowerCase('vi').includes(query);
+        });
+    });
+</script>
+</body>
+</html>

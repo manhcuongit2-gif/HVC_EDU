@@ -1,6 +1,8 @@
 package com.educenter;
 
 import com.educenter.dto.CalendarDay;
+import com.educenter.dto.TeacherEarningRow;
+import com.educenter.dto.TeacherEarningsPage;
 import com.educenter.entity.ClassEntity;
 import com.educenter.entity.ClassSession;
 import com.educenter.entity.Role;
@@ -24,6 +26,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.math.BigDecimal;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.List;
 
@@ -68,6 +73,7 @@ class TemplateRenderingTest {
 
         assertTrue(html.contains("Toán lớp 7"));
         assertTrue(html.contains("17:30"));
+        assertTrue(html.contains("Thứ Năm"));
     }
 
     @Test
@@ -166,6 +172,78 @@ class TemplateRenderingTest {
 
         assertTrue(html.contains("Math teacher"));
         assertTrue(html.contains("/admin/messages/12"));
+    }
+
+    @Test
+    void rendersTeacherEarningsWithVietnameseWeekday() {
+        User teacherUser = new User();
+        teacherUser.setId(12L);
+        teacherUser.setFullName("Giáo viên");
+        teacherUser.setRole(new Role(2, "ROLE_TEACHER", "Giáo viên"));
+        ClassEntity classEntity = new ClassEntity();
+        classEntity.setName("Toán lớp 7");
+        ClassSession session = new ClassSession();
+        session.setClassEntity(classEntity);
+        session.setSessionDate(LocalDate.of(2026, 11, 19));
+        session.setStartTime(LocalTime.of(17, 30));
+        session.setEndTime(LocalTime.of(19, 0));
+        TeacherEarningsPage page = new TeacherEarningsPage(
+                List.of(new TeacherEarningRow(session, new BigDecimal("150000"), new BigDecimal("150000"))),
+                new BigDecimal("150000"), new BigDecimal("150000"), YearMonth.of(2026, 11));
+
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(teacherUser));
+        context.setVariable("earnings", page);
+        context.setVariable("previousMonth", YearMonth.of(2026, 10));
+        context.setVariable("nextMonth", YearMonth.of(2026, 12));
+
+        String html = templateEngine.process("teacher/earnings", context);
+
+        assertTrue(html.contains("Thứ Năm"));
+        assertTrue(html.contains("Toán lớp 7"));
+        assertTrue(html.contains("150,000"));
+    }
+
+    @Test
+    void rendersTeacherClassRosterPage() {
+        User teacherUser = new User();
+        teacherUser.setId(12L);
+        teacherUser.setFullName("Giáo viên");
+        teacherUser.setRole(new Role(2, "ROLE_TEACHER", "Giáo viên"));
+        ClassEntity classEntity = new ClassEntity();
+        classEntity.setName("Toán lớp 7");
+
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(teacherUser));
+        context.setVariable("classEntity", classEntity);
+        context.setVariable("enrolledStudents", List.of());
+        context.setVariable("availableStudents", List.of());
+        context.setVariable("parents", List.of());
+        context.setVariable("studentForm", new com.educenter.dto.TeacherStudentForm());
+
+        String html = templateEngine.process("teacher/class-students", context);
+
+        assertTrue(html.contains("Quản lý học sinh"));
+        assertTrue(html.contains("Tạo hồ sơ học sinh mới"));
+        assertTrue(html.contains("Toán lớp 7"));
+    }
+
+    @Test
+    void parentDashboardPrioritizesRecentLearningReport() throws IOException {
+        try (var input = getClass().getClassLoader().getResourceAsStream("templates/parent/dashboard.html")) {
+            assertTrue(input != null);
+            String template = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(template.indexOf("Báo cáo gần nhất và lịch học sắp tới") < template.indexOf("Truy cập nhanh"));
+        }
+    }
+
+    @Test
+    void loginPageUsesAcademicVisuals() {
+        String html = templateEngine.process("auth/login", webContext());
+
+        assertTrue(html.contains("school-mark"));
+        assertTrue(html.contains("bi-book-half"));
+        assertTrue(html.contains("TRUNG TÂM HỌC TẬP"));
     }
 
     private WebContext webContext() {

@@ -54,7 +54,9 @@ public class TeacherAdminMessageServiceImpl implements TeacherAdminMessageServic
     public TeacherAdminConversationPage openForTeacher(Long teacherUserId) {
         User teacher = requireTeacher(teacherUserId);
         User admin = findPrimaryAdmin();
-        return page(getOrCreate(teacher, admin));
+        TeacherAdminConversation conversation = getOrCreate(teacher, admin);
+        markTeacherMessagesRead(conversation);
+        return page(conversation);
     }
 
     @Override
@@ -62,7 +64,9 @@ public class TeacherAdminMessageServiceImpl implements TeacherAdminMessageServic
     public TeacherAdminConversationPage openForAdmin(Long adminUserId, Long teacherUserId) {
         User admin = requirePrimaryAdmin(adminUserId);
         User teacher = requireTeacher(teacherUserId);
-        return page(getOrCreate(teacher, admin));
+        TeacherAdminConversation conversation = getOrCreate(teacher, admin);
+        markAdminMessagesRead(conversation);
+        return page(conversation);
     }
 
     @Override
@@ -123,6 +127,24 @@ public class TeacherAdminMessageServiceImpl implements TeacherAdminMessageServic
     private TeacherAdminConversationPage page(TeacherAdminConversation conversation) {
         return new TeacherAdminConversationPage(conversation,
                 messageRepository.findByConversationIdOrderByCreatedAtAscIdAsc(conversation.getId()));
+    }
+
+    private void markTeacherMessagesRead(TeacherAdminConversation conversation) {
+        messageRepository.findTopByConversationIdOrderByIdDesc(conversation.getId()).ifPresent(message -> {
+            if (message.getId() > conversation.getTeacherLastReadMessageId()) {
+                conversation.setTeacherLastReadMessageId(message.getId());
+                conversationRepository.save(conversation);
+            }
+        });
+    }
+
+    private void markAdminMessagesRead(TeacherAdminConversation conversation) {
+        messageRepository.findTopByConversationIdOrderByIdDesc(conversation.getId()).ifPresent(message -> {
+            if (message.getId() > conversation.getAdminLastReadMessageId()) {
+                conversation.setAdminLastReadMessageId(message.getId());
+                conversationRepository.save(conversation);
+            }
+        });
     }
 
     private void saveMessage(TeacherAdminConversation conversation, Long senderId, String content) {

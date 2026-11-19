@@ -106,6 +106,15 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     @Transactional
+    public void setStudentManagementPermission(Long id, boolean enabled) {
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giáo viên."));
+        teacher.setCanManageStudents(enabled);
+        teacherRepository.save(teacher);
+    }
+
+    @Override
+    @Transactional
     public void toggleActive(Long id) {
         Teacher teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên với ID: " + id));

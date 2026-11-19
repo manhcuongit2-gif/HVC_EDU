@@ -32,6 +32,12 @@ public class TeacherAdminConversation {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "teacher_last_read_message_id", nullable = false)
+    private Long teacherLastReadMessageId = 0L;
+
+    @Column(name = "admin_last_read_message_id", nullable = false)
+    private Long adminLastReadMessageId = 0L;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public User getTeacherUser() { return teacherUser; }
@@ -41,4 +47,8 @@ public class TeacherAdminConversation {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public Long getTeacherLastReadMessageId() { return teacherLastReadMessageId == null ? 0L : teacherLastReadMessageId; }
+    public void setTeacherLastReadMessageId(Long teacherLastReadMessageId) { this.teacherLastReadMessageId = teacherLastReadMessageId; }
+    public Long getAdminLastReadMessageId() { return adminLastReadMessageId == null ? 0L : adminLastReadMessageId; }
+    public void setAdminLastReadMessageId(Long adminLastReadMessageId) { this.adminLastReadMessageId = adminLastReadMessageId; }
 }

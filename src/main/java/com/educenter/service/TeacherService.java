@@ -12,6 +12,7 @@ public interface TeacherService {
     Optional<Teacher> findById(Long id);
     Teacher createTeacher(TeacherDTO dto);
     Teacher updateTeacher(Long id, TeacherDTO dto);
+    void setStudentManagementPermission(Long id, boolean enabled);
     void toggleActive(Long id);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);

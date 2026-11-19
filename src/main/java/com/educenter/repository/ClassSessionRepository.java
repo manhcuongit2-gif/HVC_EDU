@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +27,15 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
 
     @Query("select s from ClassSession s where s.classEntity.teacher.user.id = :userId and s.sessionDate between :from and :to order by s.sessionDate, s.startTime")
     List<ClassSession> findForTeacherBetween(@Param("userId") Long userId, @Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    @Query("select distinct s from ClassSession s where s.classEntity.teacher.user.id = :userId " +
+            "and (s.sessionDate < :today or (s.sessionDate = :today and s.endTime <= :throughTime)) " +
+            "and s.status <> 'CANCELLED' " +
+            "and exists (select r.id from SessionStudentReport r where r.classSession.id = s.id) " +
+            "order by s.sessionDate desc, s.startTime desc")
+    List<ClassSession> findEarningSessionsForTeacher(@Param("userId") Long userId,
+                                                    @Param("today") LocalDate today,
+                                                    @Param("throughTime") LocalTime throughTime);
 
     @Query("select s from ClassSession s where s.classEntity.id = :classId and s.sessionDate between :from and :to and s.status <> 'CANCELLED' order by s.sessionDate, s.startTime")
     List<ClassSession> findReportableForClassBetween(@Param("classId") Long classId, @Param("from") LocalDate from, @Param("to") LocalDate to);

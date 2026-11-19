@@ -23,13 +23,13 @@
 <div class="container py-4">
     <!-- Header Section -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
-        <div>
+                <div>
             <h2 class="h3 fw-bold text-dark mb-1">
                 <i class="bi bi-easel2-fill text-primary me-2"></i>Danh sách Lớp học phụ trách
             </h2>
             <p class="text-muted mb-0">Quản lý chuyên môn, thực hiện điểm danh và vào điểm cho các lớp học</p>
         </div>
-            <div class="d-flex gap-2"><a th:href="@{/teacher/reports}" class="btn btn-primary"><i class="bi bi-clipboard2-check me-1"></i>Báo cáo học sinh</a><a th:href="@{/teacher/materials}" class="btn btn-outline-success">Tài liệu</a><a th:href="@{/teacher/messages}" class="btn btn-outline-secondary">Tin nhắn</a>
+            <div class="d-flex flex-wrap gap-2"><a th:if="${canManageStudents}" th:href="@{/teacher/students}" class="btn btn-outline-primary"><i class="bi bi-people me-1"></i>Quản lý học sinh</a><a th:href="@{/teacher/reports}" class="btn btn-primary"><i class="bi bi-clipboard2-check me-1"></i>Báo cáo học sinh</a><a th:href="@{/teacher/materials}" class="btn btn-outline-success">Tài liệu</a><a th:href="@{/teacher/messages}" class="btn btn-outline-secondary">Tin nhắn</a>
                 <a th:href="@{/teacher/dashboard}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Về Dashboard</a></div>
     </div>
 
@@ -52,7 +52,7 @@
                             <th class="text-center" style="width: 120px;">Sĩ số</th>
                             <th>Thời gian khóa học</th>
                             <th class="text-center" style="width: 130px;">Trạng thái</th>
-                            <th style="width: 220px;" class="text-end pe-4">Nghiệp vụ giảng dạy</th>
+                            <th style="width: 320px;" class="text-end pe-4">Nghiệp vụ giảng dạy</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,6 +93,9 @@
                                     </a>
                                     <a th:href="@{/teacher/grades/{id}(id=${c.id})}" class="btn btn-outline-primary">
                                         <i class="bi bi-award me-1"></i>Bảng điểm
+                                    </a>
+                <a th:if="${canManageStudents}" th:href="@{/teacher/classes/{id}/students(id=${c.id})}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-people me-1"></i>Học sinh
                                     </a>
                                 </div>
                             </td>

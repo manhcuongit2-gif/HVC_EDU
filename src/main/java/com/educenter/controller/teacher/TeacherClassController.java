@@ -8,6 +8,7 @@ import com.educenter.service.AttendanceService;
 import com.educenter.service.ClassService;
 import com.educenter.service.GradeService;
 import com.educenter.service.ScheduleService;
+import com.educenter.util.VietnameseDateFormatter;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -57,6 +58,8 @@ public class TeacherClassController {
         model.addAttribute("classes", classes);
         model.addAttribute("studentCounts", studentCounts);
         model.addAttribute("currentUser", userDetails);
+        model.addAttribute("canManageStudents", teacherRepository.findByUserId(userDetails.getId())
+                .map(Teacher::isCanManageStudents).orElse(false));
         return "teacher/classes";
     }
 
@@ -81,6 +84,7 @@ public class TeacherClassController {
             model.addAttribute("classEntity", classEntity);
             model.addAttribute("enrolledStudents", enrolledStudents);
             model.addAttribute("targetDate", targetDate);
+            model.addAttribute("targetWeekdayDisplay", VietnameseDateFormatter.weekday(targetDate));
             model.addAttribute("attendanceMap", attendanceMap);
             model.addAttribute("currentUser", userDetails);
             return "teacher/attendance";

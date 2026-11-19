@@ -3,6 +3,7 @@ package com.educenter.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.educenter.util.VietnameseDateFormatter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -75,6 +76,8 @@ public class ClassSession {
     public void setOccurrenceDate(LocalDate occurrenceDate) { this.occurrenceDate = occurrenceDate; }
     public LocalDate getSessionDate() { return sessionDate; }
     public void setSessionDate(LocalDate sessionDate) { this.sessionDate = sessionDate; }
+    @Transient
+    public String getWeekdayDisplay() { return VietnameseDateFormatter.weekday(sessionDate); }
     public LocalTime getStartTime() { return startTime; }
     public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
     public LocalTime getEndTime() { return endTime; }
