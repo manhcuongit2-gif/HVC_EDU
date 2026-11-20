@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Hùng Cường AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/ai.css}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js" defer></script>
+    <script th:inline="none">
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }, options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] } };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+</head>
+<body class="ai-body">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="ai-app" id="aiApp" th:attr="data-role=${roleName}">
+    <aside class="ai-sidebar" id="aiSidebar">
+        <div class="ai-brand"><span class="ai-logo"><i class="bi bi-stars"></i></span><div><strong>Hùng Cường AI</strong><small>Trợ lý giáo dục</small></div>
+            <button type="button" class="btn btn-sm btn-light d-lg-none" id="closeSidebar" aria-label="Đóng thanh bên"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <button type="button" class="btn ai-new-chat" id="newConversation"><i class="bi bi-plus-lg me-2"></i>Cuộc trò chuyện mới</button>
+        <label class="ai-search"><i class="bi bi-search"></i><input type="search" id="conversationSearch" placeholder="Tìm cuộc trò chuyện" autocomplete="off"></label>
+        <div class="ai-history-title">Lịch sử</div>
+        <div class="ai-history" id="conversationList" aria-live="polite"><div class="small text-muted px-2">Đang tải…</div></div>
+        <div class="ai-sidebar-tools">
+            <div class="ai-history-title">Công cụ</div>
+            <a th:if="${roleName == 'ROLE_ADMIN'}" href="#composer" class="ai-tool-link"><i class="bi bi-clipboard-data"></i> Trợ lý quản lý</a>
+            <a th:if="${roleName == 'ROLE_ADMIN'}" th:href="@{/admin/ai-management}" class="ai-tool-link"><i class="bi bi-sliders"></i> Quản lý AI</a>
+            <a th:if="${roleName == 'ROLE_TEACHER'}" href="#teacherTools" class="ai-tool-link"><i class="bi bi-journal-plus"></i> Soạn bài tập và đề</a>
+            <a th:if="${roleName == 'ROLE_PARENT'}" href="#contextPicker" class="ai-tool-link"><i class="bi bi-mortarboard"></i> Theo dõi việc học</a>
+        </div>
+        <div class="ai-sidebar-user"><span class="ai-avatar" th:text="${#strings.substring(currentUser.fullName,0,1)}">U</span><div><strong th:text="${currentUser.fullName}">Người dùng</strong><small th:text="${roleName == 'ROLE_ADMIN' ? 'Quản trị viên' : (roleName == 'ROLE_TEACHER' ? 'Người dạy' : 'Phụ huynh')}">Vai trò</small></div></div>
+    </aside>
+    <div class="ai-sidebar-scrim" id="sidebarScrim"></div>
+
+    <main class="ai-main">
+        <header class="ai-topbar">
+            <button type="button" class="btn btn-light d-lg-none" id="openSidebar" aria-label="Mở lịch sử"><i class="bi bi-list fs-5"></i></button>
+            <div class="ai-context-controls" id="contextPicker">
+                <label th:if="${roleName == 'ROLE_PARENT'}" class="form-label mb-0 small text-muted">Học sinh
+                    <select id="contextId" class="form-select form-select-sm">
+                        <option value="">Chọn con</option>
+                        <option th:each="child : ${aiChildren}" th:value="${child.id}" th:text="${child.fullName}"></option>
+                    </select>
+                </label>
+                <label th:if="${roleName == 'ROLE_TEACHER'}" class="form-label mb-0 small text-muted">Lớp được phân công
+                    <select id="contextId" class="form-select form-select-sm">
+                        <option value="">Chọn lớp (không bắt buộc)</option>
+                        <option th:each="classItem : ${aiClasses}" th:value="${classItem.id}" th:text="${classItem.name}"></option>
+                    </select>
+                </label>
+                <span th:if="${roleName == 'ROLE_ADMIN'}" class="small text-muted"><i class="bi bi-shield-check me-1"></i>Dữ liệu quản lý được truy vấn có phân quyền</span>
+            </div>
+            <a th:if="${roleName == 'ROLE_ADMIN'}" class="btn btn-outline-primary btn-sm d-none d-md-inline-flex" th:href="@{/admin/ai-management}"><i class="bi bi-sliders me-1"></i>Quản lý AI</a>
+        </header>
+
+        <section class="ai-scroll" id="aiScroll">
+            <div class="ai-welcome" id="welcomePanel">
+                <div class="ai-welcome-mark"><i class="bi bi-stars"></i></div>
+                <p class="ai-eyebrow">TRỢ LÝ GIÁO DỤC</p>
+                <h1 th:text="${roleName == 'ROLE_ADMIN' ? 'Xin chào, nhà quản lý' : (roleName == 'ROLE_TEACHER' ? 'Xin chào người dạy' : 'Xin chào phụ huynh')}">Xin chào</h1>
+                <p class="text-muted" th:text="${roleName == 'ROLE_PARENT' ? 'Chọn học sinh để hỏi về kết quả, lịch học và học phí. Hùng Cường AI sẽ hướng dẫn học tập dựa trên dữ liệu được phép.' : 'Hãy bắt đầu với một câu hỏi hoặc chọn công cụ phù hợp bên dưới.'}">Hãy bắt đầu trò chuyện.</p>
+                <div class="ai-suggestions" th:if="${roleName == 'ROLE_ADMIN'}">
+                    <button type="button" class="ai-suggestion" data-prompt="Tóm tắt số học sinh, lớp học, người dạy và tình hình đăng ký trong tháng này."><i class="bi bi-bar-chart"></i><span><strong>Tình hình trung tâm</strong><small>Tổng quan số liệu tháng này</small></span></button>
+                    <button type="button" class="ai-suggestion" data-prompt="Phân tích học phí đã thu và còn phải thu trong tháng này."><i class="bi bi-cash-coin"></i><span><strong>Phân tích học phí</strong><small>Dựa trên số liệu hệ thống</small></span></button>
+                    <button type="button" class="ai-suggestion" data-prompt="Những buổi học nào trong tháng này chưa công bố báo cáo?"><i class="bi bi-file-earmark-text"></i><span><strong>Tiến độ báo cáo</strong><small>Kiểm tra báo cáo buổi học</small></span></button>
+                    <button type="button" class="ai-suggestion" data-prompt="Soạn một thông báo lịch sự gửi phụ huynh về lịch học sắp tới."><i class="bi bi-megaphone"></i><span><strong>Soạn thông báo</strong><small>Bản nháp để quản trị viên duyệt</small></span></button>
+                </div>
+                <div class="ai-suggestions" th:if="${roleName == 'ROLE_TEACHER'}">
+                    <button type="button" class="ai-suggestion" data-prompt="Gợi ý cách ôn tập kiến thức cho học sinh lớp của tôi."><i class="bi bi-lightbulb"></i><span><strong>Gợi ý ôn tập</strong><small>Dựa trên dữ liệu lớp đã chọn</small></span></button>
+                    <button type="button" class="ai-suggestion" data-prompt="Soạn một thông báo ngắn về lịch học tuần tới để tôi gửi phụ huynh."><i class="bi bi-chat-square-text"></i><span><strong>Soạn thông báo</strong><small>Bạn sẽ kiểm tra trước khi gửi</small></span></button>
+                </div>
+                <div class="ai-suggestions" th:if="${roleName == 'ROLE_PARENT'}">
+                    <button type="button" class="ai-suggestion" data-prompt="Tóm tắt tình hình học tập của con trong tháng này."><i class="bi bi-graph-up-arrow"></i><span><strong>Tình hình học tập</strong><small>Điểm, chuyên cần và nhận xét đã công bố</small></span></button>
+                    <button type="button" class="ai-suggestion" data-prompt="Buổi học tiếp theo của con diễn ra khi nào?"><i class="bi bi-calendar-event"></i><span><strong>Lịch học sắp tới</strong><small>Tra cứu lịch trong hệ thống</small></span></button>
+                    <button type="button" class="ai-suggestion" data-prompt="Tháng này con còn khoản học phí nào chưa đóng?"><i class="bi bi-credit-card"></i><span><strong>Học phí</strong><small>Xem khoản đã thu và còn phải thu</small></span></button>
+                    <button type="button" class="ai-suggestion" data-prompt="Hãy gợi ý cách hỗ trợ con ôn tập ở nhà theo từng bước."><i class="bi bi-house-heart"></i><span><strong>Hỗ trợ học tại nhà</strong><small>Ưu tiên hướng dẫn phương pháp</small></span></button>
+                </div>
+            </div>
+            <div class="ai-messages d-none" id="messageList" aria-live="polite"></div>
+            <div class="ai-result-panel d-none" id="toolResultPanel">
+                <div class="d-flex align-items-center justify-content-between gap-2"><strong><i class="bi bi-file-earmark-text me-2"></i>Kết quả công cụ</strong><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-secondary" data-export="docx">Tải Word</button><button type="button" class="btn btn-sm btn-outline-secondary" data-export="pdf">Tải PDF</button><button type="button" class="btn btn-sm btn-outline-primary" id="useResultInChat">Dùng trong trò chuyện</button></div></div>
+                <pre id="toolResult" class="ai-tool-result"></pre>
+            </div>
+        </section>
+
+        <section class="ai-tools d-none" id="teacherTools" th:if="${roleName == 'ROLE_TEACHER'}">
+            <details>
+                <summary><i class="bi bi-journal-plus me-2"></i>Soạn bài tập hoặc đề kiểm tra</summary>
+                <div class="row g-3 pt-3">
+                    <div class="col-lg-6"><form id="exerciseForm" class="ai-tool-form">
+                        <h2 class="h6">Tạo bài tập</h2>
+                        <div class="row g-2"><div class="col-6"><input class="form-control form-control-sm" name="subject" placeholder="Môn học" required></div><div class="col-6"><input class="form-control form-control-sm" name="gradeLevel" placeholder="Khối lớp"></div>
+                            <div class="col-12"><input class="form-control form-control-sm" name="topic" placeholder="Chủ đề" required></div><div class="col-12"><textarea class="form-control form-control-sm" name="knowledge" rows="2" placeholder="Nội dung kiến thức"></textarea></div>
+                            <div class="col-4"><input class="form-control form-control-sm" name="count" type="number" value="5" min="1" max="20" aria-label="Số bài"></div><div class="col-4"><input class="form-control form-control-sm" name="difficulty" placeholder="Độ khó"></div><div class="col-4"><input class="form-control form-control-sm" name="minutes" type="number" value="30" min="1" max="240" aria-label="Thời gian phút"></div>
+                            <div class="col-12"><textarea class="form-control form-control-sm" name="extraRequirements" rows="2" placeholder="Yêu cầu bổ sung"></textarea></div><div class="col-12"><button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-stars me-1"></i>Tạo bài tập</button></div></div>
+                    </form></div>
+                    <div class="col-lg-6"><form id="examForm" class="ai-tool-form">
+                        <h2 class="h6">Tạo đề kiểm tra</h2>
+                        <div class="row g-2"><div class="col-6"><input class="form-control form-control-sm" name="subject" placeholder="Môn học" required></div><div class="col-6"><input class="form-control form-control-sm" name="gradeLevel" placeholder="Khối lớp"></div>
+                            <div class="col-12"><input class="form-control form-control-sm" name="scope" placeholder="Phạm vi kiến thức" required></div><div class="col-6"><input class="form-control form-control-sm" name="questionCount" type="number" min="1" max="100" value="10" aria-label="Số câu"></div><div class="col-6"><input class="form-control form-control-sm" name="minutes" type="number" min="1" max="180" value="45" aria-label="Thời gian phút"></div>
+                            <div class="col-6"><input class="form-control form-control-sm" name="structure" placeholder="Trắc nghiệm/tự luận"></div><div class="col-6"><input class="form-control form-control-sm" name="difficulty" placeholder="Độ khó"></div>
+                            <div class="col-6 form-check ms-2"><input class="form-check-input" type="checkbox" name="includeAnswerKey" id="includeAnswerKey" checked><label class="form-check-label small" for="includeAnswerKey">Kèm đáp án</label></div><div class="col-5 form-check"><input class="form-check-input" type="checkbox" name="includeExplanation" id="includeExplanation"><label class="form-check-label small" for="includeExplanation">Lời giải chi tiết</label></div>
+                            <div class="col-12"><button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-stars me-1"></i>Tạo đề</button></div></div>
+                    </form></div>
+                    <p class="small text-muted mb-0">Tài liệu do AI tạo là bản nháp. Người dạy cần kiểm tra câu hỏi, đáp án và thang điểm trước khi sử dụng.</p>
+                </div>
+            </details>
+        </section>
+
+        <footer class="ai-composer-wrap" id="composer">
+            <div class="ai-working d-none" id="workingIndicator"><span class="spinner-border spinner-border-sm me-2"></span>Hùng Cường AI đang xử lý <button id="stopGeneration" class="btn btn-sm btn-link">Dừng</button></div>
+            <div id="documentPreview" class="ai-document-preview d-none"><span><i class="bi bi-file-earmark-check me-1"></i><span id="documentName"></span> đã trích xuất</span><button type="button" class="btn-close" id="removeDocument" aria-label="Xóa tài liệu"></button></div>
+            <form id="chatForm" class="ai-composer">
+                <div class="ai-composer-row">
+                    <label class="btn btn-light ai-attach" th:if="${roleName == 'ROLE_TEACHER'}" title="Đính kèm tài liệu PDF, Word, Excel hoặc TXT">
+                        <i class="bi bi-paperclip"></i><input type="file" id="documentFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" hidden>
+                    </label>
+                    <textarea id="chatInput" rows="1" maxlength="50000" placeholder="Nhập câu hỏi…" aria-label="Câu hỏi cho Hùng Cường AI"></textarea>
+                    <button type="submit" class="btn btn-primary ai-send" id="sendButton" aria-label="Gửi câu hỏi"><i class="bi bi-arrow-up"></i></button>
+                </div>
+                <div class="ai-composer-hint"><span>Enter để gửi · Shift + Enter để xuống dòng</span><span>AI có thể mắc lỗi. Hãy kiểm tra thông tin quan trọng.</span></div>
+            </form>
+        </footer>
+    </main>
+</div>
+<script th:src="@{/js/ai.js}" defer></script>
+</body>
+</html>

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletContext;
+import org.springframework.security.web.csrf.DefaultCsrfToken;
 import org.thymeleaf.context.WebContext;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.TemplateEngine;
@@ -52,6 +53,22 @@ class TemplateRenderingTest {
         resolver.setCacheable(false);
         templateEngine = new SpringTemplateEngine();
         templateEngine.setTemplateResolver(resolver);
+    }
+
+    @Test
+    void rendersAiHomeForParent() {
+        User parentUser = testUser(7L, "Phụ huynh kiểm thử", "ROLE_PARENT");
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(parentUser));
+        context.setVariable("roleName", "ROLE_PARENT");
+        context.setVariable("aiChildren", List.of());
+        context.setVariable("_csrf", new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", "test-token"));
+
+        String html = templateEngine.process("ai/index", context);
+
+        assertTrue(html.contains("Hùng Cường AI"));
+        assertTrue(html.contains("Xin chào phụ huynh"));
+        assertTrue(html.contains("class=\"ai-floating-launcher\""));
     }
 
     @Test

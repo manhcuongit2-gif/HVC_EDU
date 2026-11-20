@@ -64,6 +64,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" th:classappend="${activeMenu == 'ai'} ? ' active' : ''" th:href="@{/admin/ai-management}">
+                    <i class="bi bi-stars"></i> Hùng Cường AI
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" th:classappend="${activeMenu == 'chat'} ? ' active' : ''" th:href="@{/chat}">
                     <i class="bi bi-chat-square-text"></i> Tin nhắn
                 </a>
