@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bài tập về nhà · EduCenter</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"></head>
+<body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div><main class="container py-4">
+  <div class="mb-4"><h1 class="h3">Bài tập về nhà</h1><p class="text-secondary">Giao bài, theo dõi bài nộp và nhận xét cho lớp bạn phụ trách.</p></div>
+  <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div><div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+  <div class="card border-0 shadow-sm rounded-4 mb-4"><div class="card-body p-4"><h2 class="h5 mb-3">Giao bài tập</h2><form th:action="@{/teacher/homework}" method="post" enctype="multipart/form-data" class="row g-3">
+    <div class="col-md-5"><label class="form-label" for="classId">Lớp</label><select id="classId" class="form-select" name="classId" required><option value="">Chọn lớp bạn phụ trách</option><option th:each="classItem : ${classes}" th:value="${classItem.id}" th:text="${classItem.name}"></option></select></div>
+    <div class="col-md-7"><label class="form-label" for="title">Tên bài tập</label><input id="title" class="form-control" name="title" maxlength="150" required></div>
+    <div class="col-md-6"><label class="form-label" for="dueAt">Hạn nộp</label><input id="dueAt" class="form-control" name="dueAt" type="datetime-local" required></div>
+    <div class="col-md-6"><label class="form-label" for="attachment">Tệp hướng dẫn (tùy chọn)</label><input id="attachment" class="form-control" name="attachment" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.webp,.zip"></div>
+    <div class="col-12"><label class="form-label" for="instructions">Hướng dẫn</label><textarea id="instructions" class="form-control" name="instructions" rows="3" maxlength="5000" required></textarea></div>
+    <div class="col-12"><button class="btn btn-primary"><i class="bi bi-send me-1"></i>Giao bài</button></div>
+  </form></div></div>
+  <section class="card border-0 shadow-sm rounded-4"><div class="card-header bg-white py-3 fw-semibold">Bài đã giao</div><div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Bài tập</th><th>Lớp</th><th>Hạn nộp</th><th>Ngày giao</th><th></th></tr></thead><tbody>
+    <tr th:each="item : ${assignments}"><td><strong th:text="${item.title}"></strong><div class="small text-secondary text-truncate" style="max-width:360px" th:text="${item.instructions}"></div></td><td th:text="${item.classEntity.name}"></td><td th:text="${#temporals.format(item.dueAt,'HH:mm dd/MM/yyyy')}"></td><td th:text="${#temporals.format(item.publishedAt,'dd/MM/yyyy')}"></td><td class="text-end"><a class="btn btn-sm btn-outline-primary" th:href="@{/teacher/homework/{id}/submissions(id=${item.id})}">Xem bài nộp</a></td></tr>
+    <tr th:if="${#lists.isEmpty(assignments)}"><td colspan="5" class="text-center text-secondary py-4">Chưa có bài tập nào.</td></tr>
+  </tbody></table></div></section>
+</main></body></html>

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "chat_messages")
@@ -46,6 +48,15 @@ public class ChatMessage {
     @Column(name = "deleted_for_all", nullable = false)
     private boolean deletedForAll;
 
+    @Column(name = "important", nullable = false)
+    private boolean important;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "chat_message_mentions",
+            joinColumns = @JoinColumn(name = "message_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<User> mentionedUsers = new LinkedHashSet<>();
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -71,5 +82,9 @@ public class ChatMessage {
     public void setForwardedFrom(ChatMessage forwardedFrom) { this.forwardedFrom = forwardedFrom; }
     public boolean isDeletedForAll() { return deletedForAll; }
     public void setDeletedForAll(boolean deletedForAll) { this.deletedForAll = deletedForAll; }
+    public boolean isImportant() { return important; }
+    public void setImportant(boolean important) { this.important = important; }
+    public Set<User> getMentionedUsers() { return mentionedUsers; }
+    public void setMentionedUsers(Set<User> mentionedUsers) { this.mentionedUsers = mentionedUsers == null ? new LinkedHashSet<>() : mentionedUsers; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

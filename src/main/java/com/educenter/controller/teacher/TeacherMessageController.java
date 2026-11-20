@@ -9,6 +9,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -24,10 +27,8 @@ public class TeacherMessageController {
     }
 
     @GetMapping
-    public String index(@AuthenticationPrincipal CustomUserDetails user, Model model) {
-        model.addAttribute("currentUser", user);
-        model.addAttribute("targets", messageService.findTeacherTargets(user.getId()));
-        return "teacher/messages";
+    public String index() {
+        return "redirect:/chat?tab=parent";
     }
 
     @GetMapping("/{classId}/{parentId}")
@@ -38,12 +39,14 @@ public class TeacherMessageController {
             ConversationPage page = messageService.openForTeacher(user.getId(), classId, parentId);
             model.addAttribute("currentUser", user);
             model.addAttribute("conversation", page.conversation());
+            model.addAttribute("liveTopic", "/topic/parent-teacher/" + page.conversation().getId());
+            model.addAttribute("pollUrl", "/teacher/messages/" + classId + "/" + parentId + "/api/messages");
             model.addAttribute("messages", page.messages());
             model.addAttribute("title", page.conversation().getParent().getUser().getFullName() + " · "
                     + page.conversation().getClassEntity().getName());
             model.addAttribute("postUrl", "/teacher/messages/" + classId + "/" + parentId);
-            model.addAttribute("backUrl", "/teacher/messages");
-            model.addAttribute("backLabel", "Danh sách hội thoại");
+            model.addAttribute("backUrl", "/chat?tab=parent");
+            model.addAttribute("backLabel", "Hộp thư");
             model.addAttribute("canSend", true);
             return "messages/thread";
         } catch (IllegalArgumentException e) {
@@ -51,9 +54,17 @@ public class TeacherMessageController {
         } catch (Exception e) {
             LOGGER.error("Could not open teacher to parent conversation for class {} and parent {}", classId, parentId, e);
             redirect.addFlashAttribute("errorMessage", "Không thể mở hội thoại lúc này. Vui lòng thử lại sau.");
-            return "redirect:/teacher/messages";
+            return "redirect:/chat?tab=parent";
         }
-        return "redirect:/teacher/messages";
+        return "redirect:/chat?tab=parent";
+    }
+
+    @GetMapping(value = "/{classId}/{parentId}/api/messages", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public java.util.List<com.educenter.dto.LegacyMessagePayload> updates(@PathVariable Long classId, @PathVariable Long parentId,
+            @RequestParam(defaultValue = "0") Long afterId, @AuthenticationPrincipal CustomUserDetails user) {
+        try { return messageService.findMessagesAfterForTeacher(user.getId(), classId, parentId, afterId); }
+        catch (IllegalArgumentException e) { throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage(), e); }
     }
 
     @PostMapping("/{classId}/{parentId}")

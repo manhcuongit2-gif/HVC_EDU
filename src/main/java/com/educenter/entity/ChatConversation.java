@@ -26,6 +26,10 @@ public class ChatConversation {
     private String avatarFilename;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "class_id")
+    private ClassEntity classEntity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
@@ -46,6 +50,8 @@ public class ChatConversation {
     public void setDirectKey(String directKey) { this.directKey = directKey; }
     public String getAvatarFilename() { return avatarFilename; }
     public void setAvatarFilename(String avatarFilename) { this.avatarFilename = avatarFilename; }
+    public ClassEntity getClassEntity() { return classEntity; }
+    public void setClassEntity(ClassEntity classEntity) { this.classEntity = classEntity; }
     public User getCreatedBy() { return createdBy; }
     public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }

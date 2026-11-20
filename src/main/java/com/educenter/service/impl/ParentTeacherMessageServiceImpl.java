@@ -2,9 +2,12 @@ package com.educenter.service.impl;
 
 import com.educenter.dto.ConversationPage;
 import com.educenter.dto.ConversationTarget;
+import com.educenter.dto.LegacyMessagePayload;
 import com.educenter.entity.*;
 import com.educenter.repository.*;
 import com.educenter.service.ParentTeacherMessageService;
+import com.educenter.service.NotificationService;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,19 +23,25 @@ public class ParentTeacherMessageServiceImpl implements ParentTeacherMessageServ
     private final ClassRepository classRepository;
     private final ClassStudentRepository classStudentRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public ParentTeacherMessageServiceImpl(ParentTeacherConversationRepository conversationRepository,
                                           ParentTeacherMessageRepository messageRepository,
                                           ParentRepository parentRepository,
                                           ClassRepository classRepository,
                                           ClassStudentRepository classStudentRepository,
-                                          UserRepository userRepository) {
+                                          UserRepository userRepository,
+                                          NotificationService notificationService,
+                                          SimpMessagingTemplate messagingTemplate) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.parentRepository = parentRepository;
         this.classRepository = classRepository;
         this.classStudentRepository = classStudentRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -49,9 +58,11 @@ public class ParentTeacherMessageServiceImpl implements ParentTeacherMessageServ
     @Override
     public List<ConversationTarget> findTeacherTargets(Long teacherUserId) {
         Map<TargetKey, TargetAccumulator> grouped = new LinkedHashMap<>();
-        for (ClassEntity classEntity : classRepository.findByTeacherUserId(teacherUserId)) {
+        for (ClassEntity classEntity : classRepository.findAll()) {
+            if (!isAssignedTeacher(classEntity, teacherUserId) || !"ACTIVE".equalsIgnoreCase(classEntity.getStatus())) continue;
             for (ClassStudent enrollment : classStudentRepository.findByClassEntityIdAndStatus(classEntity.getId(), "ACTIVE")) {
                 Parent parent = enrollment.getStudent().getParent();
+                if (parent == null) continue;
                 TargetKey key = new TargetKey(classEntity.getId(), parent.getId());
                 TargetAccumulator target = grouped.computeIfAbsent(key, ignored -> new TargetAccumulator(classEntity, parent));
                 target.studentNames.add(enrollment.getStudent().getFullName());
@@ -103,6 +114,33 @@ public class ParentTeacherMessageServiceImpl implements ParentTeacherMessageServ
         saveMessage(conversation, teacherUserId, content);
     }
 
+    @Override
+    @Transactional
+    public List<LegacyMessagePayload> findMessagesAfterForParent(Long parentUserId, Long classId, Long afterId) {
+        requireParentEnrolled(parentUserId, classId);
+        Parent parent = parentRepository.findByUserId(parentUserId).orElseThrow();
+        ParentTeacherConversation conversation = conversationRepository.findByClassEntityIdAndParentId(classId, parent.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hội thoại."));
+        List<ParentTeacherMessage> messages = messageRepository.findByConversationIdAndIdGreaterThanOrderByIdAsc(
+                conversation.getId(), afterId == null ? 0L : Math.max(0L, afterId));
+        messages.stream().map(ParentTeacherMessage::getId).max(Long::compareTo).ifPresent(conversation::setParentLastReadMessageId);
+        return messages.stream().map(LegacyMessagePayload::from).toList();
+    }
+
+    @Override
+    @Transactional
+    public List<LegacyMessagePayload> findMessagesAfterForTeacher(Long teacherUserId, Long classId, Long parentId, Long afterId) {
+        ClassEntity classEntity = classRepository.findById(classId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lớp học."));
+        requireTeacherOwns(classEntity, teacherUserId);
+        requireParentHasActiveStudent(parentId, classId);
+        ParentTeacherConversation conversation = conversationRepository.findByClassEntityIdAndParentId(classId, parentId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hội thoại."));
+        List<ParentTeacherMessage> messages = messageRepository.findByConversationIdAndIdGreaterThanOrderByIdAsc(
+                conversation.getId(), afterId == null ? 0L : Math.max(0L, afterId));
+        messages.stream().map(ParentTeacherMessage::getId).max(Long::compareTo).ifPresent(conversation::setTeacherLastReadMessageId);
+        return messages.stream().map(LegacyMessagePayload::from).toList();
+    }
+
     private ParentTeacherConversation getOrCreateConversation(Parent parent, ClassEntity classEntity) {
         return conversationRepository.findByClassEntityIdAndParentId(classEntity.getId(), parent.getId())
                 .orElseGet(() -> {
@@ -145,9 +183,23 @@ public class ParentTeacherMessageServiceImpl implements ParentTeacherMessageServ
         message.setConversation(conversation);
         message.setSender(sender);
         message.setContent(content.trim());
-        messageRepository.save(message);
+        ParentTeacherMessage savedMessage = messageRepository.save(message);
         conversation.setUpdatedAt(LocalDateTime.now());
         conversationRepository.save(conversation);
+        messagingTemplate.convertAndSend("/topic/parent-teacher/" + conversation.getId(), LegacyMessagePayload.from(savedMessage));
+        String preview = content.trim().substring(0, Math.min(140, content.trim().length()));
+        if (Objects.equals(senderId, conversation.getParent().getUser().getId())) {
+            ClassEntity classEntity = conversation.getClassEntity();
+            java.util.stream.Stream.of(classEntity.getTeacher(), classEntity.getAssistantTeacher())
+                    .filter(Objects::nonNull).map(Teacher::getUser).filter(Objects::nonNull).map(User::getId).distinct()
+                    .forEach(userId -> notificationService.notifyUser(userId, "parent-teacher-message-" + savedMessage.getId(),
+                            "MESSAGE_PRIVATE", "Tin nhắn mới từ " + savedMessage.getSender().getFullName(), preview,
+                            "/teacher/messages/" + classEntity.getId() + "/" + conversation.getParent().getId()));
+        } else {
+            notificationService.notifyUser(conversation.getParent().getUser().getId(), "parent-teacher-message-" + savedMessage.getId(),
+                    "MESSAGE_PRIVATE", "Tin nhắn mới từ " + savedMessage.getSender().getFullName(), preview,
+                    "/parent/messages/" + conversation.getClassEntity().getId());
+        }
     }
 
     private void requireParentEnrolled(Long parentUserId, Long classId) {
@@ -158,15 +210,22 @@ public class ParentTeacherMessageServiceImpl implements ParentTeacherMessageServ
 
     private void requireParentHasActiveStudent(Long parentId, Long classId) {
         boolean allowed = classStudentRepository.findByClassEntityIdAndStatus(classId, "ACTIVE").stream()
-                .anyMatch(e -> Objects.equals(e.getStudent().getParent().getId(), parentId));
+                .anyMatch(e -> e.getStudent() != null && e.getStudent().getParent() != null
+                        && Objects.equals(e.getStudent().getParent().getId(), parentId));
         if (!allowed) throw new IllegalArgumentException("Phụ huynh không có học sinh đang theo học lớp này.");
     }
 
     private void requireTeacherOwns(ClassEntity classEntity, Long teacherUserId) {
-        if (classEntity.getTeacher() == null || classEntity.getTeacher().getUser() == null
-                || !Objects.equals(classEntity.getTeacher().getUser().getId(), teacherUserId)) {
+        if (!isAssignedTeacher(classEntity, teacherUserId)) {
             throw new IllegalArgumentException("Bạn không phụ trách lớp học này.");
         }
+    }
+
+    private boolean isAssignedTeacher(ClassEntity classEntity, Long teacherUserId) {
+        return classEntity != null && ((classEntity.getTeacher() != null && classEntity.getTeacher().getUser() != null
+                && Objects.equals(classEntity.getTeacher().getUser().getId(), teacherUserId))
+                || (classEntity.getAssistantTeacher() != null && classEntity.getAssistantTeacher().getUser() != null
+                && Objects.equals(classEntity.getAssistantTeacher().getUser().getId(), teacherUserId)));
     }
 
     private record TargetKey(Long classId, Long parentId) {}

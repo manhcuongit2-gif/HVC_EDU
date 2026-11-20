@@ -6,6 +6,8 @@ import com.educenter.dto.ChatPage;
 import com.educenter.entity.*;
 import com.educenter.repository.*;
 import com.educenter.service.ChatService;
+import com.educenter.service.NotificationService;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +23,8 @@ import java.util.*;
 @Service
 public class ChatServiceImpl implements ChatService {
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "zip", "jpg", "jpeg", "png", "gif", "webp"
+            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "zip", "jpg", "jpeg", "png", "gif", "webp",
+            "mp3", "wav", "ogg", "m4a", "webm", "aac"
     );
     private static final Set<String> ALLOWED_REACTIONS = Set.of("👍", "❤️", "😂", "😮", "😢", "🙏", "🎉");
     private static final long MAX_ATTACHMENT_BYTES = 20L * 1024 * 1024;
@@ -31,32 +34,37 @@ public class ChatServiceImpl implements ChatService {
     private final ChatMessageRepository messageRepository;
     private final ChatMessageReactionRepository reactionRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
     private final Path uploadDirectory;
 
     public ChatServiceImpl(ChatConversationRepository conversationRepository, ChatMemberRepository memberRepository,
                            ChatMessageRepository messageRepository, ChatMessageReactionRepository reactionRepository,
-                           UserRepository userRepository,
+                           UserRepository userRepository, NotificationService notificationService,
+                           SimpMessagingTemplate messagingTemplate,
                            @Value("${app.storage.upload-dir:./uploads}") String uploadDirectory) {
         this.conversationRepository = conversationRepository;
         this.memberRepository = memberRepository;
         this.messageRepository = messageRepository;
         this.reactionRepository = reactionRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
+        this.messagingTemplate = messagingTemplate;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize().resolve("chat").normalize();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<User> findContacts(Long userId, String roleName) {
-        if ("ROLE_ADMIN".equals(roleName)) {
-            return userRepository.findByActiveTrueOrderByFullNameAsc().stream().filter(user -> !user.getId().equals(userId)).toList();
-        }
-        List<User> contacts = new ArrayList<>(userRepository.findByRole_NameAndActiveTrueOrderByFullNameAsc(roleName).stream()
-                .filter(user -> !user.getId().equals(userId)).toList());
-        if ("ROLE_TEACHER".equals(roleName)) {
-            contacts.addAll(userRepository.findByRole_NameAndActiveTrueOrderByFullNameAsc("ROLE_ADMIN"));
-        }
-        return contacts;
+        String contactRole = switch (roleName) {
+            case "ROLE_PARENT", "ROLE_ADMIN" -> "ROLE_PARENT";
+            case "ROLE_TEACHER" -> "ROLE_TEACHER";
+            default -> "";
+        };
+        if (contactRole.isEmpty()) return List.of();
+        return userRepository.findByRole_NameAndActiveTrueOrderByFullNameAsc(contactRole).stream()
+                .filter(user -> !user.getId().equals(userId))
+                .toList();
     }
 
     @Override
@@ -88,61 +96,59 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public ChatConversation createConversation(Long creatorId, String creatorRole, List<Long> recipientIds, String title) {
         User creator = activeUser(creatorId);
-        String conversationType = switch (creatorRole) {
-            case "ROLE_PARENT" -> "PARENT";
-            case "ROLE_TEACHER" -> "TEACHER";
-            case "ROLE_ADMIN" -> "ADMIN";
-            default -> throw new IllegalArgumentException("Tài khoản này không được phép tạo hội thoại.");
-        };
+        if (!Set.of("ROLE_PARENT", "ROLE_TEACHER", "ROLE_ADMIN").contains(creatorRole))
+            throw new IllegalArgumentException("Tài khoản này không được phép tạo hội thoại.");
         LinkedHashSet<Long> uniqueIds = new LinkedHashSet<>();
         if (recipientIds != null) recipientIds.stream().filter(Objects::nonNull).filter(id -> !id.equals(creatorId)).forEach(uniqueIds::add);
-        if (uniqueIds.isEmpty()) throw new IllegalArgumentException("Hãy chọn ít nhất một người tham gia.");
-        if (uniqueIds.size() > 30) throw new IllegalArgumentException("Mỗi hội thoại tối đa 30 người được mời cùng lúc.");
+        if (uniqueIds.size() != 1) throw new IllegalArgumentException("Hãy chọn đúng một người để bắt đầu tin nhắn riêng.");
 
         List<User> recipients = userRepository.findAllById(uniqueIds);
         if (recipients.size() != uniqueIds.size() || recipients.stream().anyMatch(u -> !Boolean.TRUE.equals(u.getActive()))) {
             throw new IllegalArgumentException("Một hoặc nhiều tài khoản được chọn không còn hoạt động.");
         }
-        if ("ROLE_PARENT".equals(creatorRole)
-                && recipients.stream().anyMatch(u -> u.getRole() == null || !creatorRole.equals(u.getRole().getName()))) {
-            throw new IllegalArgumentException("Phụ huynh chỉ có thể tạo hội thoại với phụ huynh khác.");
-        }
-        if ("ROLE_TEACHER".equals(creatorRole)) {
-            boolean directAdminConversation = recipients.size() == 1 && recipients.getFirst().getRole() != null
-                    && "ROLE_ADMIN".equals(recipients.getFirst().getRole().getName());
-            boolean teacherOnlyConversation = recipients.stream()
-                    .allMatch(u -> u.getRole() != null && "ROLE_TEACHER".equals(u.getRole().getName()));
-            if (!directAdminConversation && !teacherOnlyConversation) {
-                throw new IllegalArgumentException("Người dạy chỉ có thể tạo nhóm với người dạy khác hoặc nhắn riêng cho quản trị viên.");
-            }
+        User recipient = recipients.getFirst();
+        String recipientRole = recipient.getRole() == null ? "" : recipient.getRole().getName();
+        String conversationType;
+        if ("ROLE_PARENT".equals(creatorRole) && "ROLE_ADMIN".equals(recipientRole)) {
+            User primaryAdmin = userRepository.findByUsername("admin")
+                    .orElseThrow(() -> new IllegalArgumentException("Chưa cấu hình tài khoản quản trị viên chính."));
+            if (!primaryAdmin.getId().equals(recipient.getId()))
+                throw new IllegalArgumentException("Phụ huynh chỉ có thể nhắn cho quản trị viên chính.");
+            conversationType = "PARENT_ADMIN";
+        } else if ("ROLE_ADMIN".equals(creatorRole) && "ROLE_PARENT".equals(recipientRole)) {
+            conversationType = "PARENT_ADMIN";
+        } else if ("ROLE_TEACHER".equals(creatorRole) && "ROLE_TEACHER".equals(recipientRole)) {
+            conversationType = "TEACHER";
+        } else {
+            throw new IllegalArgumentException(switch (creatorRole) {
+                case "ROLE_PARENT" -> "Phụ huynh chỉ có thể nhắn riêng cho quản trị viên chính hoặc người dạy qua mục lớp đang học.";
+                case "ROLE_TEACHER" -> "Người dạy hãy dùng hội thoại phụ huynh hoặc quản trị viên trong hộp thư.";
+                default -> "Quản trị viên chỉ có thể tạo tin nhắn riêng với phụ huynh tại đây.";
+            });
         }
 
-        boolean direct = recipients.size() == 1;
-        String directKey = direct ? directKey(conversationType, creatorId, recipients.get(0).getId()) : null;
-        if (directKey != null) {
-            Optional<ChatConversation> existing = conversationRepository.findByDirectKey(directKey);
-            if (existing.isPresent()) {
-                ChatConversation found = existing.get();
-                memberRepository.findByConversationIdAndUserId(found.getId(), creatorId).ifPresent(m -> m.setArchived(false));
-                memberRepository.findByConversationIdAndUserId(found.getId(), recipients.get(0).getId()).ifPresent(m -> m.setArchived(false));
-                memberRepository.flush();
-                return found;
-            }
+        String directKey = directKey(conversationType, creatorId, recipient.getId());
+        Optional<ChatConversation> existing = conversationRepository.findByDirectKey(directKey);
+        if (existing.isEmpty() && "PARENT_ADMIN".equals(conversationType)) {
+            // Reuse direct threads created before parent-to-admin messaging was enabled.
+            existing = conversationRepository.findByDirectKey(directKey("ADMIN", creatorId, recipient.getId()));
+        }
+        if (existing.isPresent()) {
+            ChatConversation found = existing.get();
+            memberRepository.findByConversationIdAndUserId(found.getId(), creatorId).ifPresent(m -> m.setArchived(false));
+            memberRepository.findByConversationIdAndUserId(found.getId(), recipient.getId()).ifPresent(m -> m.setArchived(false));
+            memberRepository.flush();
+            return found;
         }
 
         ChatConversation conversation = new ChatConversation();
         conversation.setConversationType(conversationType);
         conversation.setDirectKey(directKey);
         conversation.setCreatedBy(creator);
-        String safeTitle = title == null ? "" : title.trim();
-        if (safeTitle.isBlank() && direct) safeTitle = recipients.get(0).getFullName();
-        if (safeTitle.isBlank()) safeTitle = recipients.stream().map(User::getFullName).limit(3)
-                .reduce((left, right) -> left + ", " + right).orElse("Nhóm trò chuyện");
-        if (safeTitle.length() > 150) safeTitle = safeTitle.substring(0, 150);
-        conversation.setTitle(safeTitle);
+        conversation.setTitle(recipient.getFullName());
         conversation = conversationRepository.save(conversation);
         addMember(conversation, creator);
-        for (User recipient : recipients) addMember(conversation, recipient);
+        addMember(conversation, recipient);
         return conversation;
     }
 
@@ -163,7 +169,8 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public ChatMessage send(Long conversationId, Long senderId, String content, Long replyToId, MultipartFile file) {
+    public ChatMessage send(Long conversationId, Long senderId, String content, Long replyToId, MultipartFile file,
+                            List<Long> mentionedUserIds, boolean important) {
         ChatConversation conversation = getConversation(conversationId);
         requireMember(conversationId, senderId);
         String cleanContent = content == null ? "" : content.trim();
@@ -171,9 +178,22 @@ public class ChatServiceImpl implements ChatService {
         if (cleanContent.isEmpty() && !hasFile) throw new IllegalArgumentException("Nhập tin nhắn hoặc đính kèm tệp trước khi gửi.");
         if (cleanContent.length() > 2000) throw new IllegalArgumentException("Tin nhắn không được vượt quá 2.000 ký tự.");
 
+        LinkedHashSet<Long> mentionIds = new LinkedHashSet<>();
+        if (mentionedUserIds != null) mentionedUserIds.stream().filter(Objects::nonNull).forEach(mentionIds::add);
+        if (mentionIds.size() > 30) throw new IllegalArgumentException("Mỗi tin nhắn chỉ được nhắc tối đa 30 người.");
+        User sender = activeUser(senderId);
+        String senderRole = sender.getRole() == null ? "" : sender.getRole().getName();
+        if (important && !Set.of("ROLE_TEACHER", "ROLE_ADMIN").contains(senderRole))
+            throw new IllegalArgumentException("Chỉ giáo viên hoặc quản trị viên được đánh dấu tin quan trọng.");
+        List<ChatMember> conversationMembers = memberRepository.findByConversationIdOrderByJoinedAtAsc(conversationId);
+        Set<Long> memberIds = conversationMembers.stream().map(m -> m.getUser().getId()).collect(java.util.stream.Collectors.toSet());
+        if (!memberIds.containsAll(mentionIds)) throw new IllegalArgumentException("Chỉ có thể nhắc thành viên của hội thoại.");
+
         ChatMessage message = new ChatMessage();
         message.setConversation(conversation);
-        message.setSender(activeUser(senderId));
+        message.setSender(sender);
+        message.setImportant(important);
+        if (!mentionIds.isEmpty()) message.setMentionedUsers(new LinkedHashSet<>(userRepository.findAllById(mentionIds)));
         message.setContent(cleanContent.isEmpty() ? null : cleanContent);
         if (replyToId != null) {
             message.setReplyTo(messageRepository.findByIdAndConversationId(replyToId, conversationId)
@@ -186,6 +206,16 @@ public class ChatServiceImpl implements ChatService {
         ChatMember member = requireMember(conversationId, senderId);
         member.setLastReadMessageId(saved.getId());
         memberRepository.save(member);
+        messagingTemplate.convertAndSend("/topic/chat/" + conversationId, payload(saved));
+        String category = conversation.getClassEntity() != null || conversationMembers.size() > 2 ? "MESSAGE_GROUP" : "MESSAGE_PRIVATE";
+        String preview = cleanContent.isBlank() ? "Đã gửi tệp đính kèm." : cleanContent.substring(0, Math.min(140, cleanContent.length()));
+        for (ChatMember recipient : conversationMembers) {
+            Long recipientId = recipient.getUser().getId();
+            if (recipientId.equals(senderId) || !recipient.isNotificationsEnabled()) continue;
+            String title = mentionIds.contains(recipientId) ? sender.getFullName() + " đã nhắc đến bạn"
+                    : (important ? "Tin nhắn quan trọng từ " : "Tin nhắn mới từ ") + sender.getFullName();
+            notificationService.notifyUser(recipientId, "chat-message-" + saved.getId(), category, title, preview, "/chat/" + conversationId);
+        }
         return saved;
     }
 
@@ -224,6 +254,7 @@ public class ChatServiceImpl implements ChatService {
     public void setAvatar(Long conversationId, Long userId, MultipartFile file) {
         ChatConversation conversation = getConversation(conversationId);
         requireMember(conversationId, userId);
+        requireEditableGroup(conversation);
         requireManager(conversation, userId);
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("Chọn ảnh đại diện nhóm.");
         if (file.getSize() > 5L * 1024 * 1024) throw new IllegalArgumentException("Ảnh nhóm không được vượt quá 5 MB.");
@@ -310,6 +341,7 @@ public class ChatServiceImpl implements ChatService {
     public void rename(Long conversationId, Long userId, String title) {
         ChatConversation conversation = getConversation(conversationId);
         requireMember(conversationId, userId);
+        requireEditableGroup(conversation);
         requireManager(conversation, userId);
         if (title == null || title.isBlank() || title.trim().length() > 150) throw new IllegalArgumentException("Tên hội thoại từ 1 đến 150 ký tự.");
         conversation.setTitle(title.trim());
@@ -321,6 +353,7 @@ public class ChatServiceImpl implements ChatService {
     public void addMembers(Long conversationId, Long actorId, List<Long> userIds) {
         ChatConversation conversation = getConversation(conversationId);
         requireMember(conversationId, actorId);
+        requireEditableGroup(conversation);
         requireManager(conversation, actorId);
         if (userIds == null || userIds.isEmpty()) throw new IllegalArgumentException("Hãy chọn ít nhất một thành viên.");
         for (Long id : new LinkedHashSet<>(userIds)) {
@@ -338,6 +371,7 @@ public class ChatServiceImpl implements ChatService {
     public void removeMember(Long conversationId, Long actorId, Long memberId) {
         ChatConversation conversation = getConversation(conversationId);
         requireMember(conversationId, actorId);
+        requireEditableGroup(conversation);
         requireManager(conversation, actorId);
         ChatMember member = memberRepository.findByConversationIdAndUserId(conversationId, memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Thành viên không tồn tại trong hội thoại."));
@@ -366,7 +400,7 @@ public class ChatServiceImpl implements ChatService {
         User parent = activeUser(parentUserId);
         if (parent.getRole() == null || !"ROLE_PARENT".equals(parent.getRole().getName())) throw new IllegalArgumentException("Tài khoản này không phải phụ huynh.");
         ChatConversation conversation = createConversation(adminUserId, "ROLE_ADMIN", List.of(parentUserId), null);
-        send(conversation.getId(), adminUserId, content, null, null);
+        send(conversation.getId(), adminUserId, content, null, null, List.of(), false);
         return conversation;
     }
 
@@ -376,7 +410,8 @@ public class ChatServiceImpl implements ChatService {
                 message.getStoredFilename() == null || message.isDeletedForAll() ? null
                         : "/chat/" + message.getConversation().getId() + "/files/" + message.getId(),
                 message.getContentType(), message.getReplyTo() == null ? null : message.getReplyTo().getContent(),
-                message.isDeletedForAll(), message.getCreatedAt());
+                message.isDeletedForAll(), message.getCreatedAt(), message.isImportant(),
+                message.getMentionedUsers().stream().map(User::getId).toList());
     }
 
     private void storeAttachment(MultipartFile file, ChatMessage message) {
@@ -433,6 +468,13 @@ public class ChatServiceImpl implements ChatService {
         boolean isAdmin = actor.getRole() != null && "ROLE_ADMIN".equals(actor.getRole().getName());
         if (!isAdmin && !Objects.equals(conversation.getCreatedBy().getId(), actorId)) {
             throw new IllegalArgumentException("Chỉ người tạo nhóm hoặc quản trị viên mới có thể thay đổi nhóm.");
+        }
+    }
+
+    private void requireEditableGroup(ChatConversation conversation) {
+        if (conversation.getDirectKey() != null || conversation.getClassEntity() != null
+                || "CLASS".equals(conversation.getConversationType())) {
+            throw new IllegalArgumentException("Hội thoại riêng và nhóm lớp được quản lý tự động, không thể thay đổi thành viên hoặc tên nhóm.");
         }
     }
 

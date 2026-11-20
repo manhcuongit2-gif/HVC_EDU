@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface TeacherAdminMessageRepository extends JpaRepository<TeacherAdminMessage, Long> {
     List<TeacherAdminMessage> findByConversationIdOrderByCreatedAtAscIdAsc(Long conversationId);
+    List<TeacherAdminMessage> findByConversationIdAndIdGreaterThanOrderByIdAsc(Long conversationId, Long afterId);
     List<TeacherAdminMessage> findByConversationIdAndIdGreaterThanAndSenderIdNotOrderByIdDesc(Long conversationId, Long afterId, Long senderId);
     Optional<TeacherAdminMessage> findTopByConversationIdOrderByIdDesc(Long conversationId);
 }

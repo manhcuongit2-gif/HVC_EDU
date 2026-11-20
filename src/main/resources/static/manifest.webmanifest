@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "Luyện Thi Hùng Cường",
+  "short_name": "EduCenter",
+  "description": "Cổng thông tin học tập EduCenter",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f8ff",
+  "theme_color": "#1769e0",
+  "icons": [
+    { "src": "/icons/school.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

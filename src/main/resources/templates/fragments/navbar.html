@@ -16,11 +16,19 @@
         </a>
 
         <div class="d-flex align-items-center gap-3">
+            <a class="btn btn-outline-light btn-sm" th:href="@{/}" title="Về trang chính" aria-label="Về trang chính"><i class="bi bi-house-door-fill"></i><span class="d-none d-md-inline ms-1">Trang chính</span></a>
+            <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_TEACHER'}" class="btn btn-outline-light btn-sm" th:href="@{/teacher/homework}"><i class="bi bi-journal-check me-1"></i><span class="d-none d-md-inline">Bài tập</span></a>
+            <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_PARENT'}" class="btn btn-outline-light btn-sm" th:href="@{/parent/homework}"><i class="bi bi-journal-check me-1"></i><span class="d-none d-md-inline">Bài tập của con</span></a>
+            <a class="btn btn-outline-light btn-sm position-relative" th:href="@{/notifications}" title="Trung tâm thông báo">
+                <i class="bi bi-bell me-1"></i><span class="d-none d-md-inline">Thông báo</span>
+                <span id="businessNotificationCount" class="badge rounded-pill bg-warning text-dark d-none">0</span>
+            </a>
+            <button id="installAppButton" type="button" class="btn btn-outline-light btn-sm d-none"><i class="bi bi-download me-1"></i><span class="d-none d-md-inline">Cài ứng dụng</span></button>
             <a class="btn btn-outline-light btn-sm" th:href="@{/chat}" title="Mở hộp thư"><i class="bi bi-chat-dots me-1"></i><span class="d-none d-md-inline">Tin nhắn</span></a>
             <div class="message-notification">
                 <button type="button" id="messageNotificationButton" class="btn btn-outline-light btn-sm position-relative"
                         aria-expanded="false" aria-controls="messageNotificationMenu">
-                    <i class="bi bi-bell me-1"></i><span class="d-none d-md-inline">Thông báo</span>
+                    <i class="bi bi-chat-left-text me-1"></i><span class="d-none d-md-inline">Tin nhắn mới</span>
                     <span id="messageNotificationCount" class="badge rounded-pill bg-danger d-none">0</span>
                 </button>
                 <div id="messageNotificationMenu" class="message-notification-menu card shadow d-none">
@@ -43,6 +51,7 @@
         </div>
     </div>
 </nav>
+<script src="/js/pwa.js" defer></script>
 <script>
     (() => {
         const button = document.getElementById('messageNotificationButton');
@@ -93,6 +102,25 @@
 
         refresh();
         window.setInterval(refresh, 8000);
+    })();
+</script>
+<script>
+    (() => {
+        const badge = document.getElementById('businessNotificationCount');
+        if (!badge) return;
+        const refresh = () => Promise.all([
+            fetch('/api/business-notifications', {credentials:'same-origin', headers:{Accept:'application/json'}}).then(r => r.ok ? r.json() : null),
+            fetch('/api/notifications', {credentials:'same-origin', headers:{Accept:'application/json'}}).then(r => r.ok ? r.json() : null)
+        ]).then(([data, messages]) => {
+                if (!data) return;
+                const count = Number(data.unreadCount || 0);
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.classList.toggle('d-none', count === 0);
+                const total = count + Number(messages?.unreadCount || 0);
+                if (total > 0 && navigator.setAppBadge) navigator.setAppBadge(total).catch(() => {});
+                else if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
+            }).catch(() => {});
+        refresh(); window.setInterval(refresh, 20000);
     })();
 </script>
 </th:block>

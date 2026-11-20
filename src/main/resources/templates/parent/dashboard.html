@@ -71,95 +71,32 @@
         <a th:href="@{/parent/tuition}" class="btn btn-warning btn-sm fw-bold"><i class="bi bi-credit-card-fill me-1"></i>Xem học phí</a>
     </div>
 
-    <!-- Truy cập nhanh -->
-    <div class="row g-4 mb-4">
-        <!-- Card 1: Quản lý con -->
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card h-100 bg-white p-3 text-center">
-                <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary d-inline-flex mx-auto mb-3">
-                    <i class="bi bi-person-lines-fill fs-2"></i>
-                </div>
-                <h5 class="fw-bold text-dark">Thông tin của con</h5>
-                <p class="text-muted small">Quản lý hồ sơ <strong th:text="${#lists.size(myChildren)}">2</strong> con</p>
-                <a th:href="@{/parent/children}" class="btn btn-outline-primary btn-sm w-100 mt-auto">Xem chi tiết</a>
-            </div>
+    <section class="mb-4">
+        <div class="d-flex justify-content-between align-items-end mb-3"><div><h3 class="h5 fw-bold mb-1">Học tập</h3><p class="text-muted small mb-0">Theo dõi hồ sơ, lịch học và tài liệu của các con.</p></div></div>
+        <div class="row g-3">
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary d-inline-flex mx-auto mb-3"><i class="bi bi-person-lines-fill fs-2"></i></div><h5 class="fw-bold text-dark">Thông tin của con</h5><p class="text-muted small">Quản lý hồ sơ <strong th:text="${#lists.size(myChildren)}">2</strong> con</p><a th:href="@{/parent/children}" class="btn btn-outline-primary btn-sm w-100 mt-auto">Xem chi tiết</a></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning d-inline-flex mx-auto mb-3"><i class="bi bi-clipboard2-data-fill fs-2"></i></div><h5 class="fw-bold text-dark">Kết quả điểm danh</h5><p class="text-muted small">Theo dõi điểm số và chuyên cần</p><a th:href="@{/parent/results}" class="btn btn-outline-warning btn-sm w-100 mt-auto">Xem kết quả</a></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-info bg-opacity-10 p-3 text-info d-inline-flex mx-auto mb-3"><i class="bi bi-calendar-week fs-2"></i></div><h5 class="fw-bold text-dark">Lịch học của con</h5><p class="text-muted small">Lịch tháng của tất cả các con</p><a th:href="@{/parent/schedule}" class="btn btn-outline-info btn-sm w-100 mt-auto">Mở lịch</a></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-info bg-opacity-10 p-3 text-info d-inline-flex mx-auto mb-3"><i class="bi bi-file-earmark-text fs-2"></i></div><h5 class="fw-bold text-dark">Tài liệu</h5><p class="text-muted small">Tài liệu của lớp các con đang học</p><a th:href="@{/parent/materials}" class="btn btn-outline-info btn-sm w-100 mt-auto">Xem tài liệu</a></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-success bg-opacity-10 p-3 text-success d-inline-flex mx-auto mb-3"><i class="bi bi-journal-check fs-2"></i></div><h5 class="fw-bold text-dark">Bài tập của con</h5><p class="text-muted small">Xem bài được giao và tình trạng nộp</p><a th:href="@{/parent/homework}" class="btn btn-outline-success btn-sm w-100 mt-auto">Mở bài tập</a></div></div>
         </div>
+    </section>
 
-        <!-- Card 2: Đăng ký học -->
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card h-100 bg-white p-3 text-center">
-                <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success d-inline-flex mx-auto mb-3">
-                    <i class="bi bi-journal-plus fs-2"></i>
-                </div>
-                <h5 class="fw-bold text-dark">Đăng ký lớp học</h5>
-                <p class="text-muted small">Đăng ký môn Toán, Lý, Hóa</p>
-                <a th:href="@{/parent/register-class}" class="btn btn-outline-success btn-sm w-100 mt-auto">Đăng ký ngay</a>
-            </div>
+    <section class="mb-4">
+        <div class="mb-3"><h3 class="h5 fw-bold mb-1">Đăng ký & học phí</h3><p class="text-muted small mb-0">Đăng ký lớp mới và theo dõi các khoản cần thanh toán.</p></div>
+        <div class="row g-3">
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-success bg-opacity-10 p-3 text-success d-inline-flex mx-auto mb-3"><i class="bi bi-journal-plus fs-2"></i></div><h5 class="fw-bold text-dark">Đăng ký lớp học</h5><p class="text-muted small">Đăng ký các môn học phù hợp</p><a th:href="@{/parent/register-class}" class="btn btn-outline-success btn-sm w-100 mt-auto">Đăng ký ngay</a></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-danger bg-opacity-10 p-3 text-danger d-inline-flex mx-auto mb-3"><i class="bi bi-credit-card-2-front-fill fs-2"></i></div><h5 class="fw-bold text-dark">Học phí & VNPay</h5><p class="text-muted small">Thanh toán và tra cứu học phí</p><a th:href="@{/parent/tuition}" class="btn btn-outline-danger btn-sm w-100 mt-auto">Đóng học phí</a></div></div>
         </div>
+    </section>
 
-        <!-- Card 3: Kết quả học tập -->
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card h-100 bg-white p-3 text-center">
-                <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning d-inline-flex mx-auto mb-3">
-                    <i class="bi bi-clipboard2-data-fill fs-2"></i>
-                </div>
-                <h5 class="fw-bold text-dark">Kết quả điểm danh</h5>
-                <p class="text-muted small">Theo dõi điểm số và chuyên cần</p>
-                <a th:href="@{/parent/results}" class="btn btn-outline-warning btn-sm w-100 mt-auto">Xem kết quả</a>
-            </div>
+    <section class="mb-4">
+        <div class="mb-3"><h3 class="h5 fw-bold mb-1">Trao đổi</h3><p class="text-muted small mb-0">Nhắn tin riêng với giáo viên phụ trách hoặc quản trị viên.</p></div>
+        <div class="row g-3">
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary d-inline-flex mx-auto mb-3"><i class="bi bi-chat-dots fs-2"></i></div><h5 class="fw-bold text-dark">Tin nhắn</h5><p class="text-muted small">Trao đổi với người dạy hoặc admin trong một hộp thư</p><a th:href="@{/chat}" class="btn btn-outline-primary btn-sm w-100 mt-auto">Mở hộp thư</a></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="card stat-card h-100 bg-white p-3 text-center"><div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning d-inline-flex mx-auto mb-3"><i class="bi bi-bell fs-2"></i></div><h5 class="fw-bold text-dark">Thông báo</h5><p class="text-muted small">Cập nhật mới về học tập và tài khoản</p><a th:href="@{/notifications}" class="btn btn-outline-warning btn-sm w-100 mt-auto">Xem thông báo</a></div></div>
         </div>
-
-        <!-- Card 4: Học phí & VNPay -->
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card h-100 bg-white p-3 text-center">
-                <div class="rounded-circle bg-danger bg-opacity-10 p-3 text-danger d-inline-flex mx-auto mb-3">
-                    <i class="bi bi-credit-card-2-front-fill fs-2"></i>
-                </div>
-                <h5 class="fw-bold text-dark">Học phí & VNPay</h5>
-                <p class="text-muted small">Thanh toán an toàn, tức thì</p>
-                <a th:href="@{/parent/tuition}" class="btn btn-outline-danger btn-sm w-100 mt-auto">Đóng học phí</a>
-            </div>
-        </div>
-
-        <!-- Tài liệu -->
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card h-100 bg-white p-3 text-center">
-                <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info d-inline-flex mx-auto mb-3">
-                    <i class="bi bi-file-earmark-text fs-2"></i>
-                </div>
-                <h5 class="fw-bold text-dark">Tài liệu</h5>
-                <p class="text-muted small">Tài liệu của lớp các con đang học</p>
-                <a th:href="@{/parent/materials}" class="btn btn-outline-info btn-sm w-100 mt-auto">Xem tài liệu</a>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card h-100 bg-white p-3 text-center">
-                <div class="rounded-circle bg-secondary bg-opacity-10 p-3 text-secondary d-inline-flex mx-auto mb-3"><i class="bi bi-chat-dots fs-2"></i></div>
-                <h5 class="fw-bold text-dark">Nhắn tin người dạy</h5>
-                <p class="text-muted small">Trao đổi riêng theo từng lớp</p>
-                <a th:href="@{/parent/messages}" class="btn btn-outline-secondary btn-sm w-100 mt-auto">Mở tin nhắn</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card h-100 bg-white p-3 text-center">
-                <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info d-inline-flex mx-auto mb-3"><i class="bi bi-calendar-week fs-2"></i></div>
-                <h5 class="fw-bold text-dark">Lịch học của con</h5>
-                <p class="text-muted small">Xem lịch tháng của tất cả các con</p>
-                <a th:href="@{/parent/schedule}" class="btn btn-outline-info btn-sm w-100 mt-auto">Mở lịch</a>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card stat-card h-100 bg-white p-3 text-center">
-                <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary d-inline-flex mx-auto mb-3"><i class="bi bi-chat-dots fs-2"></i></div>
-                <h5 class="fw-bold text-dark">Tin nhắn</h5>
-                <p class="text-muted small">Trao đổi với người dạy hoặc nhóm phụ huynh</p>
-                <a th:href="@{/chat}" class="btn btn-outline-primary btn-sm w-100 mt-auto">Mở hộp thư</a>
-            </div>
-        </div>
-    </div>
+    </section>
 
     <!-- Hàng nội dung chi tiết: Danh sách con & Trạng thái đơn đăng ký gần đây -->
     <div class="row g-4">

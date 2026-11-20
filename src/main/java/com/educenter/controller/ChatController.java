@@ -6,6 +6,7 @@ import com.educenter.entity.ChatMessageReaction;
 import com.educenter.repository.ChatMessageReactionRepository;
 import com.educenter.security.CustomUserDetails;
 import com.educenter.service.ChatService;
+import com.educenter.service.impl.UnifiedInboxService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
@@ -31,16 +32,20 @@ public class ChatController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
     private final ChatService chatService;
     private final ChatMessageReactionRepository reactionRepository;
+    private final UnifiedInboxService unifiedInboxService;
 
-    public ChatController(ChatService chatService, ChatMessageReactionRepository reactionRepository) {
+    public ChatController(ChatService chatService, ChatMessageReactionRepository reactionRepository,
+                          UnifiedInboxService unifiedInboxService) {
         this.chatService = chatService;
         this.reactionRepository = reactionRepository;
+        this.unifiedInboxService = unifiedInboxService;
     }
 
     @GetMapping
     public String index(@AuthenticationPrincipal CustomUserDetails user,
-                        @RequestParam(required = false) String search, Model model) {
-        fillSharedModel(user, search, model);
+                        @RequestParam(required = false) String search,
+                        @RequestParam(defaultValue = "all") String tab, Model model) {
+        fillSharedModel(user, search, tab, model);
         return "chat/index";
     }
 
@@ -63,15 +68,22 @@ public class ChatController {
 
     @GetMapping("/{conversationId}")
     public String open(@PathVariable Long conversationId, @AuthenticationPrincipal CustomUserDetails user,
-                       @RequestParam(required = false) String search, Model model, RedirectAttributes redirect) {
+                       @RequestParam(required = false) String search,
+                       @RequestParam(defaultValue = "all") String tab, Model model, RedirectAttributes redirect) {
         try {
-            fillSharedModel(user, search, model);
+            fillSharedModel(user, search, tab, model);
             var chatPage = chatService.openConversation(conversationId, user.getId());
             model.addAttribute("chatPage", chatPage);
+            model.addAttribute("mentionableMembers", chatPage.members().stream()
+                    .filter(member -> !member.getUser().getId().equals(user.getId()))
+                    .map(member -> java.util.Map.of("id", member.getUser().getId(), "name", member.getUser().getFullName())).toList());
             java.util.Map<Long, List<ChatMessageReaction>> reactions = new java.util.HashMap<>();
             chatPage.messages().forEach(message -> reactions.put(message.getId(), reactionRepository.findByMessageId(message.getId())));
             model.addAttribute("reactionsByMessage", reactions);
             model.addAttribute("currentConversationId", conversationId);
+            model.addAttribute("canManageGroup", chatPage.conversation().getDirectKey() == null
+                    && chatPage.conversation().getClassEntity() == null
+                    && !"CLASS".equals(chatPage.conversation().getConversationType()));
             model.addAttribute("pollUrl", "/chat/" + conversationId + "/api/messages");
             model.addAttribute("sendUrl", "/chat/" + conversationId + "/messages");
             return "chat/thread";
@@ -90,9 +102,11 @@ public class ChatController {
                        @RequestParam(required = false) String content,
                        @RequestParam(required = false) Long replyToId,
                        @RequestParam(required = false) MultipartFile file,
+                       @RequestParam(name = "mentionedUserIds", required = false) List<Long> mentionedUserIds,
+                       @RequestParam(defaultValue = "false") boolean important,
                        RedirectAttributes redirect) {
         try {
-            chatService.send(conversationId, user.getId(), content, replyToId, file);
+            chatService.send(conversationId, user.getId(), content, replyToId, file, mentionedUserIds, important);
         } catch (IllegalArgumentException e) {
             redirect.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
@@ -116,9 +130,11 @@ public class ChatController {
         ChatMessage message = chatService.findMessageForMember(conversationId, messageId, user.getId());
         Resource resource = new FileSystemResource(chatService.resolveFile(message));
         MediaType type = MediaTypeFactory.getMediaType(message.getOriginalFilename()).orElse(MediaType.APPLICATION_OCTET_STREAM);
+        ContentDisposition disposition = type.getType().equals("audio")
+                ? ContentDisposition.inline().filename(message.getOriginalFilename(), StandardCharsets.UTF_8).build()
+                : ContentDisposition.attachment().filename(message.getOriginalFilename(), StandardCharsets.UTF_8).build();
         return ResponseEntity.ok().contentType(type)
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                        .filename(message.getOriginalFilename(), StandardCharsets.UTF_8).build().toString())
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
                 .body(resource);
     }
 
@@ -209,16 +225,17 @@ public class ChatController {
         return "redirect:/chat/" + conversationId;
     }
 
-    private void fillSharedModel(CustomUserDetails user, String search, Model model) {
+    private void fillSharedModel(CustomUserDetails user, String search, String tab, Model model) {
         model.addAttribute("currentUser", user);
         model.addAttribute("search", search == null ? "" : search);
+        String activeTab = unifiedInboxService.normalizeTab(tab, user.getRoleName());
+        model.addAttribute("activeTab", activeTab);
         model.addAttribute("conversations", chatService.findConversations(user.getId(), search));
-        model.addAttribute("contacts", chatService.findContacts(user.getId(), user.getRoleName()));
+        model.addAttribute("inboxItems", unifiedInboxService.conversations(user.getId(), user.getRoleName(), search, activeTab));
+        model.addAttribute("contacts", unifiedInboxService.contacts(user.getId(), user.getRoleName()));
+        model.addAttribute("groupContacts", chatService.findContacts(user.getId(), user.getRoleName()));
+        model.addAttribute("inboxTabs", unifiedInboxService.tabs(user.getRoleName()));
         model.addAttribute("reactionChoices", List.of("👍", "❤️", "😂", "😮", "😢", "🙏", "🎉"));
-        model.addAttribute("createLabel", switch (user.getRoleName()) {
-            case "ROLE_PARENT" -> "Tạo nhóm phụ huynh";
-            case "ROLE_TEACHER" -> "Tạo nhóm người dạy";
-            default -> "Tạo hội thoại mới";
-        });
+        model.addAttribute("createLabel", "Tin nhắn mới");
     }
 }

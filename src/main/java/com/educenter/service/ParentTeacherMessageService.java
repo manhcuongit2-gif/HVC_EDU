@@ -2,6 +2,7 @@ package com.educenter.service;
 
 import com.educenter.dto.ConversationPage;
 import com.educenter.dto.ConversationTarget;
+import com.educenter.dto.LegacyMessagePayload;
 import com.educenter.entity.ClassEntity;
 
 import java.util.List;
@@ -13,4 +14,6 @@ public interface ParentTeacherMessageService {
     ConversationPage openForTeacher(Long teacherUserId, Long classId, Long parentId);
     void sendAsParent(Long parentUserId, Long classId, String content);
     void sendAsTeacher(Long teacherUserId, Long classId, Long parentId, String content);
+    List<LegacyMessagePayload> findMessagesAfterForParent(Long parentUserId, Long classId, Long afterId);
+    List<LegacyMessagePayload> findMessagesAfterForTeacher(Long teacherUserId, Long classId, Long parentId, Long afterId);
 }

@@ -60,13 +60,14 @@
                 <div class="fw-bold" th:text="${#temporals.format(day.date,'d')}">1</div>
                 <small class="text-muted d-block" th:text="${day.weekdayDisplay}"></small>
                 <a th:each="classSession : ${day.sessions}" th:href="@{/admin/schedules/session/{id}(id=${classSession.id})}"
-                   class="session-chip" th:classappend="${sessionVisualStates[classSession.id]}" th:style="${!reportStatusView && classSession.status != 'CANCELLED' ? '--class-color:' + classColors[classSession.classEntity.id] : ''}">
+                   class="session-chip" th:attr="aria-label=|Mở báo cáo buổi học ${classSession.classEntity.name} ngày ${#temporals.format(classSession.sessionDate,'dd/MM/yyyy')}|,title='Mở báo cáo buổi học'" th:classappend="${sessionVisualStates[classSession.id]}" th:style="${!reportStatusView && classSession.status != 'CANCELLED' ? '--class-color:' + classColors[classSession.classEntity.id] : ''}">
                     <strong th:text="|${classSession.startTime} ${classSession.classEntity.name}|">17:30 Toán</strong>
                     <span class="d-block" th:text="${classSession.classEntity.teacher.user.fullName}"></span>
                     <span class="d-block" th:text="${classSession.room != null ? classSession.room.name : 'Chưa có phòng'}"></span>
                     <span class="d-block" th:if="${classSession.status == 'CANCELLED'}">Đã hủy</span>
                     <span class="d-block" th:if="${classSession.status != 'CANCELLED' && classSession.publishedAt == null}">Chưa công bố báo cáo</span>
                     <span class="d-block" th:if="${classSession.publishedAt != null}">Đã công bố</span>
+                    <span class="d-block small fw-semibold text-decoration-underline">Mở báo cáo buổi học</span>
                 </a>
             </section>
         </div>

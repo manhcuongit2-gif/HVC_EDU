@@ -9,6 +9,7 @@ import com.educenter.repository.ClassStudentRepository;
 import com.educenter.repository.LearningMaterialRepository;
 import com.educenter.repository.UserRepository;
 import com.educenter.service.LearningMaterialService;
+import com.educenter.service.NotificationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,17 +42,20 @@ public class LearningMaterialServiceImpl implements LearningMaterialService {
     private final ClassRepository classRepository;
     private final ClassStudentRepository classStudentRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
     private final Path uploadDirectory;
 
     public LearningMaterialServiceImpl(LearningMaterialRepository materialRepository,
                                        ClassRepository classRepository,
                                        ClassStudentRepository classStudentRepository,
                                        UserRepository userRepository,
+                                       NotificationService notificationService,
                                        @Value("${app.storage.upload-dir:./uploads}") String uploadDirectory) {
         this.materialRepository = materialRepository;
         this.classRepository = classRepository;
         this.classStudentRepository = classStudentRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
@@ -216,6 +220,13 @@ public class LearningMaterialServiceImpl implements LearningMaterialService {
         }
 
         LearningMaterial saved = materialRepository.save(material);
+        if (id == null) {
+            List<Long> parents = classStudentRepository.findByClassEntityIdAndStatus(classEntity.getId(), "ACTIVE").stream()
+                    .map(ClassStudent::getStudent).filter(Objects::nonNull).map(s -> s.getParent()).filter(Objects::nonNull)
+                    .map(p -> p.getUser()).filter(Objects::nonNull).map(User::getId).distinct().toList();
+            notificationService.notifyUsers(parents, "learning-material-" + saved.getId(), "GENERAL", "Tài liệu mới cho lớp " + classEntity.getName(),
+                    "Giáo viên đã đăng tài liệu: " + saved.getTitle() + ".", "/parent/materials");
+        }
         if (newStoredFilename != null && oldStoredFilename != null && !oldStoredFilename.equals(newStoredFilename)) {
             deleteStoredFile(oldStoredFilename);
         }

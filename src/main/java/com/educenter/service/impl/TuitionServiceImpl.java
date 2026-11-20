@@ -10,6 +10,7 @@ import com.educenter.repository.PaymentRepository;
 import com.educenter.repository.StudentRepository;
 import com.educenter.repository.TuitionRepository;
 import com.educenter.service.TuitionService;
+import com.educenter.service.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,15 +31,18 @@ public class TuitionServiceImpl implements TuitionService {
     private final PaymentRepository paymentRepository;
     private final StudentRepository studentRepository;
     private final ClassRepository classRepository;
+    private final NotificationService notificationService;
 
     public TuitionServiceImpl(TuitionRepository tuitionRepository,
                               PaymentRepository paymentRepository,
                               StudentRepository studentRepository,
-                              ClassRepository classRepository) {
+                              ClassRepository classRepository,
+                              NotificationService notificationService) {
         this.tuitionRepository = tuitionRepository;
         this.paymentRepository = paymentRepository;
         this.studentRepository = studentRepository;
         this.classRepository = classRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -83,7 +87,9 @@ public class TuitionServiceImpl implements TuitionService {
         t.setStatus("UNPAID");
         t.setDescription(description != null ? description : "Học phí lớp " + classEntity.getName());
 
-        return tuitionRepository.save(t);
+        Tuition saved = tuitionRepository.save(t);
+        notifyParent(saved, "tuition-created-" + saved.getId(), "Khoản học phí mới", "Có khoản học phí mới của " + student.getFullName() + " cho lớp " + classEntity.getName() + ".", "/parent/tuition", "TUITION");
+        return saved;
     }
 
     @Override
@@ -105,6 +111,7 @@ public class TuitionServiceImpl implements TuitionService {
         p.setVnpayResponseCode("00");
         p.setNote(note != null ? note : "Thu học phí trực tiếp");
         paymentRepository.save(p);
+        notifyParent(t, "tuition-paid-" + t.getId(), "Đã ghi nhận thanh toán", "Khoản học phí của " + t.getStudent().getFullName() + " đã được ghi nhận thanh toán.", "/parent/tuition", "TUITION");
     }
 
     @Override
@@ -192,6 +199,7 @@ public class TuitionServiceImpl implements TuitionService {
         }
 
         Tuition tuition = getTuitionById(tuitionId);
+        boolean wasPaid = "PAID".equals(tuition.getStatus());
         Payment payment = new Payment();
         payment.setTuition(tuition);
         payment.setAmount(tuition.getAmount());
@@ -221,7 +229,11 @@ public class TuitionServiceImpl implements TuitionService {
                     : "Giao dịch không thành công, lặp lại hoặc lỗi chữ ký (Mã phản hồi: " + vnp_ResponseCode + ")");
         }
 
-        return paymentRepository.save(payment);
+        Payment saved = paymentRepository.save(payment);
+        if (!wasPaid && "SUCCESS".equals(saved.getStatus())) {
+            notifyParent(tuition, "tuition-paid-" + tuition.getId(), "Thanh toán học phí thành công", "Khoản học phí của " + tuition.getStudent().getFullName() + " đã được thanh toán.", "/parent/tuition", "TUITION");
+        }
+        return saved;
     }
 
     @Override
@@ -238,5 +250,11 @@ public class TuitionServiceImpl implements TuitionService {
     @Override
     public long getPaidCount() {
         return tuitionRepository.countByStatus("PAID");
+    }
+
+    private void notifyParent(Tuition tuition, String eventKey, String title, String body, String path, String category) {
+        if (tuition.getStudent() != null && tuition.getStudent().getParent() != null && tuition.getStudent().getParent().getUser() != null) {
+            notificationService.notifyUser(tuition.getStudent().getParent().getUser().getId(), eventKey, category, title, body, path);
+        }
     }
 }

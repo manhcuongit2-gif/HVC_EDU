@@ -7,78 +7,78 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" th:href="@{/css/messages.css}">
     <style>
-        .chat-inbox-layout{display:grid;grid-template-columns:minmax(270px,360px) 1fr;gap:20px;min-height:calc(100dvh - 190px)}
-        .chat-inbox,.chat-welcome{border:1px solid #e5ebf2;border-radius:18px;background:white;overflow:hidden}
-        .chat-inbox{display:flex;flex-direction:column}.chat-inbox-head{padding:18px;border-bottom:1px solid #e5ebf2}
-        .chat-contact-list{max-height:55vh;overflow:auto}.chat-contact{display:flex;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid #eef1f5;text-decoration:none;color:#14243a}
-        .chat-contact:hover,.chat-contact.active{background:#f0f6ff}.chat-contact-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#e9f1ff;color:#1769e0;font-weight:700;flex:0 0 auto}
-        .chat-contact .preview{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-welcome{display:grid;place-items:center;text-align:center;padding:32px;color:#758398}.chat-welcome i{font-size:4rem;color:#1769e0}
-        @media(max-width:767px){.chat-inbox-layout{grid-template-columns:1fr}.chat-contact-list{max-height:35vh}.chat-welcome{min-height:240px}}
+        .inbox-layout{display:grid;grid-template-columns:minmax(300px,390px) minmax(0,1fr);gap:20px;min-height:calc(100dvh - 190px)}
+        .inbox-panel,.inbox-welcome{border:1px solid #e5ebf2;border-radius:18px;background:#fff;overflow:hidden}
+        .inbox-panel{display:flex;flex-direction:column}.inbox-head{padding:18px;border-bottom:1px solid #e5ebf2}
+        .inbox-tabs{display:flex;gap:7px;overflow:auto;padding:12px 14px 4px;white-space:nowrap}
+        .inbox-contact{display:flex;gap:11px;align-items:center;padding:12px 15px;border-bottom:1px solid #eef1f5;text-decoration:none;color:#14243a}
+        .inbox-contact:hover,.inbox-contact.active{background:#f0f6ff}.inbox-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#e9f1ff;color:#1769e0;font-weight:700;flex:0 0 auto}
+        .inbox-preview{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.inbox-welcome{display:grid;place-items:center;text-align:center;padding:32px;color:#758398}
+        .inbox-welcome i{font-size:4rem;color:#1769e0}.new-contact{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #eef1f5}
+        @media(max-width:767px){.inbox-layout{grid-template-columns:1fr}.inbox-welcome{min-height:200px}}
     </style>
 </head>
 <body class="message-page">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <main class="container-fluid px-lg-4 py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div><h1 class="h3 mb-1">Tin nhắn</h1><p class="text-muted mb-0">Trao đổi riêng hoặc tạo nhóm theo quyền tài khoản.</p></div>
+        <div><h1 class="h3 mb-1">Tin nhắn</h1><p class="text-muted mb-0">Một hộp thư cho trao đổi với phụ huynh, người dạy và quản trị viên.</p></div>
         <a class="btn btn-outline-secondary" th:href="@{/}"><i class="bi bi-house me-1"></i>Trang chính</a>
     </div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-    <div class="chat-inbox-layout">
-        <section class="chat-inbox shadow-sm">
-            <div class="chat-inbox-head">
-                <form th:action="@{/chat}" method="get" class="input-group mb-3">
+    <div class="inbox-layout">
+        <section class="inbox-panel shadow-sm">
+            <div class="inbox-head">
+                <form th:action="@{/chat}" method="get" class="input-group">
+                    <input type="hidden" name="tab" th:value="${activeTab}">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
-                    <input class="form-control bg-light border-start-0" name="search" th:value="${search}" placeholder="Tìm hội thoại hoặc tin nhắn">
+                    <input class="form-control bg-light border-start-0" name="search" th:value="${search}" placeholder="Tìm người hoặc tin nhắn">
                     <button class="btn btn-outline-primary" type="submit">Tìm</button>
                 </form>
-                <button class="btn btn-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#newConversation">
-                    <i class="bi bi-plus-lg me-1"></i><span th:text="${createLabel}">Tạo hội thoại mới</span>
+            </div>
+            <nav class="inbox-tabs" aria-label="Lọc hội thoại">
+                <a th:each="tab : ${inboxTabs}" class="btn btn-sm" th:classappend="${activeTab == tab.key ? ' btn-primary' : ' btn-outline-secondary'}"
+                   th:href="@{/chat(tab=${tab.key},search=${search})}" th:text="${tab.label}">Tất cả</a>
+            </nav>
+            <div class="small text-uppercase fw-semibold text-muted px-3 pt-3 pb-1">Hội thoại gần đây</div>
+            <div class="flex-grow-1 overflow-auto" style="max-height:44vh">
+                <a th:each="item : ${inboxItems}" th:href="${item.url}" class="inbox-contact">
+                    <span class="inbox-avatar" th:text="${item.initials}">HC</span>
+                    <span class="min-w-0 flex-grow-1"><strong class="d-block text-truncate" th:text="${item.title}">Hội thoại</strong>
+                        <small class="inbox-preview text-muted d-block" th:text="${item.preview}">Tin nhắn gần nhất</small></span>
+                    <span class="text-end flex-shrink-0"><small class="text-muted d-block" th:if="${item.updatedAt != null}" th:text="${#temporals.format(item.updatedAt,'HH:mm')}"></small>
+                        <span th:if="${item.unreadCount > 0}" class="badge rounded-pill bg-primary" th:text="${item.unreadCount > 99 ? '99+' : item.unreadCount}">1</span></span>
+                </a>
+                <div th:if="${#lists.isEmpty(inboxItems)}" class="p-4 text-center text-muted small">Chưa có hội thoại trong mục này.</div>
+            </div>
+            <div class="border-top p-3">
+                <button class="btn btn-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#newMessageContacts" aria-expanded="false">
+                    <i class="bi bi-pencil-square me-1"></i>Tin nhắn mới
                 </button>
-                <div class="collapse mt-3" id="newConversation">
-                    <form th:action="@{/chat/new}" method="post">
-                        <label class="form-label small fw-semibold" for="conversationTitle">Tên nhóm (không bắt buộc khi nhắn riêng)</label>
-                        <input class="form-control form-control-sm mb-2" id="conversationTitle" name="title" maxlength="150" placeholder="Ví dụ: Nhóm phụ huynh lớp 7A">
-                        <label class="form-label small fw-semibold" for="contactRoleFilter">Lọc theo vai trò</label>
-                        <select id="contactRoleFilter" class="form-select form-select-sm mb-2"><option value="all">Tất cả vai trò được phép</option><option value="ROLE_PARENT">Phụ huynh</option><option value="ROLE_TEACHER">Người dạy</option><option value="ROLE_ADMIN">Quản trị viên</option></select>
-                        <div class="small text-muted mb-1">Chọn một người để nhắn riêng hoặc nhiều người để tạo nhóm.</div>
-                        <div class="chat-contact-list border rounded mb-2">
-                            <label th:each="contact : ${contacts}" class="chat-contact" th:attr="data-role=${contact.role.name}">
-                                <input class="form-check-input mt-0" type="checkbox" name="userIds" th:value="${contact.id}">
-                                <span class="chat-contact-avatar" th:text="${#strings.substring(contact.fullName,0,1)}">A</span>
-                                <span class="min-w-0"><strong class="d-block text-truncate" th:text="${contact.fullName}">Người dùng</strong><small class="text-muted" th:text="${contact.role.name == 'ROLE_ADMIN' ? 'Quản trị viên' : (contact.role.name == 'ROLE_TEACHER' ? 'Người dạy' : 'Phụ huynh')}">Vai trò</small></span>
-                            </label>
-                            <div th:if="${#lists.isEmpty(contacts)}" class="p-3 small text-muted">Không có tài khoản phù hợp để bắt đầu trò chuyện.</div>
+                <div class="collapse mt-2" id="newMessageContacts">
+                    <div class="small text-muted mb-2">Chọn người nhận. Hội thoại với giáo viên/phụ huynh đã có sẽ giữ nguyên lịch sử.</div>
+                    <div class="border rounded overflow-auto" style="max-height:33vh">
+                        <div th:each="contact : ${contacts}" class="new-contact">
+                            <span class="inbox-avatar" th:text="${contact.initials}">HC</span>
+                            <span class="min-w-0 flex-grow-1"><strong class="d-block text-truncate" th:text="${contact.title}">Người nhận</strong><small class="text-muted" th:text="${contact.subtitle}">Vai trò</small></span>
+                            <form th:if="${contact.recipientUserId != null}" th:action="@{/chat/new}" method="post" class="m-0">
+                                <input type="hidden" name="userIds" th:value="${contact.recipientUserId}">
+                                <button class="btn btn-sm btn-outline-primary" type="submit" aria-label="Bắt đầu nhắn tin"><i class="bi bi-chat-dots"></i><span class="visually-hidden">Nhắn tin</span></button>
+                            </form>
+                            <a th:if="${contact.url != null}" class="btn btn-sm btn-outline-primary" th:href="${contact.url}"><i class="bi bi-chat-dots"></i><span class="visually-hidden">Mở hội thoại</span></a>
                         </div>
-                        <button type="submit" class="btn btn-sm btn-success w-100">Tạo hội thoại</button>
-                    </form>
+                        <div th:if="${#lists.isEmpty(contacts)}" class="p-3 small text-muted">Chưa có người nhận phù hợp.</div>
+                    </div>
                 </div>
             </div>
-            <div class="small text-uppercase fw-semibold text-muted px-3 pt-3">Gần đây</div>
-            <div class="flex-grow-1 overflow-auto">
-                <a th:each="item : ${conversations}" th:href="@{/chat/{id}(id=${item.conversation.id})}" class="chat-contact">
-                    <span class="chat-contact-avatar" th:text="${item.initials}">HC</span>
-                    <span class="min-w-0 flex-grow-1"><strong class="d-block text-truncate" th:text="${item.displayTitle}">Hội thoại</strong>
-                        <small class="preview text-muted d-block" th:text="${item.latestMessage == null ? 'Chưa có tin nhắn' : (item.latestMessage.deletedForAll ? 'Đã thu hồi tin nhắn' : (item.latestMessage.content != null ? item.latestMessage.content : item.latestMessage.originalFilename))}">Tin nhắn gần nhất</small></span>
-                    <span class="text-end flex-shrink-0"><small class="text-muted d-block" th:if="${item.conversation.updatedAt != null}" th:text="${#temporals.format(item.conversation.updatedAt,'HH:mm')}"></small><span th:if="${item.unreadCount > 0}" class="badge rounded-pill bg-primary" th:text="${item.unreadCount > 99 ? '99+' : item.unreadCount}">1</span></span>
-                </a>
-                <div th:if="${#lists.isEmpty(conversations)}" class="p-4 text-center text-muted small">Chưa có hội thoại. Bắt đầu trao đổi bằng nút phía trên.</div>
-            </div>
         </section>
-        <section class="chat-welcome shadow-sm">
-            <div><i class="bi bi-chat-square-heart d-block mb-3"></i><h2 class="h4 text-dark">Kết nối học tập thuận tiện</h2><p class="mb-0">Chọn một cuộc trò chuyện hoặc tạo nhóm mới. Tin nhắn mới sẽ được cập nhật tự động.</p></div>
+        <section class="inbox-welcome shadow-sm">
+            <div><i class="bi bi-chat-square-heart d-block mb-3"></i><h2 class="h4 text-dark">Trao đổi thuận tiện</h2>
+                <p class="mb-0">Chọn hội thoại để tiếp tục. Tin nhắn cũ giữa phụ huynh, người dạy và admin được tổng hợp ở danh sách bên trái.</p></div>
         </section>
     </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    document.getElementById('contactRoleFilter')?.addEventListener('change', event => {
-        const role = event.target.value;
-        document.querySelectorAll('#newConversation [data-role]').forEach(contact => {
-            contact.classList.toggle('d-none', role !== 'all' && contact.dataset.role !== role);
-        });
-    });
-</script>
 </body>
 </html>

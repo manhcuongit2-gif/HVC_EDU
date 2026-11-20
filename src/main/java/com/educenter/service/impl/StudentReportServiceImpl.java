@@ -4,6 +4,7 @@ import com.educenter.entity.*;
 import com.educenter.repository.*;
 import com.educenter.service.ClassSessionService;
 import com.educenter.service.StudentReportService;
+import com.educenter.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class StudentReportServiceImpl implements StudentReportService {
     private final ClassRepository classRepository;
     private final UserRepository userRepository;
     private final MonthlyTuitionBillingService billingService;
+    private final NotificationService notificationService;
 
     public StudentReportServiceImpl(ClassSessionService classSessionService,
                                     ClassSessionRepository sessionRepository,
@@ -39,7 +41,8 @@ public class StudentReportServiceImpl implements StudentReportService {
                                     AttendanceRepository attendanceRepository,
                                     ClassRepository classRepository,
                                     UserRepository userRepository,
-                                    MonthlyTuitionBillingService billingService) {
+                                    MonthlyTuitionBillingService billingService,
+                                    NotificationService notificationService) {
         this.classSessionService = classSessionService;
         this.sessionRepository = sessionRepository;
         this.sessionReportRepository = sessionReportRepository;
@@ -49,6 +52,7 @@ public class StudentReportServiceImpl implements StudentReportService {
         this.classRepository = classRepository;
         this.userRepository = userRepository;
         this.billingService = billingService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -133,6 +137,14 @@ public class StudentReportServiceImpl implements StudentReportService {
             sessionRepository.save(session);
         }
         refreshPublishedMonthForSession(session);
+        for (SessionStudentReport report : reports) {
+            if (report.getStudent().getParent() != null && report.getStudent().getParent().getUser() != null) {
+                notificationService.notifyUser(report.getStudent().getParent().getUser().getId(),
+                        "learning-report-session-" + sessionId + "-" + report.getStudent().getId(), "LEARNING_REPORT",
+                        "Báo cáo buổi học mới", "Đã có nhận xét buổi " + session.getSessionDate() + " của " + report.getStudent().getFullName() + ".",
+                        "/parent/reports");
+            }
+        }
     }
 
     @Override
@@ -192,6 +204,12 @@ public class StudentReportServiceImpl implements StudentReportService {
         report.setUpdatedBy(report.getPublishedBy());
         recalculateMonthlySummary(report, month);
         monthlyReportRepository.save(report);
+        if (student.getParent() != null && student.getParent().getUser() != null) {
+            notificationService.notifyUser(student.getParent().getUser().getId(),
+                    "learning-report-monthly-" + classId + "-" + studentId + "-" + month, "LEARNING_REPORT",
+                    "Báo cáo học tập tháng mới", "Đã có tổng kết tháng " + month.getMonthValue() + "/" + month.getYear() + " cho " + student.getFullName() + ".",
+                    "/parent/reports");
+        }
         BigDecimal calculatedTotal = classEntity.getSessionFee() == null ? BigDecimal.ZERO
                 : classEntity.getSessionFee().multiply(BigDecimal.valueOf(report.getPresentCount()));
         return billingService.synchronizeCharge(student, classEntity, month, calculatedTotal);

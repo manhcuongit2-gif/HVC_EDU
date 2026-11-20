@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface ChatConversationRepository extends JpaRepository<ChatConversation, Long> {
     Optional<ChatConversation> findByDirectKey(String directKey);
+    Optional<ChatConversation> findByClassEntityId(Long classId);
 }

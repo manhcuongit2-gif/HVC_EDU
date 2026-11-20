@@ -9,8 +9,10 @@ import com.educenter.repository.TeacherAdminConversationRepository;
 import com.educenter.repository.TeacherAdminMessageRepository;
 import com.educenter.repository.TeacherRepository;
 import com.educenter.repository.UserRepository;
+import com.educenter.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +27,8 @@ class TeacherAdminMessageServiceImplTest {
     private TeacherAdminMessageRepository messageRepository;
     private TeacherRepository teacherRepository;
     private UserRepository userRepository;
+    private NotificationService notificationService;
+    private SimpMessagingTemplate messagingTemplate;
     private TeacherAdminMessageServiceImpl service;
     private User adminUser;
     private User teacherUser;
@@ -36,8 +40,10 @@ class TeacherAdminMessageServiceImplTest {
         messageRepository = mock(TeacherAdminMessageRepository.class);
         teacherRepository = mock(TeacherRepository.class);
         userRepository = mock(UserRepository.class);
+        notificationService = mock(NotificationService.class);
+        messagingTemplate = mock(SimpMessagingTemplate.class);
         service = new TeacherAdminMessageServiceImpl(conversationRepository, messageRepository,
-                teacherRepository, userRepository);
+                teacherRepository, userRepository, notificationService, messagingTemplate);
 
         adminUser = user(1L, "ROLE_ADMIN");
         teacherUser = user(2L, "ROLE_TEACHER");
@@ -54,6 +60,7 @@ class TeacherAdminMessageServiceImplTest {
             return conversation;
         });
         when(messageRepository.findByConversationIdOrderByCreatedAtAscIdAsc(51L)).thenReturn(List.of());
+        when(messageRepository.save(any(TeacherAdminMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test

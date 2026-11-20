@@ -17,6 +17,7 @@ import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -145,15 +146,13 @@ public class ReportFileServiceImpl implements ReportFileService {
 
     @Override
     public byte[] exportSessionPdf(String title, List<SessionStudentReport> reports) {
-        List<List<String>> blocks = new ArrayList<>();
-        for (SessionStudentReport r : reports) {
-            blocks.add(List.of("Ngày: " + sessionDate(r) + " · Lớp: " + text(r.getClassSession().getClassEntity().getName()),
-                    "Học sinh: " + text(r.getStudent().getFullName()),
-                    "Điểm danh: " + attendanceLabel(r.getAttendanceStatus()) + " · BTVN: " + text(r.getHomeworkScore())
-                            + " · Điểm Cộng: " + text(r.getGoodEvaluationCount()),
-                    "Nhận xét: " + text(r.getComment()), "Ghi chú: " + text(r.getNote())));
-        }
-        return pdf(title, blocks);
+        List<String> headers = List.of("Ngày", "Học sinh", "Lớp", "Điểm danh", "BTVN", "Nhận xét", "Điểm Cộng", "Ghi chú");
+        List<List<String>> rows = reports.stream().map(report -> List.of(
+                sessionDate(report), text(report.getStudent().getFullName()),
+                text(report.getClassSession().getClassEntity().getName()), attendanceLabel(report.getAttendanceStatus()),
+                text(report.getHomeworkScore()), text(report.getComment()), text(report.getGoodEvaluationCount()),
+                text(report.getNote()))).toList();
+        return pdfTable(title, headers, rows, new float[]{74, 108, 98, 72, 48, 204, 70, 104});
     }
 
     @Override
@@ -219,7 +218,7 @@ public class ReportFileServiceImpl implements ReportFileService {
                 document.addPage(page);
                 try (PDPageContentStream content = new PDPageContentStream(document, page)) {
                     content.beginText(); content.setFont(font, 16); content.newLineAtOffset(38, 555); content.showText(safePdf(title)); content.endText();
-                    content.setStrokingColor(203, 213, 225); content.moveTo(38, 540); content.lineTo(804, 540); content.stroke();
+                    content.setStrokingColor(new Color(203, 213, 225)); content.moveTo(38, 540); content.lineTo(804, 540); content.stroke();
                     int end = Math.min(lines.size(), (p + 1) * pageSize);
                     float y = 520;
                     for (int i = p * pageSize; i < end; i++) {
@@ -235,6 +234,195 @@ public class ReportFileServiceImpl implements ReportFileService {
         } catch (IOException e) {
             throw new IllegalStateException("Không thể tạo tệp PDF báo cáo.", e);
         }
+    }
+
+    private byte[] pdfTable(String title, List<String> headers, List<List<String>> rows, float[] columnWidths) {
+        final float pageWidth = 842;
+        final float pageHeight = 595;
+        final float left = 32;
+        final float right = 32;
+        final float bottom = 38;
+        final float headerHeight = 26;
+        final float rowLeading = 10.5f;
+        final float cellPadding = 5;
+        float tableWidth = pageWidth - left - right;
+        if (headers.size() != columnWidths.length) throw new IllegalArgumentException("Số cột PDF không khớp độ rộng cột.");
+        float configuredWidth = 0;
+        for (float width : columnWidths) configuredWidth += width;
+        if (Math.abs(configuredWidth - tableWidth) > 1) throw new IllegalArgumentException("Độ rộng bảng PDF không khớp khổ giấy.");
+
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream();
+             InputStream fontStream = getClass().getResourceAsStream("/fonts/NotoSans-Vietnamese.ttf")) {
+            if (fontStream == null) throw new IllegalStateException("Thiếu phông chữ tiếng Việt cho báo cáo PDF.");
+            PDType0Font font = PDType0Font.load(document, fontStream);
+
+            List<String> titleLines = wrapPdfCell(title, font, 15, tableWidth);
+            float headerTop = pageHeight - 34 - titleLines.size() * 18 - 13;
+            float dataTop = headerTop - headerHeight;
+            float availableRowHeight = dataTop - bottom;
+            List<List<List<String>>> tableRows = new ArrayList<>();
+            if (rows.isEmpty()) {
+                tableRows.add(List.of(List.of("Chưa có dữ liệu báo cáo."), List.of(""), List.of(""), List.of(""),
+                        List.of(""), List.of(""), List.of(""), List.of("")));
+            } else {
+                for (List<String> values : rows) {
+                    List<List<String>> cells = new ArrayList<>();
+                    for (int column = 0; column < headers.size(); column++) {
+                        String value = column < values.size() ? values.get(column) : "";
+                        cells.add(wrapPdfCell(value, font, 8.5f, columnWidths[column] - cellPadding * 2));
+                    }
+                    tableRows.add(cells);
+                }
+            }
+
+            List<Float> rowHeights = new ArrayList<>(tableRows.size());
+            for (List<List<String>> row : tableRows) {
+                int maxLines = row.stream().mapToInt(List::size).max().orElse(1);
+                float rowHeight = Math.max(25, maxLines * rowLeading + cellPadding * 2);
+                if (rowHeight > availableRowHeight) {
+                    throw new IllegalArgumentException("Một hàng báo cáo vượt quá chiều cao của trang PDF.");
+                }
+                rowHeights.add(rowHeight);
+            }
+
+            List<List<Integer>> pages = paginateRows(rowHeights, dataTop, bottom);
+            Color headerColor = new Color(31, 78, 121);
+            Color gridColor = new Color(203, 213, 225);
+            for (int pageIndex = 0; pageIndex < pages.size(); pageIndex++) {
+                PDPage page = new PDPage(new PDRectangle(pageWidth, pageHeight));
+                document.addPage(page);
+                try (PDPageContentStream content = new PDPageContentStream(document, page)) {
+                    float titleY = pageHeight - 34;
+                    for (String line : titleLines) {
+                        drawPdfText(content, font, 15, left, titleY, line);
+                        titleY -= 18;
+                    }
+                    content.setStrokingColor(gridColor);
+                    content.moveTo(left, headerTop + 9);
+                    content.lineTo(pageWidth - right, headerTop + 9);
+                    content.stroke();
+
+                    content.setNonStrokingColor(headerColor);
+                    content.addRect(left, headerTop - headerHeight, tableWidth, headerHeight);
+                    content.fill();
+                    float x = left;
+                    for (int column = 0; column < headers.size(); column++) {
+                        drawPdfText(content, font, 8.5f, x + cellPadding, headerTop - 16, headers.get(column), Color.WHITE);
+                        x += columnWidths[column];
+                    }
+
+                    float y = dataTop;
+                    int stripe = 0;
+                    for (int rowIndex : pages.get(pageIndex)) {
+                        float rowHeight = rowHeights.get(rowIndex);
+                        float rowBottom = y - rowHeight;
+                        if (stripe++ % 2 == 1) {
+                            content.setNonStrokingColor(new Color(246, 248, 251));
+                            content.addRect(left, rowBottom, tableWidth, rowHeight);
+                            content.fill();
+                        }
+                        content.setStrokingColor(gridColor);
+                        content.setLineWidth(0.45f);
+                        content.addRect(left, rowBottom, tableWidth, rowHeight);
+                        content.stroke();
+
+                        x = left;
+                        List<List<String>> cells = tableRows.get(rowIndex);
+                        for (int column = 0; column < headers.size(); column++) {
+                            if (column > 0) {
+                                content.moveTo(x, rowBottom);
+                                content.lineTo(x, y);
+                                content.stroke();
+                            }
+                            List<String> lines = cells.get(column);
+                            float textY = y - cellPadding - 7.5f;
+                            for (String line : lines) {
+                                drawPdfText(content, font, 8.5f, x + cellPadding, textY, line, Color.BLACK);
+                                textY -= rowLeading;
+                            }
+                            x += columnWidths[column];
+                        }
+                        y = rowBottom;
+                    }
+
+                    drawPdfText(content, font, 8, pageWidth - right - 30, 18,
+                            (pageIndex + 1) + " / " + pages.size(), new Color(90, 100, 115));
+                }
+            }
+            document.save(output);
+            return output.toByteArray();
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể tạo tệp PDF báo cáo.", e);
+        }
+    }
+
+    private List<List<Integer>> paginateRows(List<Float> rowHeights, float startY, float bottom) {
+        List<List<Integer>> pages = new ArrayList<>();
+        List<Integer> page = new ArrayList<>();
+        float y = startY;
+        for (int rowIndex = 0; rowIndex < rowHeights.size(); rowIndex++) {
+            float height = rowHeights.get(rowIndex);
+            if (!page.isEmpty() && y - height < bottom) {
+                pages.add(page);
+                page = new ArrayList<>();
+                y = startY;
+            }
+            page.add(rowIndex);
+            y -= height;
+        }
+        if (!page.isEmpty()) pages.add(page);
+        return pages;
+    }
+
+    private List<String> wrapPdfCell(String text, PDType0Font font, float fontSize, float maxWidth) throws IOException {
+        String value = safePdf(text).replace("\r\n", "\n").replace('\r', '\n');
+        List<String> lines = new ArrayList<>();
+        for (String paragraph : value.split("\n", -1)) {
+            StringBuilder line = new StringBuilder();
+            for (String word : paragraph.trim().split("\\s+")) {
+                if (word.isEmpty()) continue;
+                String candidate = line.isEmpty() ? word : line + " " + word;
+                if (font.getStringWidth(candidate) / 1000f * fontSize <= maxWidth) {
+                    if (!line.isEmpty()) line.append(' ');
+                    line.append(word);
+                    continue;
+                }
+                if (!line.isEmpty()) {
+                    lines.add(line.toString());
+                    line.setLength(0);
+                }
+                StringBuilder fragment = new StringBuilder();
+                for (int offset = 0; offset < word.length();) {
+                    int codePoint = word.codePointAt(offset);
+                    String glyph = new String(Character.toChars(codePoint));
+                    String next = fragment + glyph;
+                    if (!fragment.isEmpty() && font.getStringWidth(next) / 1000f * fontSize > maxWidth) {
+                        lines.add(fragment.toString());
+                        fragment.setLength(0);
+                    }
+                    fragment.append(glyph);
+                    offset += Character.charCount(codePoint);
+                }
+                line.append(fragment);
+            }
+            lines.add(line.toString());
+        }
+        return lines.isEmpty() ? List.of("") : lines;
+    }
+
+    private void drawPdfText(PDPageContentStream content, PDType0Font font, float fontSize,
+                             float x, float y, String text) throws IOException {
+        drawPdfText(content, font, fontSize, x, y, text, Color.BLACK);
+    }
+
+    private void drawPdfText(PDPageContentStream content, PDType0Font font, float fontSize,
+                             float x, float y, String text, Color color) throws IOException {
+        content.setNonStrokingColor(color);
+        content.beginText();
+        content.setFont(font, fontSize);
+        content.newLineAtOffset(x, y);
+        content.showText(safePdf(text));
+        content.endText();
     }
 
     private List<String> wrapPdfLine(String text, PDType0Font font, float fontSize, float maxWidth) throws IOException {

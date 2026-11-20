@@ -1,6 +1,7 @@
 package com.educenter.service.impl;
 
 import com.educenter.dto.TeacherAdminConversationPage;
+import com.educenter.dto.LegacyMessagePayload;
 import com.educenter.entity.Teacher;
 import com.educenter.entity.TeacherAdminConversation;
 import com.educenter.entity.TeacherAdminMessage;
@@ -10,6 +11,8 @@ import com.educenter.repository.TeacherAdminMessageRepository;
 import com.educenter.repository.TeacherRepository;
 import com.educenter.repository.UserRepository;
 import com.educenter.service.TeacherAdminMessageService;
+import com.educenter.service.NotificationService;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,15 +32,21 @@ public class TeacherAdminMessageServiceImpl implements TeacherAdminMessageServic
     private final TeacherAdminMessageRepository messageRepository;
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public TeacherAdminMessageServiceImpl(TeacherAdminConversationRepository conversationRepository,
                                           TeacherAdminMessageRepository messageRepository,
                                           TeacherRepository teacherRepository,
-                                          UserRepository userRepository) {
+                                          UserRepository userRepository,
+                                          NotificationService notificationService,
+                                          SimpMessagingTemplate messagingTemplate) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -81,6 +90,26 @@ public class TeacherAdminMessageServiceImpl implements TeacherAdminMessageServic
     public void sendAsAdmin(Long adminUserId, Long teacherUserId, String content) {
         TeacherAdminConversation conversation = openForAdmin(adminUserId, teacherUserId).conversation();
         saveMessage(conversation, adminUserId, content);
+    }
+
+    @Override
+    @Transactional
+    public List<LegacyMessagePayload> findMessagesAfterForTeacher(Long teacherUserId, Long afterId) {
+        TeacherAdminConversation conversation = getOrCreate(requireTeacher(teacherUserId), findPrimaryAdmin());
+        List<TeacherAdminMessage> messages = messageRepository.findByConversationIdAndIdGreaterThanOrderByIdAsc(
+                conversation.getId(), afterId == null ? 0L : Math.max(0L, afterId));
+        messages.stream().map(TeacherAdminMessage::getId).max(Long::compareTo).ifPresent(conversation::setTeacherLastReadMessageId);
+        return messages.stream().map(LegacyMessagePayload::from).toList();
+    }
+
+    @Override
+    @Transactional
+    public List<LegacyMessagePayload> findMessagesAfterForAdmin(Long adminUserId, Long teacherUserId, Long afterId) {
+        TeacherAdminConversation conversation = getOrCreate(requireTeacher(teacherUserId), requirePrimaryAdmin(adminUserId));
+        List<TeacherAdminMessage> messages = messageRepository.findByConversationIdAndIdGreaterThanOrderByIdAsc(
+                conversation.getId(), afterId == null ? 0L : Math.max(0L, afterId));
+        messages.stream().map(TeacherAdminMessage::getId).max(Long::compareTo).ifPresent(conversation::setAdminLastReadMessageId);
+        return messages.stream().map(LegacyMessagePayload::from).toList();
     }
 
     private User requirePrimaryAdmin(Long adminUserId) {
@@ -160,8 +189,15 @@ public class TeacherAdminMessageServiceImpl implements TeacherAdminMessageServic
         message.setConversation(conversation);
         message.setSender(sender);
         message.setContent(content.trim());
-        messageRepository.save(message);
+        TeacherAdminMessage savedMessage = messageRepository.save(message);
         conversation.setUpdatedAt(LocalDateTime.now());
         conversationRepository.save(conversation);
+        messagingTemplate.convertAndSend("/topic/teacher-admin/" + conversation.getId(), LegacyMessagePayload.from(savedMessage));
+        Long recipientId = Objects.equals(senderId, conversation.getTeacherUser().getId())
+                ? conversation.getAdminUser().getId() : conversation.getTeacherUser().getId();
+        String targetPath = recipientId.equals(conversation.getAdminUser().getId())
+                ? "/admin/messages/" + conversation.getTeacherUser().getId() : "/teacher/admin-messages";
+        notificationService.notifyUser(recipientId, "teacher-admin-message-" + savedMessage.getId(), "MESSAGE_PRIVATE",
+                "Tin nhắn mới từ " + savedMessage.getSender().getFullName(), content.trim().substring(0, Math.min(140, content.trim().length())), targetPath);
     }
 }

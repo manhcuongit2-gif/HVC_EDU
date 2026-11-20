@@ -51,7 +51,8 @@ public class SecurityConfig {
         http
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/icons/**", "/webjars/**", "/favicon.ico", "/manifest.webmanifest", "/sw.js", "/offline.html").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/push/public-key").permitAll()
                 .requestMatchers("/", "/login", "/register", "/auth/**", "/403", "/error/**", "/payment/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/teacher/**").hasRole("TEACHER")

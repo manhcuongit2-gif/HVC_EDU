@@ -13,6 +13,7 @@ import java.util.List;
 public interface TuitionRepository extends JpaRepository<Tuition, Long> {
     List<Tuition> findAllByOrderByIdDesc();
     List<Tuition> findByStatus(String status);
+    List<Tuition> findByStatusAndDueDateBetween(String status, LocalDate from, LocalDate to);
     List<Tuition> findByStudentId(Long studentId);
     List<Tuition> findByStudentParentUserIdOrderByIdDesc(Long userId);
     List<Tuition> findByClassEntityId(Long classId);

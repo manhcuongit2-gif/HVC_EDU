@@ -11,7 +11,8 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <main class="container py-4 message-main">
     <a th:href="${backUrl}" class="btn btn-link text-decoration-none px-0 mb-3"><i class="bi bi-arrow-left me-1"></i><span th:text="${backLabel}">Danh sách hội thoại</span></a>
-    <section class="chat-window shadow-sm">
+    <section class="chat-window shadow-sm" id="liveConversation"
+             th:attr="data-live-topic=${liveTopic},data-poll-url=${pollUrl},data-user-id=${currentUser.id}">
         <header class="chat-header">
             <div class="chat-avatar"><i class="bi bi-person-fill"></i></div>
             <div class="min-w-0"><h1 class="h5 mb-0 text-truncate" th:text="${title}">Hội thoại</h1><span class="small text-success"><i class="bi bi-shield-check me-1"></i>Trao đổi riêng</span></div>
@@ -21,7 +22,7 @@
                 <div class="chat-empty-icon"><i class="bi bi-chat-heart"></i></div>
                 <strong>Chưa có tin nhắn</strong><span>Gửi lời nhắn đầu tiên để bắt đầu trao đổi.</span>
             </div>
-            <article th:each="message : ${messages}" class="chat-row" th:classappend="${message.sender.id == currentUser.id} ? ' chat-row-mine' : ' chat-row-theirs'">
+            <article th:each="message : ${messages}" class="chat-row" th:attr="data-message-id=${message.id}" th:classappend="${message.sender.id == currentUser.id} ? ' chat-row-mine' : ' chat-row-theirs'">
                 <div class="chat-avatar chat-avatar-small" aria-hidden="true"><span th:text="${#strings.substring(message.sender.fullName, 0, 1)}">A</span></div>
                 <div class="chat-message-wrap">
                     <span class="chat-sender" th:text="${message.sender.fullName}">Người gửi</span>
@@ -40,16 +41,45 @@
         </form>
     </section>
 </main>
+<script src="/webjars/github-com-stomp-js-stompjs/7.0.0/bundles/stomp.umd.min.js"></script>
 <script>
     const history = document.getElementById('messageList');
+    const conversation = document.getElementById('liveConversation');
+    const currentUserId = Number(conversation?.dataset.userId || 0);
+    const pollUrl = conversation?.dataset.pollUrl;
+    const liveTopic = conversation?.dataset.liveTopic;
+    let lastId = Math.max(0, ...Array.from(history?.querySelectorAll('[data-message-id]') || []).map(row => Number(row.dataset.messageId)));
     if (history) history.scrollTop = history.scrollHeight;
+    const appendMessage = message => {
+        if (!history || !message.id || Number(message.id) <= lastId) return;
+        lastId = Number(message.id);
+        history.querySelector('.chat-empty')?.remove();
+        const article = document.createElement('article');
+        article.className = `chat-row ${Number(message.senderId) === currentUserId ? 'chat-row-mine' : 'chat-row-theirs'}`;
+        article.dataset.messageId = message.id;
+        const avatar = document.createElement('div'); avatar.className = 'chat-avatar chat-avatar-small';
+        const initial = document.createElement('span'); initial.textContent = (message.senderName || '?').slice(0, 1); avatar.append(initial);
+        const wrap = document.createElement('div'); wrap.className = 'chat-message-wrap';
+        const sender = document.createElement('span'); sender.className = 'chat-sender'; sender.textContent = message.senderName || 'Người dùng';
+        const bubble = document.createElement('div'); bubble.className = 'chat-bubble';
+        const text = document.createElement('p'); text.className = 'mb-1'; text.textContent = message.content || ''; bubble.append(text);
+        const time = document.createElement('time'); time.className = 'chat-time';
+        time.textContent = new Date(message.createdAt).toLocaleString('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'});
+        bubble.append(time); wrap.append(sender, bubble); article.append(avatar, wrap); history.append(article); history.scrollTop = history.scrollHeight;
+    };
     const composer = document.getElementById('messageContent');
     composer?.addEventListener('keydown', event => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            composer.form?.requestSubmit();
-        }
+        if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); composer.form?.requestSubmit(); }
     });
+    if (window.StompJs?.Client && liveTopic) {
+        const socketProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const client = new StompJs.Client({brokerURL:`${socketProtocol}//${location.host}/ws`, reconnectDelay:5000, heartbeatIncoming:10000, heartbeatOutgoing:10000});
+        client.onConnect = () => client.subscribe(liveTopic, frame => { try { appendMessage(JSON.parse(frame.body)); } catch (_) {} });
+        client.activate();
+    }
+    if (pollUrl) window.setInterval(() => fetch(`${pollUrl}?afterId=${lastId}`, {credentials:'same-origin', headers:{Accept:'application/json'}})
+        .then(response => response.ok ? response.json() : [])
+        .then(messages => messages.forEach(appendMessage)).catch(() => {}), 5000);
 </script>
 </body>
 </html>

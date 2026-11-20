@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Controller
 @RequestMapping("/admin/messages")
@@ -29,19 +33,8 @@ public class AdminTeacherMessageController {
     }
 
     @GetMapping
-    public String index(@AuthenticationPrincipal CustomUserDetails user, Model model) {
-        model.addAttribute("currentUser", user);
-        try {
-            model.addAttribute("teachers", messageService.findTeachersForAdmin(user.getId()));
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("teachers", java.util.List.of());
-            model.addAttribute("errorMessage", e.getMessage());
-        } catch (DataAccessException e) {
-            LOGGER.error("Could not list teachers for admin messaging", e);
-            model.addAttribute("teachers", java.util.List.of());
-            model.addAttribute("errorMessage", "Không thể tải danh sách người dạy lúc này.");
-        }
-        return "admin/messages/list";
+    public String index() {
+        return "redirect:/chat?tab=teacher";
     }
 
     @GetMapping("/{teacherUserId}")
@@ -51,11 +44,13 @@ public class AdminTeacherMessageController {
             TeacherAdminConversationPage page = messageService.openForAdmin(user.getId(), teacherUserId);
             model.addAttribute("currentUser", user);
             model.addAttribute("conversation", page.conversation());
+            model.addAttribute("liveTopic", "/topic/teacher-admin/" + page.conversation().getId());
+            model.addAttribute("pollUrl", "/admin/messages/" + teacherUserId + "/api/messages");
             model.addAttribute("messages", page.messages());
             model.addAttribute("title", "Trao đổi với " + page.conversation().getTeacherUser().getFullName());
             model.addAttribute("postUrl", "/admin/messages/" + teacherUserId);
-            model.addAttribute("backUrl", "/admin/messages");
-            model.addAttribute("backLabel", "Danh sách người dạy");
+            model.addAttribute("backUrl", "/chat?tab=teacher");
+            model.addAttribute("backLabel", "Hộp thư");
             model.addAttribute("canSend", true);
             return "messages/thread";
         } catch (IllegalArgumentException e) {
@@ -64,7 +59,15 @@ public class AdminTeacherMessageController {
             LOGGER.error("Could not open admin to teacher conversation for teacher user {}", teacherUserId, e);
             redirect.addFlashAttribute("errorMessage", "Không thể mở hội thoại lúc này. Vui lòng thử lại sau.");
         }
-        return "redirect:/admin/messages";
+        return "redirect:/chat?tab=teacher";
+    }
+
+    @GetMapping(value = "/{teacherUserId}/api/messages", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public java.util.List<com.educenter.dto.LegacyMessagePayload> updates(@PathVariable Long teacherUserId,
+            @RequestParam(defaultValue = "0") Long afterId, @AuthenticationPrincipal CustomUserDetails user) {
+        try { return messageService.findMessagesAfterForAdmin(user.getId(), teacherUserId, afterId); }
+        catch (IllegalArgumentException e) { throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage(), e); }
     }
 
     @PostMapping("/{teacherUserId}")

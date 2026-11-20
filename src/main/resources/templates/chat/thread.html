@@ -19,17 +19,21 @@
     <div class="chat-thread-layout">
         <aside class="chat-inbox shadow-sm">
             <div class="p-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center mb-2"><strong>Tin nhắn</strong><a th:href="@{/chat}" class="small text-decoration-none">Tất cả</a></div>
-                <form th:action="@{/chat}" method="get" class="input-group input-group-sm"><input class="form-control" name="search" th:value="${search}" placeholder="Tìm hội thoại"><button class="btn btn-outline-primary">Tìm</button></form>
+                <div class="d-flex justify-content-between align-items-center mb-2"><strong>Hộp thư</strong><a th:href="@{/chat}" class="small text-decoration-none">Tất cả</a></div>
+                <form th:action="@{/chat}" method="get" class="input-group input-group-sm"><input type="hidden" name="tab" th:value="${activeTab}"><input class="form-control" name="search" th:value="${search}" placeholder="Tìm hội thoại"><button class="btn btn-outline-primary">Tìm</button></form>
             </div>
+            <nav class="d-flex gap-1 overflow-auto px-2 py-2 border-bottom" aria-label="Lọc hội thoại">
+                <a th:each="tab : ${inboxTabs}" class="btn btn-sm text-nowrap" th:classappend="${activeTab == tab.key ? ' btn-primary' : ' btn-outline-secondary'}" th:href="@{/chat(tab=${tab.key},search=${search})}" th:text="${tab.label}">Tất cả</a>
+            </nav>
             <div class="flex-grow-1 overflow-auto">
-                <a th:each="item : ${conversations}" th:href="@{/chat/{id}(id=${item.conversation.id})}" class="chat-contact" th:classappend="${item.conversation.id == currentConversationId} ? ' active'">
+                <a th:each="item : ${inboxItems}" th:href="${item.url}" class="chat-contact" th:classappend="${item.url == '/chat/' + currentConversationId} ? ' active'">
                     <span class="chat-contact-avatar" th:text="${item.initials}">HC</span>
-                    <span class="min-w-0 flex-grow-1"><strong class="d-block text-truncate" th:text="${item.displayTitle}">Hội thoại</strong><small class="d-block text-muted text-truncate" th:text="${item.latestMessage == null ? 'Chưa có tin nhắn' : (item.latestMessage.deletedForAll ? 'Đã thu hồi tin nhắn' : (item.latestMessage.content != null ? item.latestMessage.content : item.latestMessage.originalFilename))}">Tin nhắn gần nhất</small></span>
-                    <span th:if="${item.unreadCount > 0}" class="badge rounded-pill bg-primary" th:text="${item.unreadCount}">1</span>
+                    <span class="min-w-0 flex-grow-1"><strong class="d-block text-truncate" th:text="${item.title}">Hội thoại</strong><small class="d-block text-muted text-truncate" th:text="${item.preview}">Tin nhắn gần nhất</small></span>
+                    <span th:if="${item.unreadCount > 0}" class="badge rounded-pill bg-primary" th:text="${item.unreadCount > 99 ? '99+' : item.unreadCount}">1</span>
                 </a>
+                <div th:if="${#lists.isEmpty(inboxItems)}" class="chat-empty-compact">Chưa có hội thoại trong mục này.</div>
             </div>
-            <a th:href="@{/chat}" class="btn btn-primary m-3"><i class="bi bi-plus-lg me-1"></i>Tạo hội thoại</a>
+            <div class="d-flex gap-2 m-3"><a th:href="@{/chat}" class="btn btn-outline-secondary flex-fill"><i class="bi bi-inbox me-1"></i>Hộp thư</a><a th:href="@{/}" class="btn btn-outline-primary" aria-label="Về trang chính" title="Về trang chính"><i class="bi bi-house"></i></a></div>
         </aside>
         <section class="chat-panel shadow-sm">
             <div class="chat-window chat-thread-window" th:attr="data-poll-url=${pollUrl},data-user-id=${currentUser.id}">
@@ -39,10 +43,10 @@
                     <div class="chat-tools">
                         <form th:action="@{/chat/{id}/notifications(id=${currentConversationId})}" method="post"><input type="hidden" name="enabled" th:value="${!chatPage.currentMember.notificationsEnabled}"><button class="btn btn-sm btn-light" th:title="${chatPage.currentMember.notificationsEnabled ? 'Tắt thông báo' : 'Bật thông báo'}"><i class="bi" th:classappend="${chatPage.currentMember.notificationsEnabled ? ' bi-bell' : ' bi-bell-slash'}"></i></button></form>
                         <form th:action="@{/chat/{id}/archive(id=${currentConversationId})}" method="post"><button class="btn btn-sm btn-light" title="Lưu trữ hội thoại"><i class="bi bi-archive"></i></button></form>
-                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#chatSettings" aria-label="Thông tin nhóm"><i class="bi bi-people"></i></button>
+                        <button th:if="${canManageGroup}" class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#chatSettings" aria-label="Thông tin nhóm"><i class="bi bi-people"></i></button>
                     </div>
                 </header>
-                <div id="chatSettings" class="collapse border-bottom">
+                <div th:if="${canManageGroup}" id="chatSettings" class="collapse border-bottom">
                     <div class="chat-settings p-3">
                         <form th:action="@{/chat/{id}/avatar(id=${currentConversationId})}" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center mb-3">
                             <label class="form-label small mb-0" for="groupAvatar">Ảnh đại diện nhóm</label><input id="groupAvatar" type="file" class="form-control form-control-sm" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp" style="max-width:260px"><button class="btn btn-sm btn-outline-primary">Cập nhật ảnh</button>
@@ -59,7 +63,7 @@
                             </div>
                             <div class="col-lg-7"><h2 class="h6">Thêm thành viên</h2><form th:action="@{/chat/{id}/members(id=${currentConversationId})}" method="post">
                                 <select class="form-select form-select-sm mb-2" name="userIds" multiple size="4" aria-label="Chọn thành viên">
-                                    <option th:each="contact : ${contacts}" th:value="${contact.id}" th:text="${contact.fullName + ' · ' + (contact.role.name == 'ROLE_ADMIN' ? 'Quản trị viên' : (contact.role.name == 'ROLE_TEACHER' ? 'Người dạy' : 'Phụ huynh'))}"></option>
+                                    <option th:each="contact : ${groupContacts}" th:value="${contact.id}" th:text="${contact.fullName + ' · ' + (contact.role.name == 'ROLE_ADMIN' ? 'Quản trị viên' : (contact.role.name == 'ROLE_TEACHER' ? 'Người dạy' : 'Phụ huynh'))}"></option>
                                 </select><button class="btn btn-sm btn-outline-primary">Thêm người đã chọn</button></form>
                             </div>
                         </div>
@@ -67,7 +71,7 @@
                 </div>
                 <div id="messageList" class="chat-history" aria-live="polite" aria-label="Tin nhắn">
                     <div th:if="${#lists.isEmpty(chatPage.messages)}" class="chat-empty"><div class="chat-empty-icon"><i class="bi bi-chat-heart"></i></div><strong>Chưa có tin nhắn</strong><span>Gửi lời nhắn đầu tiên để bắt đầu.</span></div>
-                    <article th:each="message : ${chatPage.messages}" class="chat-row" th:attr="data-message-id=${message.id}" th:classappend="${message.sender.id == currentUser.id} ? ' chat-row-mine' : ' chat-row-theirs'">
+                    <article th:each="message : ${chatPage.messages}" class="chat-row" th:attr="data-message-id=${message.id},data-important=${message.important}" th:classappend="${message.sender.id == currentUser.id} ? ' chat-row-mine' : ' chat-row-theirs'">
                         <div class="chat-avatar chat-avatar-small" aria-hidden="true"><span th:text="${#strings.substring(message.sender.fullName,0,1)}">A</span></div>
                         <div class="chat-message-wrap"><span class="chat-sender" th:text="${message.sender.fullName}">Người gửi</span><div class="chat-bubble">
                             <div th:if="${message.forwardedFrom != null}" class="small opacity-75 mb-1"><i class="bi bi-forward me-1"></i>Đã chuyển tiếp</div>
@@ -94,7 +98,7 @@
                 <div id="replyPreview" class="reply-preview"><span>Đang trả lời: <strong id="replyText"></strong></span><button type="button" id="cancelReply" class="btn btn-sm btn-link">Hủy</button></div>
                 <form class="chat-composer" method="post" enctype="multipart/form-data" th:action="${sendUrl}">
                     <input id="replyToId" type="hidden" name="replyToId"><label class="btn btn-light mb-0" for="chatFile" title="Đính kèm tệp"><i class="bi bi-paperclip"></i></label>
-                    <input id="chatFile" type="file" name="file" class="d-none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.jpg,.jpeg,.png,.gif,.webp">
+                    <input id="chatFile" type="file" name="file" class="d-none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.jpg,.jpeg,.png,.gif,.webp,audio/*,.mp3,.wav,.ogg,.m4a,.webm,.aac">
                     <label class="visually-hidden" for="messageContent">Nội dung tin nhắn</label><textarea id="messageContent" name="content" rows="1" maxlength="2000" placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)"></textarea>
                     <button type="submit" aria-label="Gửi tin nhắn"><i class="bi bi-send-fill"></i><span>Gửi</span></button>
                 </form>
@@ -103,13 +107,51 @@
     </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/webjars/github-com-stomp-js-stompjs/7.0.0/bundles/stomp.umd.min.js"></script>
 <script th:inline="javascript">
     const chatHistory = document.getElementById('messageList');
     const chatWindow = document.querySelector('.chat-thread-window');
     const currentUserId = Number(chatWindow?.dataset.userId || 0);
     const pollUrl = chatWindow?.dataset.pollUrl;
+    const currentConversationId = /*[[${currentConversationId}]]*/ 0;
+    const mentionableMembers = /*[[${mentionableMembers}]]*/ [];
+    const canMarkImportant = /*[[${currentUser.roleName == 'ROLE_TEACHER' || currentUser.roleName == 'ROLE_ADMIN'}]]*/ false;
     let lastId = Math.max(0, ...Array.from(chatHistory?.querySelectorAll('[data-message-id]') || []).map(row => Number(row.dataset.messageId)));
     if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
+
+    const composer = document.querySelector('.chat-composer');
+    const textarea = document.getElementById('messageContent');
+    if (composer && textarea) {
+        const options = document.createElement('details'); options.className = 'small';
+        const summary = document.createElement('summary'); summary.className = 'text-secondary'; summary.textContent = 'Nhắc thành viên'; options.append(summary);
+        const mentions = document.createElement('select'); mentions.name = 'mentionedUserIds'; mentions.multiple = true; mentions.size = 2; mentions.className = 'form-select form-select-sm mt-1'; mentions.setAttribute('aria-label', 'Chọn thành viên để nhắc');
+        mentionableMembers.forEach(member => { const option = document.createElement('option'); option.value = member.id; option.textContent = member.name; mentions.append(option); });
+        options.append(mentions);
+        if (canMarkImportant) { const label = document.createElement('label'); label.className = 'form-check mt-1'; const checkbox = document.createElement('input'); checkbox.className = 'form-check-input'; checkbox.type = 'checkbox'; checkbox.name = 'important'; checkbox.value = 'true'; const text = document.createElement('span'); text.className = 'form-check-label'; text.textContent = 'Đánh dấu tin quan trọng'; label.append(checkbox, text); options.append(label); }
+        textarea.parentElement.insertBefore(options, textarea);
+        const voice = document.createElement('button'); voice.id = 'recordVoiceButton'; voice.type = 'button'; voice.className = 'btn btn-light'; voice.title = 'Ghi âm tin nhắn'; voice.innerHTML = '<i class="bi bi-mic-fill"></i>';
+        const fileInput = document.getElementById('chatFile'); fileInput?.parentElement.insertBefore(voice, fileInput);
+        const voiceStatus = document.createElement('span'); voiceStatus.className = 'small text-secondary'; voiceStatus.id = 'voiceStatus'; voice.after(voiceStatus);
+        let recorder = null, recordingStream = null, recordingChunks = [];
+        voice.addEventListener('click', async () => {
+            try {
+                if (recorder?.state === 'recording') { recorder.stop(); voice.disabled = true; voiceStatus.textContent = 'Đang lưu bản ghi…'; return; }
+                if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error('Trình duyệt chưa hỗ trợ ghi âm.');
+                recordingStream = await navigator.mediaDevices.getUserMedia({audio:true});
+                const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+                recorder = new MediaRecorder(recordingStream, mime ? {mimeType:mime} : undefined); recordingChunks = [];
+                recorder.ondataavailable = event => { if (event.data.size) recordingChunks.push(event.data); };
+                recorder.onstop = () => {
+                    const blob = new Blob(recordingChunks, {type:recorder.mimeType || 'audio/webm'}); const extension = blob.type.includes('ogg') ? 'ogg' : (blob.type.includes('mp4') ? 'm4a' : 'webm');
+                    const transfer = new DataTransfer(); transfer.items.add(new File([blob], `tin-nhan-thoai.${extension}`, {type:blob.type})); fileInput.files = transfer.files;
+                    recordingStream?.getTracks().forEach(track => track.stop()); recordingStream = null; voice.disabled = false; voiceStatus.textContent = `Đã ghi âm (${Math.ceil(blob.size/1024)} KB)`; voice.classList.replace('btn-danger','btn-light');
+                };
+                recorder.start(); voiceStatus.textContent = 'Đang ghi âm · bấm mic để kết thúc'; voice.classList.replace('btn-light','btn-danger');
+            } catch (error) { voiceStatus.textContent = error.message || 'Không thể ghi âm.'; recordingStream?.getTracks().forEach(track=>track.stop()); }
+        });
+    }
+    chatHistory?.querySelectorAll('article[data-important="true"]').forEach(row => { const bubble=row.querySelector('.chat-bubble'); if (bubble) { const badge=document.createElement('div'); badge.className='small text-warning fw-semibold mb-1'; badge.textContent='⚑ Tin nhắn quan trọng'; bubble.prepend(badge); } });
+    chatHistory?.querySelectorAll('a.chat-attachment').forEach(link => { if (/\.(mp3|wav|ogg|m4a|webm|aac)$/i.test(link.href)) { const audio=document.createElement('audio'); audio.controls=true; audio.preload='metadata'; audio.className='d-block mb-2'; audio.src=link.href; link.before(audio); } });
 
     document.querySelectorAll('.reply-button').forEach(button => button.addEventListener('click', () => {
         document.getElementById('replyToId').value = button.dataset.id;
@@ -141,12 +183,21 @@
         const wrap = document.createElement('div'); wrap.className = 'chat-message-wrap';
         const sender = document.createElement('span'); sender.className = 'chat-sender'; sender.textContent = message.senderName || 'Người dùng';
         const bubble = document.createElement('div'); bubble.className = 'chat-bubble';
+        if (message.important) { const badge=document.createElement('div'); badge.className='small text-warning fw-semibold mb-1'; badge.textContent='⚑ Tin nhắn quan trọng'; bubble.append(badge); }
         if (message.replyText) { const quote = document.createElement('div'); quote.className = 'chat-reply-quote'; quote.textContent = message.replyText; bubble.append(quote); }
         const text = document.createElement('p'); text.className = 'mb-1'; text.textContent = message.deleted ? 'Tin nhắn đã được thu hồi' : (message.content || ''); bubble.append(text);
+        if (message.mentionedUserIds?.length) { const names=message.mentionedUserIds.map(id => mentionableMembers.find(member => Number(member.id) === Number(id))?.name || 'thành viên').join(', '); const tag=document.createElement('div'); tag.className='small opacity-75 mb-1'; tag.textContent=`Đã nhắc: ${names}`; bubble.append(tag); }
+        if (message.fileUrl && (message.contentType || '').startsWith('audio/')) { const audio=document.createElement('audio'); audio.controls=true; audio.preload='metadata'; audio.src=message.fileUrl; audio.className='d-block mb-2'; bubble.append(audio); }
         if (message.fileUrl) { const link = document.createElement('a'); link.className = 'chat-attachment'; link.href = message.fileUrl; link.textContent = message.fileName || 'Tải tệp'; bubble.append(link); }
         const time = document.createElement('time'); time.className = 'chat-time'; time.textContent = new Date(message.createdAt).toLocaleString('vi-VN', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}); bubble.append(time);
         wrap.append(sender, bubble); article.append(avatar, wrap); chatHistory.append(article); chatHistory.scrollTop = chatHistory.scrollHeight;
     };
+    if (window.StompJs?.Client && currentConversationId) {
+        const socketProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const client = new StompJs.Client({brokerURL:`${socketProtocol}//${location.host}/ws`, reconnectDelay:5000, heartbeatIncoming:10000, heartbeatOutgoing:10000});
+        client.onConnect = () => client.subscribe(`/topic/chat/${currentConversationId}`, frame => { try { addIncomingMessage(JSON.parse(frame.body)); } catch (_) {} });
+        client.onStompError = () => client.deactivate(); client.activate();
+    }
     if (pollUrl) window.setInterval(() => fetch(`${pollUrl}?afterId=${lastId}`, {credentials:'same-origin', headers:{Accept:'application/json'}})
         .then(response => response.ok ? response.json() : [])
         .then(messages => messages.forEach(addIncomingMessage)).catch(() => {}), 5000);

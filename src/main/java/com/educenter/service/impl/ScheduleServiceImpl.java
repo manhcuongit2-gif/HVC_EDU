@@ -7,8 +7,10 @@ import com.educenter.entity.Schedule;
 import com.educenter.repository.ClassRepository;
 import com.educenter.repository.RoomRepository;
 import com.educenter.repository.ScheduleRepository;
+import com.educenter.repository.ClassStudentRepository;
 import com.educenter.service.ScheduleService;
 import com.educenter.service.ClassSessionService;
+import com.educenter.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,15 +24,21 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ClassRepository classRepository;
     private final RoomRepository roomRepository;
     private final ClassSessionService classSessionService;
+    private final ClassStudentRepository enrollments;
+    private final NotificationService notificationService;
 
     public ScheduleServiceImpl(ScheduleRepository scheduleRepository,
                                ClassRepository classRepository,
                                RoomRepository roomRepository,
-                               ClassSessionService classSessionService) {
+                               ClassSessionService classSessionService,
+                               ClassStudentRepository enrollments,
+                               NotificationService notificationService) {
         this.scheduleRepository = scheduleRepository;
         this.classRepository = classRepository;
         this.roomRepository = roomRepository;
         this.classSessionService = classSessionService;
+        this.enrollments = enrollments;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -122,6 +130,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         Schedule saved = scheduleRepository.save(s);
         classSessionService.synchronizeClass(classEntity.getId());
+        notifyParents(saved, "schedule-created-" + saved.getId());
         return saved;
     }
 
@@ -129,6 +138,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Transactional
     public Schedule updateSchedule(Long id, ScheduleDTO dto) {
         Schedule s = getScheduleById(id);
+        ClassEntity oldClass = s.getClassEntity();
 
         checkScheduleConflicts(dto.getClassId(), dto.getRoomId(), dto.getDayOfWeek(), dto.getStartTime(), dto.getEndTime(), id);
 
@@ -146,6 +156,14 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         Schedule saved = scheduleRepository.save(s);
         classSessionService.synchronizeClass(classEntity.getId());
+        if (!oldClass.getId().equals(classEntity.getId())) {
+            notificationService.notifyUsers(enrollments.findByClassEntityIdAndStatus(oldClass.getId(), "ACTIVE").stream()
+                            .map(e -> e.getStudent().getParent()).filter(java.util.Objects::nonNull).map(p -> p.getUser())
+                            .filter(java.util.Objects::nonNull).map(u -> u.getId()).distinct().toList(),
+                    "schedule-moved-away-" + saved.getId() + "-" + classEntity.getId(), "SCHEDULE_CHANGE",
+                    "Lịch học lớp " + oldClass.getName() + " đã được chuyển", "Giáo viên đã chuyển lịch sang lớp " + classEntity.getName() + ".", "/parent/schedule");
+        }
+        notifyParents(saved, "schedule-updated-" + saved.getId() + "-" + saved.getDayOfWeek() + "-" + saved.getStartTime() + "-" + saved.getEndTime() + "-" + saved.getRoom().getId());
         return saved;
     }
 
@@ -156,5 +174,20 @@ public class ScheduleServiceImpl implements ScheduleService {
         classSessionService.beforeScheduleDelete(id);
         scheduleRepository.deleteById(id);
         classSessionService.synchronizeClass(schedule.getClassEntity().getId());
+        notificationService.notifyUsers(enrollments.findByClassEntityIdAndStatus(schedule.getClassEntity().getId(), "ACTIVE").stream()
+                .map(e -> e.getStudent().getParent()).filter(java.util.Objects::nonNull).map(p -> p.getUser())
+                .filter(java.util.Objects::nonNull).map(u -> u.getId()).distinct().toList(),
+                "schedule-deleted-" + id, "SCHEDULE_CHANGE", "Lịch học đã được cập nhật",
+                "Lịch học lớp " + schedule.getClassEntity().getName() + " đã bị xóa.", "/parent/schedule");
+    }
+
+    private void notifyParents(Schedule schedule, String eventKey) {
+        ClassEntity classEntity = schedule.getClassEntity();
+        String body = classEntity.getName() + " · " + schedule.getDayOfWeekDisplay() + " · " + schedule.getTimeRangeDisplay()
+                + (schedule.getRoom() == null ? "" : " · Phòng " + schedule.getRoom().getName());
+        notificationService.notifyUsers(enrollments.findByClassEntityIdAndStatus(classEntity.getId(), "ACTIVE").stream()
+                        .map(e -> e.getStudent().getParent()).filter(java.util.Objects::nonNull).map(p -> p.getUser())
+                        .filter(java.util.Objects::nonNull).map(u -> u.getId()).distinct().toList(),
+                eventKey, "SCHEDULE_CHANGE", "Lịch học lớp " + classEntity.getName() + " đã thay đổi", body, "/parent/schedule");
     }
 }

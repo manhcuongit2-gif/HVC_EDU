@@ -8,6 +8,7 @@ import com.educenter.repository.ClassRepository;
 import com.educenter.repository.ClassStudentRepository;
 import com.educenter.repository.LearningMaterialRepository;
 import com.educenter.repository.UserRepository;
+import com.educenter.service.NotificationService;
 import com.educenter.service.impl.LearningMaterialServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ class LearningMaterialServiceTest {
     private ClassRepository classRepository;
     private ClassStudentRepository classStudentRepository;
     private UserRepository userRepository;
+    private NotificationService notificationService;
     private LearningMaterialServiceImpl service;
     private ClassEntity teacherClass;
     private User teacherUser;
@@ -42,8 +44,9 @@ class LearningMaterialServiceTest {
         classRepository = mock(ClassRepository.class);
         classStudentRepository = mock(ClassStudentRepository.class);
         userRepository = mock(UserRepository.class);
+        notificationService = mock(NotificationService.class);
         service = new LearningMaterialServiceImpl(materialRepository, classRepository, classStudentRepository,
-                userRepository, uploadDirectory.toString());
+                userRepository, notificationService, uploadDirectory.toString());
 
         teacherUser = new User();
         teacherUser.setId(11L);
@@ -55,6 +58,7 @@ class LearningMaterialServiceTest {
         teacherClass.setTeacher(teacher);
         when(classRepository.findById(21L)).thenReturn(Optional.of(teacherClass));
         when(userRepository.findById(11L)).thenReturn(Optional.of(teacherUser));
+        when(classStudentRepository.findByClassEntityIdAndStatus(21L, "ACTIVE")).thenReturn(List.of());
         when(materialRepository.save(any(LearningMaterial.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 

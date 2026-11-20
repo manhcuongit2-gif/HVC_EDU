@@ -17,7 +17,8 @@ public interface ChatService {
     List<ChatConversationSummary> findConversations(Long userId, String search);
     ChatConversation createConversation(Long creatorId, String creatorRole, List<Long> recipientIds, String title);
     ChatPage openConversation(Long conversationId, Long userId);
-    ChatMessage send(Long conversationId, Long senderId, String content, Long replyToId, MultipartFile file);
+    ChatMessage send(Long conversationId, Long senderId, String content, Long replyToId, MultipartFile file,
+                     List<Long> mentionedUserIds, boolean important);
     List<ChatMessagePayload> findMessagesAfter(Long conversationId, Long userId, Long afterId);
     ChatMessage findMessageForMember(Long conversationId, Long messageId, Long userId);
     Path resolveFile(ChatMessage message);
