@@ -217,6 +217,7 @@ public class LearningMaterialServiceImpl implements LearningMaterialService {
             material.setOriginalFilename(cleanOriginalFilename(file.getOriginalFilename()));
             material.setContentType(contentTypeFor(file.getOriginalFilename()));
             material.setFileSize(file.getSize());
+            material.setAiIndexStatus("PENDING");
         }
 
         LearningMaterial saved = materialRepository.save(material);

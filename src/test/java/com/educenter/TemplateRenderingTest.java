@@ -377,6 +377,36 @@ class TemplateRenderingTest {
         assertTrue(html.contains("batch-1"));
     }
 
+    @Test
+    void rendersStudentTutorPage() {
+        User student = testUser(91L, "Học sinh kiểm thử", "ROLE_STUDENT");
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(student));
+        context.setVariable("_csrf", new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", "test-token"));
+
+        String html = templateEngine.process("student/ai", context);
+
+        assertTrue(html.contains("Hùng Cường AI"));
+        assertTrue(html.contains("studentAiForm"));
+        assertTrue(html.contains("/student/ai"));
+    }
+
+    @Test
+    void rendersSharedAccountSettingsPage() {
+        User student = testUser(92L, "Học sinh kiểm thử", "ROLE_STUDENT");
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(student));
+        context.setVariable("account", student);
+        context.setVariable("hasAvatar", false);
+        context.setVariable("_csrf", new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", "test-token"));
+
+        String html = templateEngine.process("account/settings", context);
+
+        assertTrue(html.contains("Cài đặt tài khoản"));
+        assertTrue(html.contains("Mật khẩu hiện tại"));
+        assertTrue(html.contains("/account/avatar"));
+    }
+
     private User testUser(Long id, String fullName, String roleName) {
         User user = new User();
         user.setId(id);

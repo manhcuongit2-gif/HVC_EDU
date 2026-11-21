@@ -25,7 +25,7 @@ public class AIProperties {
         private String apiKey = "";
         private String baseUrl = "https://api.groq.com/openai/v1";
         private String model = "openai/gpt-oss-120b";
-        private String allowedModels = "openai/gpt-oss-120b,openai/gpt-oss-20b";
+        private String allowedModels = "openai/gpt-oss-120b,openai/gpt-oss-20b,qwen/qwen3.8-27b";
         private Duration connectTimeout = Duration.ofSeconds(5);
         private Duration requestTimeout = Duration.ofSeconds(90);
         private long maxUploadBytes = 10_485_760;
@@ -48,6 +48,7 @@ public class AIProperties {
         public int getMaxExtractedCharacters() { return maxExtractedCharacters; }
         public void setMaxExtractedCharacters(int maxExtractedCharacters) { this.maxExtractedCharacters = maxExtractedCharacters; }
         public boolean hasApiKey() { return apiKey != null && !apiKey.isBlank(); }
+        public boolean isVisionModel(String model) { return "qwen/qwen3.8-27b".equals(model); }
     }
 
     public static class Context {

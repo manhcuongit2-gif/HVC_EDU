@@ -1,6 +1,6 @@
 ﻿<!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tiến độ học tập · Hùng Cường</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}"><title>Tiến độ học tập · Hùng Cường</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"></head>
 <body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div><main class="container py-4">
   <h1 class="h3">Tiến độ học tập</h1><p class="text-secondary">Dữ liệu dưới đây lấy từ hồ sơ và báo cáo đã lưu cho bạn.</p>
   <div class="alert alert-info small"><strong>Nguồn và cách tổng hợp:</strong> Điểm dùng nguyên các cột đã lưu trong <code>grades</code>, gồm <code>average_score</code>; hệ thống không tính lại điểm. Chuyên cần đếm trạng thái PRESENT, ABSENT và EXCUSED từ báo cáo buổi đã công bố trong <code>session_student_reports</code>; nếu lớp/ngày chưa có báo cáo đã công bố thì dùng bản ghi cũ trong <code>attendance</code>, tránh đếm cùng một buổi hai lần. Buổi chưa có bản ghi không tính vào số đếm. Bài tập được phân loại theo bài đã giao, hạn nộp, trạng thái và cờ nộp muộn trong <code>homework_assignments</code>/<code>homework_submissions</code>. Nhận xét chỉ lấy báo cáo buổi/tháng đã công bố.</div>
@@ -26,6 +26,30 @@
     <div th:if="${#lists.isEmpty(portal.sessionReports) and #lists.isEmpty(portal.monthlyReports)}" class="list-group-item text-secondary">Chưa có nhận xét được công bố.</div>
   </div></section>
   <section class="card border-0 shadow-sm mt-4"><div class="card-header bg-white fw-semibold">Kết quả thi trực tuyến đã công bố</div><div class="alert alert-info m-3 small">Nguồn: các lượt trong <code>exam_attempts</code> thuộc đề đã công bố trong <code>exam_assignments</code>. Điểm hiển thị là điểm cao nhất trong các lượt đã chấm, tối đa lấy từ đề giao; không cộng vào hoặc tính lại các cột trong <code>grades</code>.</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Đề</th><th>Lớp / môn</th><th>Đóng đề</th><th>Điểm cao nhất</th><th>Tối đa</th></tr></thead><tbody><tr th:each="exam : ${examResults}"><td th:text="${exam.title}"></td><td th:text="|${exam.className} · ${exam.subject}|"></td><td th:text="${#temporals.format(exam.closesAt,'dd/MM/yyyy HH:mm')}"></td><td><span th:text="${exam.officialScore != null ? exam.officialScore : '—'}"></span><div class="small text-secondary mt-1" th:if="${exam.teacherFeedback != null}" th:text="${exam.teacherFeedback}"></div></td><td th:text="${exam.totalPoints}"></td></tr><tr th:if="${#lists.isEmpty(examResults)}"><td colspan="5" class="text-secondary">Chưa có kết quả thi được công bố.</td></tr></tbody></table></div></section>
-</main></body></html>
+  <section class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white fw-semibold">Phân tích chủ đề từ đề thi trực tuyến</div>
+    <div class="alert alert-info m-3 small">Nguồn: câu trả lời có cờ đúng/sai đã lưu ở <code>exam_attempt_answers</code>, đối chiếu chủ đề trong bản chụp đề <code>exam_assignments.questions_snapshot_json</code>. Chỉ dùng đề đã công bố và lượt điểm cao nhất đã chấm cho mỗi đề; không thay đổi điểm chính thức. Tỷ lệ hiển thị = số câu đúng / số câu đã chấm có chủ đề. Chỉ gắn nhận định khi có tối thiểu 5 câu từ 2 đề đã công bố; mỗi dòng vẫn hiển thị số câu và số đề làm căn cứ.</div>
+    <div class="px-3 pb-2 small" th:if="${!learningProgress.enoughTopicData}" th:text="${learningProgress.studyPlanMessage}"></div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Môn</th><th>Chủ đề</th><th>Đúng / đã chấm</th><th>Đề</th><th>Tỷ lệ</th><th>Diễn giải</th></tr></thead><tbody>
+      <tr th:each="topic : ${learningProgress.topics}"><td th:text="${topic.subject}"></td><td th:text="${topic.topic}"></td><td th:text="|${topic.correctAnswers} / ${topic.totalAnswers}|"></td><td th:text="${topic.examCount}"></td><td th:text="|${topic.accuracyPercent}%|"></td><td th:text="${topic.interpretation}"></td></tr>
+      <tr th:if="${#lists.isEmpty(learningProgress.topics)}"><td colspan="6" class="text-secondary">Chưa có câu trả lời theo chủ đề từ đề thi đã công bố.</td></tr>
+    </tbody></table></div>
+  </section>
+  <section id="studyPlan" class="card border-0 shadow-sm mt-4" th:attr="data-refresh-needed=${learningProgress.studyPlanRefreshNeeded}">
+    <div class="card-header bg-white d-flex align-items-center justify-content-between gap-2"><span class="fw-semibold">Kế hoạch ôn tập gợi ý</span><button id="refreshStudyPlan" type="button" class="btn btn-sm btn-outline-primary">Làm mới từ tiến độ</button></div>
+    <div class="card-body"><p id="studyPlanNotice" class="small text-secondary mb-3" th:text="${learningProgress.studyPlanMessage}">Kế hoạch được cập nhật từ dữ liệu học tập đã lưu.</p>
+      <div id="studyPlanItems" class="list-group">
+        <article th:each="item : ${learningProgress.studyPlan}" class="list-group-item" th:attr="data-item-id=${item.id}">
+          <div class="d-flex flex-wrap justify-content-between gap-2"><div><strong th:text="|${item.subjectName} · ${item.topic}|"></strong><div th:text="${item.goal}"></div></div>
+            <select class="form-select form-select-sm study-plan-status" style="max-width: 180px"><option value="SUGGESTED" th:selected="${item.progressStatus == 'SUGGESTED'}">Chưa bắt đầu</option><option value="IN_PROGRESS" th:selected="${item.progressStatus == 'IN_PROGRESS'}">Đang thực hiện</option><option value="COMPLETED" th:selected="${item.progressStatus == 'COMPLETED'}">Đã hoàn thành</option></select></div>
+          <p class="mb-1 mt-2" th:text="${item.practicePrompt}"></p><div class="small text-secondary" th:if="${item.materialReferences != null and !item.materialReferences.isBlank()}" th:text="|Tài liệu lớp liên quan: ${item.materialReferences}|"></div>
+        </article>
+        <div th:if="${#lists.isEmpty(learningProgress.studyPlan) and learningProgress.enoughTopicData}" class="text-secondary small">Chưa có chủ đề dưới ngưỡng 80% cần đưa vào kế hoạch. Em tiếp tục luyện tập các chủ đề hiện tại nhé.</div>
+        <div th:if="${#lists.isEmpty(learningProgress.studyPlan) and !learningProgress.enoughTopicData}" class="text-secondary small">Chưa có kế hoạch gợi ý. Kế hoạch được tạo khi có đủ dữ liệu chủ đề và AI được Admin bật cho học sinh.</div>
+      </div>
+    </div>
+  </section>
+  <div id="studyPlanToast" class="alert d-none mt-3" role="status"></div>
+</main><script src="/js/student-progress.js" defer></script></body></html>
 
 

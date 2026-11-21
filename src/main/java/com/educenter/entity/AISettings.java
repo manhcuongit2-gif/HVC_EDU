@@ -17,6 +17,8 @@ public class AISettings {
     private boolean teacherEnabled;
     @Column(name = "parent_enabled", nullable = false)
     private boolean parentEnabled;
+    @Column(name = "student_enabled", nullable = false)
+    private boolean studentEnabled;
     @Column(name = "per_user_daily_requests")
     private Integer perUserDailyRequests;
     @Column(name = "global_daily_requests")
@@ -45,6 +47,8 @@ public class AISettings {
     public void setTeacherEnabled(boolean teacherEnabled) { this.teacherEnabled = teacherEnabled; }
     public boolean isParentEnabled() { return parentEnabled; }
     public void setParentEnabled(boolean parentEnabled) { this.parentEnabled = parentEnabled; }
+    public boolean isStudentEnabled() { return studentEnabled; }
+    public void setStudentEnabled(boolean studentEnabled) { this.studentEnabled = studentEnabled; }
     public Integer getPerUserDailyRequests() { return perUserDailyRequests; }
     public void setPerUserDailyRequests(Integer value) { this.perUserDailyRequests = value; }
     public Integer getGlobalDailyRequests() { return globalDailyRequests; }

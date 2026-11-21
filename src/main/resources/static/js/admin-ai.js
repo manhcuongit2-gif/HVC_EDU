@@ -12,6 +12,7 @@
             adminEnabled: document.getElementById('adminEnabled').checked,
             teacherEnabled: document.getElementById('teacherEnabled').checked,
             parentEnabled: document.getElementById('parentEnabled').checked,
+            studentEnabled: document.getElementById('studentEnabled').checked,
             perUserDailyRequests: Number(document.getElementById('perUserDailyRequests').value),
             globalDailyRequests: Number(document.getElementById('globalDailyRequests').value),
             dailyTokenLimit: Number(document.getElementById('dailyTokenLimit').value),

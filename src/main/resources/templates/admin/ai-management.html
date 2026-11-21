@@ -27,9 +27,11 @@
             <span>Admin: <strong th:text="${usage.requestsByRole['ROLE_ADMIN']}">0</strong></span>
             <span>Người dạy: <strong th:text="${usage.requestsByRole['ROLE_TEACHER']}">0</strong></span>
             <span>Phụ huynh: <strong th:text="${usage.requestsByRole['ROLE_PARENT']}">0</strong></span>
+            <span>Học sinh: <strong th:text="${usage.requestsByRole['ROLE_STUDENT']}">0</strong></span>
         </div></div>
         <div class="card border-0 shadow-sm"><div class="card-header bg-white fw-semibold">Cài đặt quyền và giới hạn</div><div class="card-body">
             <div id="settingsNotice" class="alert d-none"></div>
+            <div class="alert alert-secondary small">Muốn học sinh gửi ảnh bài toán, hãy thêm model Groq hỗ trợ hình ảnh vào <code>GROQ_ALLOWED_MODELS</code> và chọn model đó bên dưới. Danh sách mặc định có <code>qwen/qwen3.8-27b</code>; model văn bản không nhận ảnh.</div>
             <form id="aiSettingsForm" class="row g-3">
                 <div class="col-md-6 col-xl-4"><label class="form-label" for="selectedModel">Mô hình Groq</label><select class="form-select" id="selectedModel" name="selectedModel"><option th:each="model : ${models}" th:value="${model}" th:text="${model}" th:selected="${settings.selectedModel == model}"></option></select><div class="form-text">Chỉ chọn mô hình trong danh sách đã cấu hình máy chủ.</div></div>
                 <div class="col-md-6 col-xl-4"><label class="form-label" for="perUserDailyRequests">Lượt hỏi mỗi tài khoản/ngày</label><input class="form-control" type="number" id="perUserDailyRequests" min="1" max="10000" th:value="${settings.perUserDailyRequests}"></div>
@@ -43,6 +45,7 @@
                     <div class="form-check"><input class="form-check-input" type="checkbox" id="adminEnabled" th:checked="${settings.adminEnabled}"><label class="form-check-label" for="adminEnabled">Admin</label></div>
                     <div class="form-check"><input class="form-check-input" type="checkbox" id="teacherEnabled" th:checked="${settings.teacherEnabled}"><label class="form-check-label" for="teacherEnabled">Người dạy</label></div>
                     <div class="form-check"><input class="form-check-input" type="checkbox" id="parentEnabled" th:checked="${settings.parentEnabled}"><label class="form-check-label" for="parentEnabled">Phụ huynh</label></div>
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="studentEnabled" th:checked="${settings.studentEnabled}"><label class="form-check-label" for="studentEnabled">Học sinh</label></div>
                 </div></div>
                 <div class="col-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i>Lưu cài đặt</button></div>
             </form>

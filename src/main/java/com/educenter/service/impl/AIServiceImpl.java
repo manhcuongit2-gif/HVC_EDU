@@ -189,7 +189,7 @@ public class AIServiceImpl implements AIService {
         AIUsage usage = usageService.reserve(userId, role, null, model, sanitized.length());
         try {
             AIProvider.AIProviderResponse response = retryOnce(() -> provider.complete(
-                    List.of(message("system", systemPrompt), message("user", sanitized)), model,
+                    List.of(message("system", AIPersona.combine(role, systemPrompt)), message("user", sanitized)), model,
                     settings.getMaxResponseTokens(), List.of()));
             usageService.complete(usage.getId(), response.promptTokens(), response.completionTokens(),
                     response.providerStatus(), response.remainingRequests(), response.remainingTokens());
@@ -218,7 +218,7 @@ public class AIServiceImpl implements AIService {
                 + "Không yêu cầu hoặc tiết lộ mật khẩu, khóa API hay thông tin riêng tư. "
                 + "Không thay đổi dữ liệu, công bố nhận xét, gửi tin nhắn hay thực hiện hành động thay người dùng. "
                 + "Nếu chưa đủ dữ liệu, hãy nói rõ giới hạn.";
-        return new ArrayList<>(List.of(message("system", system)));
+        return new ArrayList<>(List.of(message("system", AIPersona.combine(role, system))));
     }
 
     private Map<String, Object> message(String role, String content) {

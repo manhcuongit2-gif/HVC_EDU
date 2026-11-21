@@ -39,6 +39,9 @@ public class User {
     @Column(name = "address")
     private String address;
 
+    @Column(name = "avatar_filename", length = 120)
+    private String avatarFilename;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
@@ -76,6 +79,9 @@ public class User {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public String getAvatarFilename() { return avatarFilename; }
+    public void setAvatarFilename(String avatarFilename) { this.avatarFilename = avatarFilename; }
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }

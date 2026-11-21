@@ -81,4 +81,19 @@ class FlywayMigrationResourceTest {
             assertTrue(!sql.contains("ALTER TABLE `grades`"), "Exam scores must remain separate from Grade");
         }
     }
+
+    @Test
+    void studentAiAndAccountSettingsMigrationIsAdditive() throws IOException {
+        String resourcePath = "db/migration/V20261205__student_ai_personalization_and_account_settings.sql";
+        try (var input = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            assertTrue(input != null, "Student AI migration must be available on the application classpath");
+            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(sql.contains("ADD COLUMN student_enabled"));
+            assertTrue(sql.contains("ADD COLUMN avatar_filename"));
+            assertTrue(sql.contains("CREATE TABLE student_ai_learning_material_chunks"));
+            assertTrue(sql.contains("CREATE TABLE student_ai_study_plans"));
+            assertTrue(sql.contains("CREATE TABLE student_ai_study_plan_items"));
+            assertTrue(!sql.contains("DROP TABLE"), "Migration must preserve existing tables and data");
+        }
+    }
 }

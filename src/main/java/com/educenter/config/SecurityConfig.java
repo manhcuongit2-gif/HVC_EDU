@@ -55,10 +55,12 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/push/public-key").permitAll()
                 .requestMatchers("/", "/login", "/register", "/auth/**", "/403", "/error/**", "/payment/vnpay-return").permitAll()
                 .requestMatchers("/payment/pay-tuition/**").hasAnyRole("ADMIN", "TEACHER", "PARENT")
+                .requestMatchers("/account/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/teacher/**").hasRole("TEACHER")
                 .requestMatchers("/parent/**").hasRole("PARENT")
                 .requestMatchers("/student/**").hasRole("STUDENT")
+                .requestMatchers("/api/ai/student/**").hasRole("STUDENT")
                 .requestMatchers("/notifications/**", "/api/business-notifications/**",
                         "/api/push/subscriptions", "/api/push/subscriptions/**").authenticated()
                 .anyRequest().hasAnyRole("ADMIN", "TEACHER", "PARENT")

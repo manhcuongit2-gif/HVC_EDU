@@ -39,6 +39,9 @@ public class LearningMaterial {
     @Column(name = "external_url", length = 2048)
     private String externalUrl;
 
+    @Column(name = "ai_index_status", nullable = false, length = 20)
+    private String aiIndexStatus = "PENDING";
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -69,6 +72,8 @@ public class LearningMaterial {
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
     public String getExternalUrl() { return externalUrl; }
     public void setExternalUrl(String externalUrl) { this.externalUrl = externalUrl; }
+    public String getAiIndexStatus() { return aiIndexStatus; }
+    public void setAiIndexStatus(String aiIndexStatus) { this.aiIndexStatus = aiIndexStatus; }
     public User getCreatedBy() { return createdBy; }
     public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }

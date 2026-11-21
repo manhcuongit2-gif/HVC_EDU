@@ -5,6 +5,8 @@ import com.educenter.security.CustomUserDetails;
 import com.educenter.service.HomeworkService;
 import com.educenter.service.ExamService;
 import com.educenter.service.StudentPortalService;
+import com.educenter.service.impl.PdfExamService;
+import com.educenter.service.impl.StudentLearningProgressService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -29,11 +31,16 @@ public class StudentPortalController {
     private final StudentPortalService portal;
     private final HomeworkService homework;
     private final ExamService exams;
+    private final PdfExamService pdfExams;
+    private final StudentLearningProgressService learningProgress;
 
-    public StudentPortalController(StudentPortalService portal, HomeworkService homework, ExamService exams) {
+    public StudentPortalController(StudentPortalService portal, HomeworkService homework, ExamService exams,
+                                   PdfExamService pdfExams, StudentLearningProgressService learningProgress) {
         this.portal = portal;
         this.homework = homework;
         this.exams = exams;
+        this.pdfExams = pdfExams;
+        this.learningProgress = learningProgress;
     }
 
     @GetMapping({"", "/dashboard"})
@@ -41,13 +48,16 @@ public class StudentPortalController {
         model.addAttribute("currentUser", user);
         model.addAttribute("portal", portal.getPortalData(user.getId()));
         model.addAttribute("examAssignments", exams.assignmentsForStudent(user.getId()));
+        model.addAttribute("pdfExamAssignments", pdfExams.forStudent(user.getId()));
         return "student/dashboard";
     }
 
     @GetMapping("/progress")
     public String progress(@AuthenticationPrincipal CustomUserDetails user, Model model) {
         model.addAttribute("currentUser", user);
-        model.addAttribute("portal", portal.getPortalData(user.getId()));
+        var portalData = portal.getPortalData(user.getId());
+        model.addAttribute("portal", portalData);
+        model.addAttribute("learningProgress", learningProgress.overview(user.getId(), portalData));
         model.addAttribute("examResults", exams.publishedResultsForStudent(user.getId()));
         return "student/progress";
     }

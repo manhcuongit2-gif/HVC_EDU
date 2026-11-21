@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <title>Hùng Cường AI · Học sinh</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .student-ai-shell { min-height: calc(100vh - 100px); }
+    #studentAiMessages { max-height: 56vh; overflow-y: auto; }
+    .student-ai-message { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .student-ai-message.assistant { background: #f3f6fb; }
+    .student-ai-message.user { background: #e8f1ff; }
+  </style>
+</head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main id="studentAiApp" class="container py-4 student-ai-shell">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+    <div><h1 class="h3 mb-1">Hùng Cường AI</h1><p class="text-secondary mb-0">Hỏi bài, xin gợi ý từng bước hoặc gửi ảnh bài tập để được hướng dẫn.</p></div>
+    <button id="newStudentConversation" type="button" class="btn btn-outline-primary"><i class="bi bi-plus-lg me-1"></i>Cuộc trò chuyện mới</button>
+  </div>
+  <div id="studentAiStatus" class="alert alert-info py-2 small" role="status">Đang kiểm tra cấu hình AI…</div>
+  <div class="alert alert-secondary small">Nguồn câu trả lời: câu hỏi của em và đoạn trích từ tài liệu của các lớp em đang học nếu tìm được. Tài liệu scan không có lớp văn bản có thể không tìm kiếm được; hệ thống chưa có OCR. AI không tra cứu điểm, hồ sơ hay lịch cá nhân và có thể trả lời chưa chính xác; hãy đối chiếu với giáo viên. Ảnh chỉ được gửi xử lý trong yêu cầu hiện tại, không lưu vào cuộc trò chuyện.</div>
+  <div class="row g-3">
+    <aside class="col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white fw-semibold">Lịch sử trò chuyện</div><div id="studentConversationList" class="list-group list-group-flush"></div></div></aside>
+    <section class="col-lg-9"><div class="card border-0 shadow-sm">
+      <div id="studentAiMessages" class="card-body d-flex flex-column gap-2" aria-live="polite">
+        <div id="studentAiWelcome" class="text-center text-secondary py-5"><i class="bi bi-stars fs-1 d-block mb-2 text-primary"></i>Em có thể nhập câu hỏi hoặc tải ảnh bài tập lên.</div>
+      </div>
+      <div id="studentAiWorking" class="small text-secondary px-3 pb-2 d-none">Hùng Cường AI đang suy nghĩ…</div>
+      <form id="studentAiForm" class="card-footer bg-white">
+        <div class="mb-2">
+          <label for="studentAiAction" class="form-label small mb-1">Cách hỗ trợ</label>
+          <select id="studentAiAction" class="form-select form-select-sm" style="max-width: 260px">
+            <option value="ASK">Giải thích câu hỏi</option><option value="HINT">Gợi ý, chưa nêu đáp án</option><option value="NEXT_HINT">Gợi ý tiếp theo</option><option value="SOLUTION">Giải thích lời giải</option>
+          </select>
+        </div>
+        <label for="studentAiImage" class="form-label small mb-1">Ảnh bài tập (JPG, JPEG hoặc PNG, tối đa 10 MB)</label>
+        <input id="studentAiImage" class="form-control form-control-sm mb-2" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
+        <div id="studentAiImagePreview" class="d-none mb-2"><img alt="Xem trước ảnh bài tập" style="max-height:180px;max-width:100%" class="rounded border"><button id="removeStudentAiImage" type="button" class="btn btn-sm btn-outline-secondary ms-2">Bỏ ảnh</button></div>
+        <div class="input-group"><textarea id="studentAiInput" class="form-control" rows="2" maxlength="12000" placeholder="Nhập câu hỏi của em…"></textarea><button id="studentAiSend" class="btn btn-primary" type="submit"><i class="bi bi-send me-1"></i>Gửi</button></div>
+      </form>
+    </div></section>
+  </div>
+</main>
+<script src="/js/student-ai.js" defer></script>
+</body></html>

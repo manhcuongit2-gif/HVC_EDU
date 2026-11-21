@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @Service
 public class AIUsageServiceImpl implements AIUsageService {
     private static final ZoneId APP_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
-    private static final List<String> ROLES = List.of("ROLE_ADMIN", "ROLE_TEACHER", "ROLE_PARENT");
+    private static final List<String> ROLES = List.of("ROLE_ADMIN", "ROLE_TEACHER", "ROLE_PARENT", "ROLE_STUDENT");
     private final AISettingsRepository settingsRepository;
     private final AIUsageRepository usageRepository;
     private final UserRepository userRepository;
@@ -166,6 +166,7 @@ public class AIUsageServiceImpl implements AIUsageService {
         settings.setAdminEnabled(update.adminEnabled());
         settings.setTeacherEnabled(update.teacherEnabled());
         settings.setParentEnabled(update.parentEnabled());
+        settings.setStudentEnabled(update.studentEnabled());
         settings.setEnabled(update.enabled());
         return settingsRepository.save(settings);
     }
@@ -179,6 +180,7 @@ public class AIUsageServiceImpl implements AIUsageService {
             case "ROLE_ADMIN" -> s.isAdminEnabled();
             case "ROLE_TEACHER" -> s.isTeacherEnabled();
             case "ROLE_PARENT" -> s.isParentEnabled();
+            case "ROLE_STUDENT" -> s.isStudentEnabled();
             default -> false;
         };
         if (!enabled) throw new AIException("ROLE_DISABLED", null, false, "Hùng Cường AI chưa được bật cho vai trò của bạn.");
@@ -199,7 +201,7 @@ public class AIUsageServiceImpl implements AIUsageService {
     }
     private Set<String> allowedModels() {
         return java.util.Arrays.stream(properties.getGroq().getAllowedModels().split(","))
-                .map(String::trim).filter(value -> value.matches("openai/[A-Za-z0-9._-]{1,80}"))
+                .map(String::trim).filter(value -> value.matches("[A-Za-z0-9._-]{1,60}/[A-Za-z0-9._-]{1,80}"))
                 .collect(Collectors.toUnmodifiableSet());
     }
     private AISettings createDisabledSettings() {
