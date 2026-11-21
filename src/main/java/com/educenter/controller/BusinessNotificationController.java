@@ -41,7 +41,7 @@ public class BusinessNotificationController {
                 Map.entry("scheduleChanges", p.isScheduleChanges()), Map.entry("attendance", p.isAttendance()),
                 Map.entry("learningReports", p.isLearningReports()), Map.entry("homework", p.isHomework()),
                 Map.entry("general", p.isGeneral()), Map.entry("soundEnabled", p.isSoundEnabled()),
-                Map.entry("previewEnabled", p.isPreviewEnabled()), Map.entry("quietHoursEnabled", p.isQuietHoursEnabled()),
+                Map.entry("previewEnabled", false), Map.entry("quietHoursEnabled", p.isQuietHoursEnabled()),
                 Map.entry("quietStart", p.getQuietStart() == null ? "" : p.getQuietStart().toString()),
                 Map.entry("quietEnd", p.getQuietEnd() == null ? "" : p.getQuietEnd().toString()));
     }

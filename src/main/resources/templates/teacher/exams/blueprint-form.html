@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lập ma trận đề</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="container py-4">
+  <a th:href="@{/teacher/exams/blueprints}">← Đề thi</a>
+  <h1 class="h3 mt-2">Lập ma trận đề</h1>
+  <p class="text-secondary">Mỗi dòng là một ô ma trận. Điểm câu được chia đều trong ô; phần dư làm tròn được phân bổ từng 0,01 điểm.</p>
+  <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+  <form method="post" th:action="@{/teacher/exams/blueprints}" th:object="${form}" class="card border-0 shadow-sm rounded-4">
+    <div class="card-body row g-3">
+      <div class="col-md-5"><label class="form-label">Tên đề</label><input class="form-control" th:field="*{title}" maxlength="150" required></div>
+      <div class="col-md-3"><label class="form-label">Môn học</label><select class="form-select" th:field="*{subjectId}" required><option value="">Chọn môn</option><option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.name}"></option></select></div>
+      <div class="col-md-2"><label class="form-label">Khối</label><select class="form-select" th:field="*{gradeLevel}" required><option value="">Chọn khối</option><option th:each="g : ${#numbers.sequence(6,12)}" th:value="|Lớp ${g}|" th:text="|Lớp ${g}|"></option></select></div>
+      <div class="col-md-1"><label class="form-label">Phút</label><input class="form-control" type="number" min="1" max="240" th:field="*{durationMinutes}" required></div>
+      <div class="col-md-1"><label class="form-label">Tổng điểm</label><input class="form-control" type="number" min="0.01" step="0.01" th:field="*{totalPoints}" required></div>
+      <div class="col-12"><label class="form-label">Phạm vi / nội dung</label><textarea class="form-control" th:field="*{scope}" rows="2" maxlength="2000"></textarea></div>
+      <div class="col-12">
+        <h2 class="h6 mt-2">Ô ma trận</h2>
+        <div class="table-responsive"><table class="table table-sm">
+          <thead><tr><th>Chủ đề (để trống = mọi chủ đề)</th><th>Dạng câu</th><th>Độ khó</th><th>Số câu</th><th>Tổng điểm ô</th></tr></thead>
+          <tbody><tr th:each="cell,stat : *{cells}">
+            <td><input class="form-control" th:field="*{cells[__${stat.index}__].topic}" maxlength="150"></td>
+            <td><select class="form-select" th:field="*{cells[__${stat.index}__].questionType}"><option value="MULTIPLE_CHOICE">Trắc nghiệm</option><option value="TRUE_FALSE">Đúng/Sai</option><option value="FILL_IN">Điền</option><option value="ESSAY">Tự luận</option></select></td>
+            <td><select class="form-select" th:field="*{cells[__${stat.index}__].difficulty}"><option value="EASY">Dễ</option><option value="MEDIUM">Trung bình</option><option value="HARD">Khó</option></select></td>
+            <td><input class="form-control" type="number" min="0" max="100" th:field="*{cells[__${stat.index}__].questionCount}"></td>
+            <td><input class="form-control" type="number" min="0" step="0.01" th:field="*{cells[__${stat.index}__].cellPoints}"></td>
+          </tr></tbody>
+        </table></div>
+        <button type="button" id="addMatrixCell" class="btn btn-sm btn-outline-secondary mb-3">Thêm ô ma trận</button>
+      </div>
+      <div class="col-12"><button class="btn btn-primary">Tạo đề nháp và chọn câu</button></div>
+    </div>
+  </form>
+</main>
+<script>
+document.getElementById("addMatrixCell")?.addEventListener("click", () => {
+  const body = document.querySelector("table tbody");
+  const rows = body.querySelectorAll("tr");
+  const index = rows.length;
+  const row = rows[rows.length - 1].cloneNode(true);
+  row.querySelectorAll("[name]").forEach(field => {
+    field.name = field.name.replace(/cells\[\d+\]/, "cells[" + index + "]");
+    if (field.tagName === "INPUT") field.value = "";
+    else if (field.tagName === "SELECT") field.selectedIndex = 0;
+  });
+  body.appendChild(row);
+});
+</script>
+</body></html>

@@ -44,6 +44,7 @@ public class AuthController {
                 if ("ROLE_ADMIN".equals(role)) return "redirect:/admin/dashboard";
                 if ("ROLE_TEACHER".equals(role)) return "redirect:/teacher/dashboard";
                 if ("ROLE_PARENT".equals(role)) return "redirect:/parent/dashboard";
+                if ("ROLE_STUDENT".equals(role)) return "redirect:/student/dashboard";
             }
         }
         return "redirect:/login";

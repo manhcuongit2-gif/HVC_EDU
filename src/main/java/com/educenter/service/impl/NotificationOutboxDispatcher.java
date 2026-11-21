@@ -61,14 +61,16 @@ public class NotificationOutboxDispatcher {
             Long conversationId = Long.parseLong(job.getTargetPath().substring("/chat/".length()));
             if (activeChatPresence.viewing(job.getUser().getId(), conversationId)) { job.setStatus("SUPPRESSED_ACTIVE"); return; }
         }
-        List<PushSubscription> targets = subscriptions.findByUserIdAndActiveTrueOrderByLastSeenAtDesc(job.getUser().getId());
+        List<PushSubscription> targets = subscriptions.findActiveForLinkedUser(job.getUser().getId());
         if (targets.isEmpty()) { job.setStatus("NO_DEVICE"); return; }
         boolean hasFailure = false;
         String payload;
         try {
             Map<String, Object> data = new LinkedHashMap<>();
-            data.put("title", job.getTitle()); data.put("body", job.getBody());
-            data.put("url", job.getTargetPath()); data.put("tag", job.getEventKey());
+            // Sanitize legacy outbox rows too: queued notifications may predate lock-screen privacy.
+            data.put("title", PushNotificationContent.title(job.getCategory()));
+            data.put("body", PushNotificationContent.body(job.getCategory()));
+            data.put("url", job.getTargetPath()); data.put("tag", "educenter-" + job.getEventKey());
             data.put("silent", !job.isSoundEnabled());
             payload = objectMapper.writeValueAsString(data);
         } catch (Exception e) {

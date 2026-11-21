@@ -1,6 +1,7 @@
 package com.educenter.service;
 
 import com.educenter.dto.ParentHomeworkRow;
+import com.educenter.dto.StudentHomeworkRow;
 import com.educenter.entity.HomeworkAssignment;
 import com.educenter.entity.HomeworkSubmission;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,4 +22,8 @@ public interface HomeworkService {
     HomeworkSubmission submitForParent(Long parentUserId, Long assignmentId, Long studentId, MultipartFile file);
     Path assignmentFileForParent(Long parentUserId, Long assignmentId);
     Path submissionFileForParent(Long parentUserId, Long submissionId);
+    List<StudentHomeworkRow> findForStudent(Long studentUserId);
+    HomeworkSubmission submitForStudent(Long studentUserId, Long assignmentId, String responseText, MultipartFile file);
+    Path assignmentFileForStudent(Long studentUserId, Long assignmentId);
+    Path submissionFileForStudent(Long studentUserId, Long submissionId);
 }

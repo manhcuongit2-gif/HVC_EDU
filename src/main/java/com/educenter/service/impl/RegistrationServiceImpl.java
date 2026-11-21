@@ -2,6 +2,7 @@ package com.educenter.service.impl;
 
 import com.educenter.entity.*;
 import com.educenter.repository.*;
+import com.educenter.service.NotificationService;
 import com.educenter.service.RegistrationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final ClassStudentRepository classStudentRepository;
     private final TuitionRepository tuitionRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public RegistrationServiceImpl(RegistrationRepository registrationRepository,
                                    ParentRepository parentRepository,
@@ -27,7 +29,8 @@ public class RegistrationServiceImpl implements RegistrationService {
                                    ClassRepository classRepository,
                                    ClassStudentRepository classStudentRepository,
                                    TuitionRepository tuitionRepository,
-                                   UserRepository userRepository) {
+                                   UserRepository userRepository,
+                                   NotificationService notificationService) {
         this.registrationRepository = registrationRepository;
         this.parentRepository = parentRepository;
         this.studentRepository = studentRepository;
@@ -35,6 +38,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.classStudentRepository = classStudentRepository;
         this.tuitionRepository = tuitionRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -78,7 +82,12 @@ public class RegistrationServiceImpl implements RegistrationService {
         r.setStatus("PENDING");
         r.setNote(note);
 
-        return registrationRepository.save(r);
+        Registration saved = registrationRepository.save(r);
+        List<Long> adminIds = userRepository.findByRole_NameAndActiveTrueOrderByFullNameAsc("ROLE_ADMIN")
+                .stream().map(User::getId).toList();
+        notificationService.notifyUsers(adminIds, "registration-submitted-" + saved.getId(), "GENERAL",
+                "Có đơn đăng ký học mới", "Có đơn đăng ký lớp cần được xem xét.", "/admin/registrations");
+        return saved;
     }
 
     @Override
@@ -125,6 +134,9 @@ public class RegistrationServiceImpl implements RegistrationService {
         t.setStatus("UNPAID");
         t.setDescription("Học phí khóa học " + classEntity.getName() + " (Đăng ký học ngày " + LocalDate.now() + ")");
         tuitionRepository.save(t);
+        notificationService.notifyUser(r.getParent().getUser().getId(), "registration-processed-" + r.getId(), "GENERAL",
+                "Đăng ký lớp đã được duyệt", "Đơn đăng ký lớp " + classEntity.getName() + " đã được duyệt.",
+                "/parent/registrations");
     }
 
     @Override
@@ -143,6 +155,9 @@ public class RegistrationServiceImpl implements RegistrationService {
         r.setProcessedBy(admin);
         r.setProcessedDate(LocalDateTime.now());
         registrationRepository.save(r);
+        notificationService.notifyUser(r.getParent().getUser().getId(), "registration-processed-" + r.getId(), "GENERAL",
+                "Đăng ký lớp chưa được duyệt", "Đơn đăng ký lớp " + r.getClassEntity().getName() + " chưa được tiếp nhận.",
+                "/parent/registrations");
     }
 
     @Override

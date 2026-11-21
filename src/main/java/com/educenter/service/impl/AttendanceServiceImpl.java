@@ -81,6 +81,12 @@ public class AttendanceServiceImpl implements AttendanceService {
                         "ATTENDANCE", "Điểm danh đã được cập nhật", student.getFullName() + " · " + date + " · " + status,
                         "/parent/results");
             }
+            if (student.getUser() != null && Boolean.TRUE.equals(student.getUser().getActive())) {
+                notificationService.notifyUser(student.getUser().getId(),
+                        "attendance-" + classId + "-" + studentId + "-" + date + "-" + status,
+                        "ATTENDANCE", "Điểm danh đã được cập nhật", "Có cập nhật điểm danh cho buổi học của bạn.",
+                        "/student/progress");
+            }
         }
     }
 }

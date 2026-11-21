@@ -2,7 +2,9 @@ package com.educenter.service.impl;
 
 import com.educenter.entity.*;
 import com.educenter.repository.*;
+import com.educenter.service.PushSubscriptionOwnershipException;
 import com.educenter.service.NotificationService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +25,17 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationOutboxRepository outbox;
     private final NotificationPreferenceRepository preferences;
     private final PushSubscriptionRepository subscriptions;
+    private final PushSubscriptionUserRepository subscriptionUsers;
 
     public NotificationServiceImpl(UserRepository users, UserNotificationRepository notifications,
                                    NotificationOutboxRepository outbox, NotificationPreferenceRepository preferences,
-                                   PushSubscriptionRepository subscriptions) {
+                                   PushSubscriptionRepository subscriptions, PushSubscriptionUserRepository subscriptionUsers) {
         this.users = users;
         this.notifications = notifications;
         this.outbox = outbox;
         this.preferences = preferences;
         this.subscriptions = subscriptions;
+        this.subscriptionUsers = subscriptionUsers;
     }
 
     @Override
@@ -60,8 +64,9 @@ public class NotificationServiceImpl implements NotificationService {
                 job.setNotification(item);
                 job.setEventKey(pushKey);
                 job.setCategory(item.getCategory());
-                job.setTitle(preference.isPreviewEnabled() ? item.getTitle() : genericTitle(item.getCategory()));
-                job.setBody(preference.isPreviewEnabled() ? item.getBody() : genericBody(item.getCategory()));
+                // Push is always generic because the operating system may show it on a lock screen.
+                job.setTitle(PushNotificationContent.title(item.getCategory()));
+                job.setBody(PushNotificationContent.body(item.getCategory()));
                 job.setSoundEnabled(preference.isSoundEnabled());
                 job.setTargetPath(item.getTargetPath());
                 job.setScheduledAt(quietEndIfNeeded(preference, LocalDateTime.now()));
@@ -102,34 +107,65 @@ public class NotificationServiceImpl implements NotificationService {
     public void hide(Long userId, Long notificationId) { ownedNotification(userId, notificationId).setHiddenAt(LocalDateTime.now()); }
 
     @Override @Transactional(readOnly = true)
-    public List<PushSubscription> subscriptions(Long userId) { return subscriptions.findByUserIdAndActiveTrueOrderByLastSeenAtDesc(userId); }
+    public List<PushSubscriptionUser> subscriptions(Long userId) {
+        return subscriptionUsers.findByUserIdAndActiveTrueAndSubscriptionActiveTrueOrderBySubscriptionLastSeenAtDesc(userId);
+    }
 
     @Override @Transactional
     public void saveSubscription(Long userId, String endpoint, String p256dh, String auth, String deviceName, String userAgent, String platform) {
-        if (endpoint == null || endpoint.length() > 2048 || p256dh == null || p256dh.length() > 256 || auth == null || auth.length() > 128)
+        if (endpoint == null || endpoint.isBlank() || endpoint.length() > 2048
+                || p256dh == null || p256dh.isBlank() || p256dh.length() > 256
+                || auth == null || auth.isBlank() || auth.length() > 128)
             throw new IllegalArgumentException("Thông tin thiết bị nhận thông báo không hợp lệ.");
         validateEndpoint(endpoint);
         User user = users.findById(userId).orElseThrow();
         String hash = sha256(endpoint);
-        PushSubscription subscription = subscriptions.findByEndpointHash(hash).orElseGet(PushSubscription::new);
-        subscription.setUser(user);
-        subscription.setEndpoint(endpoint);
-        subscription.setEndpointHash(hash);
-        subscription.setP256dhKey(p256dh);
-        subscription.setAuthKey(auth);
-        subscription.setDeviceName(safe(deviceName == null ? "Thiết bị của tôi" : deviceName, 100));
-        subscription.setUserAgent(safe(userAgent, 512));
-        subscription.setPlatform(safe(platform, 80));
-        subscription.setActive(true);
-        subscriptions.save(subscription);
+        PushSubscription subscription = subscriptions.findByEndpointHash(hash).orElse(null);
+        try {
+            if (subscription == null) {
+                subscription = new PushSubscription();
+                subscription.setUser(user);
+                subscription.setEndpoint(endpoint);
+                subscription.setEndpointHash(hash);
+                subscription.setP256dhKey(p256dh);
+                subscription.setAuthKey(auth);
+                subscription.setDeviceName(safe(deviceName == null ? "Thiết bị của tôi" : deviceName, 100));
+                subscription.setUserAgent(safe(userAgent, 512));
+                subscription.setPlatform(safe(platform, 80));
+                subscription.setActive(true);
+                subscription = subscriptions.saveAndFlush(subscription);
+            } else {
+                // The physical endpoint and its registering account are immutable. Another
+                // signed-in account may add its own opt-in link without taking ownership.
+                if (!endpoint.equals(subscription.getEndpoint())
+                        || !p256dh.equals(subscription.getP256dhKey())
+                        || !auth.equals(subscription.getAuthKey())) {
+                    throw new PushSubscriptionOwnershipException();
+                }
+                subscription.setActive(true);
+            }
+            PushSubscription linkedSubscription = subscription;
+            PushSubscriptionUser link = subscriptionUsers.findBySubscriptionIdAndUserId(linkedSubscription.getId(), userId)
+                    .orElseGet(() -> {
+                        PushSubscriptionUser created = new PushSubscriptionUser();
+                        created.setSubscription(linkedSubscription);
+                        created.setUser(user);
+                        return created;
+                    });
+            link.setActive(true);
+            subscriptionUsers.saveAndFlush(link);
+        } catch (DataIntegrityViolationException ex) {
+            // A concurrent registration may have created the endpoint or account link after lookup.
+            throw new PushSubscriptionOwnershipException();
+        }
         getOrCreatePreference(user);
     }
 
     @Override @Transactional
     public void removeSubscription(Long userId, Long subscriptionId) {
-        PushSubscription subscription = subscriptions.findByIdAndUserId(subscriptionId, userId)
+        PushSubscriptionUser link = subscriptionUsers.findByIdAndUserIdAndActiveTrue(subscriptionId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thiết bị."));
-        subscription.setActive(false);
+        link.setActive(false);
     }
 
     @Override @Transactional
@@ -148,7 +184,9 @@ public class NotificationServiceImpl implements NotificationService {
         p.setPushEnabled(pushEnabled); p.setPrivateMessages(privateMessages); p.setGroupMessages(groupMessages);
         p.setTuition(tuition); p.setTuitionReminders(tuitionReminders); p.setScheduleReminders(scheduleReminders);
         p.setScheduleChanges(scheduleChanges); p.setAttendance(attendance); p.setLearningReports(learningReports);
-        p.setHomework(homework); p.setGeneral(general); p.setSoundEnabled(soundEnabled); p.setPreviewEnabled(previewEnabled);
+        p.setHomework(homework); p.setGeneral(general); p.setSoundEnabled(soundEnabled);
+        // Kept in the schema/API for compatibility, but detailed lock-screen previews are disabled.
+        p.setPreviewEnabled(false);
         p.setQuietHoursEnabled(quietHoursEnabled); p.setQuietStart(quietStart); p.setQuietEnd(quietEnd);
     }
 
@@ -184,18 +222,6 @@ public class NotificationServiceImpl implements NotificationService {
         LocalDateTime end = now.toLocalDate().atTime(p.getQuietEnd());
         if (!p.getQuietStart().isBefore(p.getQuietEnd()) && !time.isBefore(p.getQuietStart())) end = end.plusDays(1);
         return end;
-    }
-    private String genericBody(String category) { return category.startsWith("MESSAGE") ? "Bạn có tin nhắn mới." : "Bạn có thông báo mới."; }
-    private String genericTitle(String category) {
-        return switch (category) {
-            case "MESSAGE_PRIVATE", "MESSAGE_GROUP" -> "Tin nhắn mới";
-            case "TUITION", "TUITION_REMINDER" -> "Cập nhật học phí";
-            case "SCHEDULE_REMINDER", "SCHEDULE_CHANGE" -> "Cập nhật lịch học";
-            case "ATTENDANCE" -> "Cập nhật điểm danh";
-            case "LEARNING_REPORT" -> "Cập nhật học tập";
-            case "HOMEWORK" -> "Cập nhật bài tập";
-            default -> "Thông báo mới";
-        };
     }
     private String normalizeCategory(String category) { return category == null || !category.matches("[A-Z_]{1,40}") ? "GENERAL" : category; }
     private String safe(String value, int max) { if (value == null) return ""; String s = value.trim(); return s.length() <= max ? s : s.substring(0, max); }

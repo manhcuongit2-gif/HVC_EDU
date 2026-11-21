@@ -2,12 +2,14 @@
 
 ## Database
 
-On startup, Flyway applies the new migrations after `V20261124`:
+On startup, Flyway applies the additive migrations through `V20261130`:
 
 - `V20261125`: push subscriptions, notification preferences, notification center, outbox/delivery tracking, homework, class chat links and mentions.
 - `V20261126`: admin broadcasts and scheduled broadcasts.
 - `V20261127`: important chat message flag.
 - `V20261128`: notification sound preference copied into the push outbox.
+- `V20261129`: Hùng Cường AI settings and usage.
+- `V20261130`: student profiles/accounts, homework text submissions, and per-account links to shared browser push subscriptions.
 
 Back up the database before the first production startup as usual. Hibernate schema updates remain disabled.
 
@@ -26,9 +28,9 @@ mvn spring-boot:run
 
 Use the same key pair after restarts. Do not commit either key. If VAPID is not configured, the application remains usable and the push worker leaves queued deliveries untouched. Browser and in-app notifications still appear in the center.
 
-For production, serve the application over HTTPS. Browsers allow the service worker and push APIs on `localhost` for local development. Each user must enable push from **Thông báo → Thiết bị**; the browser permission prompt is only shown after that button is pressed. Device keys are tied to the signed-in account and can be removed from that page.
+For production, serve the application over HTTPS. Browsers allow the service worker and push APIs on `localhost` for local development. Each account must enable push from **Thông báo → Quản lý thiết bị**; the browser permission prompt is only shown after that button is pressed. A browser has one physical push subscription, and several explicitly opted-in accounts may link to it. Removing the link for one account leaves the other accounts and the physical browser subscription intact. Endpoint and encryption-key ownership data are never overwritten by another account.
 
-The PWA caches only its offline fallback and icon. Authenticated pages, APIs, chat, reports and uploaded files are not placed in the service-worker cache. Push previews are generic by default; a user can opt into detailed previews in notification settings.
+The PWA caches only its offline fallback and icon. Authenticated pages, APIs, chat, reports and uploaded files are not placed in the service-worker cache. Push previews always remain generic so lock-screen notifications do not expose grades, student names or submitted work.
 
 ## Supported application behavior
 

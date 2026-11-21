@@ -1,5 +1,13 @@
-const CACHE_NAME = 'educenter-shell-v1';
-const SHELL = ['/offline.html', '/icons/school.svg'];
+const CACHE_NAME = 'educenter-shell-v2';
+const SHELL = [
+  '/offline.html',
+  '/manifest.webmanifest',
+  '/icons/school.svg',
+  '/icons/school-192.png',
+  '/icons/school-512.png',
+  '/icons/school-maskable-512.png',
+  '/icons/apple-touch-icon.png'
+];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)));
@@ -26,18 +34,25 @@ self.addEventListener('fetch', event => {
 
 self.addEventListener('push', event => {
   let payload = {};
-  try { payload = event.data ? event.data.json() : {}; } catch (_) { payload = { body: 'Bạn có thông báo mới.' }; }
-  const title = payload.title || 'EduCenter';
+  try { payload = event.data ? event.data.json() : {}; } catch (_) { payload = {}; }
+  // Keep the OS lock screen private even for old or malformed queued payloads.
+  const title = 'EduCenter';
   const options = {
-    body: payload.body || 'Bạn có thông báo mới.',
-    icon: '/icons/school.svg',
-    badge: '/icons/school.svg',
+    body: 'Bạn có thông báo mới.',
+    icon: '/icons/school-192.png',
+    badge: '/icons/school-192.png',
     tag: payload.tag || 'educenter-notification',
     renotify: false,
     silent: Boolean(payload.silent),
     data: { url: payload.url || '/notifications' }
   };
   event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('pushsubscriptionchange', event => {
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+    windows.forEach(client => client.postMessage({ type: 'EDUCENTER_PUSH_SUBSCRIPTION_CHANGED' }));
+  }));
 });
 
 self.addEventListener('notificationclick', event => {

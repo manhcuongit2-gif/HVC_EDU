@@ -12,6 +12,9 @@ import java.util.Optional;
 public interface SessionStudentReportRepository extends JpaRepository<SessionStudentReport, Long> {
     List<SessionStudentReport> findByClassSessionIdOrderByStudentFullNameAsc(Long sessionId);
     List<SessionStudentReport> findByClassSessionId(Long sessionId);
+    @Query("select r from SessionStudentReport r join fetch r.classSession s join fetch s.classEntity c " +
+            "where r.student.id = :studentId and s.publishedAt is not null order by s.sessionDate desc, s.startTime desc")
+    List<SessionStudentReport> findPublishedForStudent(@Param("studentId") Long studentId);
     Optional<SessionStudentReport> findByClassSessionIdAndStudentId(Long sessionId, Long studentId);
     long countByClassSessionId(Long sessionId);
 

@@ -122,4 +122,43 @@ public class AdminStudentController {
         redirectAttributes.addFlashAttribute("successMessage", status + " hồ sơ học sinh \"" + student.getFullName() + "\"!");
         return "redirect:/admin/students";
     }
+
+    @GetMapping("/{id}/account")
+    public String account(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails,
+                          Model model, RedirectAttributes redirectAttributes) {
+        Student student = studentService.findById(id).orElse(null);
+        if (student == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy hồ sơ học sinh.");
+            return "redirect:/admin/students";
+        }
+        model.addAttribute("currentUser", userDetails);
+        model.addAttribute("student", student);
+        model.addAttribute("unlinkedAccounts", studentService.findUnlinkedStudentAccounts());
+        return "admin/students/account";
+    }
+
+    @PostMapping("/{id}/account/create")
+    public String createAccount(@PathVariable Long id, @RequestParam String username,
+                                @RequestParam String email, @RequestParam String password,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            studentService.createStudentAccount(id, username, email, password);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo tài khoản học sinh. Hãy giao mật khẩu ban đầu trực tiếp cho học sinh hoặc phụ huynh.");
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/admin/students/" + id + "/account";
+    }
+
+    @PostMapping("/{id}/account/link")
+    public String linkAccount(@PathVariable Long id, @RequestParam Long userId,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            studentService.linkStudentAccount(id, userId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã liên kết tài khoản với hồ sơ học sinh.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/admin/students/" + id + "/account";
+    }
 }

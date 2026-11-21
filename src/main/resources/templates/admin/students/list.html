@@ -67,13 +67,14 @@
                                     <th style="min-width: 140px;">Ngày sinh / Giới tính</th>
                                     <th style="min-width: 160px;">Trường & Khối lớp</th>
                                     <th style="min-width: 180px;">Phụ huynh đại diện</th>
+                                    <th style="min-width: 160px;">Tài khoản</th>
                                     <th style="width: 130px;" class="text-center">Trạng thái</th>
                                     <th style="width: 170px;" class="text-end pe-4">Hành động</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:if="${#lists.isEmpty(students)}">
-                                    <td colspan="7" class="text-center py-4 text-muted">
+                                    <td colspan="8" class="text-center py-4 text-muted">
                                         <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                         Chưa có học sinh nào trong hệ thống.
                                     </td>
@@ -99,6 +100,11 @@
                                         <small class="text-muted">
                                             <i class="bi bi-telephone me-1"></i><span th:text="${s.parent.user.phone != null ? s.parent.user.phone : 'Chưa có SĐT'}">0912345678</span>
                                         </small>
+                                    </td>
+                                    <td>
+                                        <span th:if="${s.user != null}" class="badge text-bg-success" th:text="${s.user.username}">student</span>
+                                        <span th:if="${s.user == null}" class="badge text-bg-secondary">Chưa có</span>
+                                        <a class="small d-block mt-1" th:href="@{/admin/students/{id}/account(id=${s.id})}">Quản lý tài khoản</a>
                                     </td>
                                     <td class="text-center">
                                         <span th:if="${s.active}" class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">

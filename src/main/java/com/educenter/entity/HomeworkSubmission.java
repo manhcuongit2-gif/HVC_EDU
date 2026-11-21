@@ -12,10 +12,11 @@ public class HomeworkSubmission {
     @ManyToOne(fetch = FetchType.EAGER, optional = false) @JoinColumn(name = "assignment_id", nullable = false) private HomeworkAssignment assignment;
     @ManyToOne(fetch = FetchType.EAGER, optional = false) @JoinColumn(name = "student_id", nullable = false) private Student student;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "submitted_by", nullable = false) private User submittedBy;
-    @Column(name = "attachment_stored_filename", nullable = false, length = 100) private String attachmentStoredFilename;
-    @Column(name = "attachment_original_filename", nullable = false, length = 255) private String attachmentOriginalFilename;
+    @Column(name = "submission_text", columnDefinition = "TEXT") private String submissionText;
+    @Column(name = "attachment_stored_filename", length = 100) private String attachmentStoredFilename;
+    @Column(name = "attachment_original_filename", length = 255) private String attachmentOriginalFilename;
     @Column(name = "attachment_content_type", length = 100) private String attachmentContentType;
-    @Column(name = "attachment_file_size", nullable = false) private Long attachmentFileSize;
+    @Column(name = "attachment_file_size") private Long attachmentFileSize;
     @Column(name = "submitted_at", nullable = false) private LocalDateTime submittedAt;
     @Column(nullable = false) private boolean late;
     @Column(nullable = false, length = 20) private String status = "SUBMITTED";
@@ -31,6 +32,8 @@ public class HomeworkSubmission {
     public void setStudent(Student student) { this.student = student; }
     public User getSubmittedBy() { return submittedBy; }
     public void setSubmittedBy(User submittedBy) { this.submittedBy = submittedBy; }
+    public String getSubmissionText() { return submissionText; }
+    public void setSubmissionText(String submissionText) { this.submissionText = submissionText; }
     public String getAttachmentStoredFilename() { return attachmentStoredFilename; }
     public void setAttachmentStoredFilename(String value) { this.attachmentStoredFilename = value; }
     public String getAttachmentOriginalFilename() { return attachmentOriginalFilename; }

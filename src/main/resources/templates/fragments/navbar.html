@@ -41,14 +41,19 @@
         <div class="d-flex align-items-center gap-3">
             <a class="btn btn-outline-light btn-sm" th:href="@{/}" title="Về trang chính" aria-label="Về trang chính"><i class="bi bi-house-door-fill"></i><span class="d-none d-md-inline ms-1">Trang chính</span></a>
             <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_TEACHER'}" class="btn btn-outline-light btn-sm" th:href="@{/teacher/homework}"><i class="bi bi-journal-check me-1"></i><span class="d-none d-md-inline">Bài tập</span></a>
+            <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_TEACHER'}" class="btn btn-outline-light btn-sm" th:href="@{/teacher/exams}"><i class="bi bi-ui-checks-grid me-1"></i><span class="d-none d-md-inline">Đề thi</span></a>
             <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_PARENT'}" class="btn btn-outline-light btn-sm" th:href="@{/parent/homework}"><i class="bi bi-journal-check me-1"></i><span class="d-none d-md-inline">Bài tập của con</span></a>
+            <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_PARENT'}" class="btn btn-outline-light btn-sm" th:href="@{/parent/exams}"><i class="bi bi-award me-1"></i><span class="d-none d-md-inline">Kết quả thi</span></a>
+            <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_STUDENT'}" class="btn btn-outline-light btn-sm" th:href="@{/student/homework}"><i class="bi bi-journal-check me-1"></i><span class="d-none d-md-inline">Bài tập</span></a>
+            <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_STUDENT'}" class="btn btn-outline-light btn-sm" th:href="@{/student/exams}"><i class="bi bi-ui-checks-grid me-1"></i><span class="d-none d-md-inline">Bài thi</span></a>
+            <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_STUDENT'}" class="btn btn-outline-light btn-sm" th:href="@{/student/progress}"><i class="bi bi-graph-up me-1"></i><span class="d-none d-md-inline">Tiến độ</span></a>
             <a class="btn btn-outline-light btn-sm position-relative" th:href="@{/notifications}" title="Trung tâm thông báo">
                 <i class="bi bi-bell me-1"></i><span class="d-none d-md-inline">Thông báo</span>
                 <span id="businessNotificationCount" class="badge rounded-pill bg-warning text-dark d-none">0</span>
             </a>
             <button id="installAppButton" type="button" class="btn btn-outline-light btn-sm d-none"><i class="bi bi-download me-1"></i><span class="d-none d-md-inline">Cài ứng dụng</span></button>
-            <a class="btn btn-outline-light btn-sm" th:href="@{/chat}" title="Mở hộp thư"><i class="bi bi-chat-dots me-1"></i><span class="d-none d-md-inline">Tin nhắn</span></a>
-            <div class="message-notification">
+            <a th:if="${currentUser != null and currentUser.roleName != 'ROLE_STUDENT'}" class="btn btn-outline-light btn-sm" th:href="@{/chat}" title="Mở hộp thư"><i class="bi bi-chat-dots me-1"></i><span class="d-none d-md-inline">Tin nhắn</span></a>
+            <div class="message-notification" th:if="${currentUser != null and currentUser.roleName != 'ROLE_STUDENT'}">
                 <button type="button" id="messageNotificationButton" class="btn btn-outline-light btn-sm position-relative"
                         aria-expanded="false" aria-controls="messageNotificationMenu">
                     <i class="bi bi-chat-left-text me-1"></i><span class="d-none d-md-inline">Tin nhắn mới</span>
@@ -63,7 +68,7 @@
             </div>
             <div class="text-white text-end d-none d-sm-block">
                 <div class="fw-semibold small" th:text="${currentUser != null ? currentUser.fullName : 'Người dùng'}">Họ tên</div>
-                <span class="badge bg-light text-primary small" th:text="${currentUser == null ? 'USER' : (currentUser.roleName == 'ROLE_TEACHER' ? 'NGƯỜI DẠY' : (currentUser.roleName == 'ROLE_PARENT' ? 'PHỤ HUYNH' : (currentUser.roleName == 'ROLE_ADMIN' ? 'QUẢN TRỊ VIÊN' : currentUser.roleName)))}">ROLE</span>
+                <span class="badge bg-light text-primary small" th:text="${currentUser == null ? 'USER' : (currentUser.roleName == 'ROLE_TEACHER' ? 'NGƯỜI DẠY' : (currentUser.roleName == 'ROLE_PARENT' ? 'PHỤ HUYNH' : (currentUser.roleName == 'ROLE_STUDENT' ? 'HỌC SINH' : (currentUser.roleName == 'ROLE_ADMIN' ? 'QUẢN TRỊ VIÊN' : currentUser.roleName))))}">ROLE</span>
             </div>
 
             <form th:action="@{/logout}" method="post" class="m-0">

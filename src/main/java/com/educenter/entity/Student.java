@@ -43,6 +43,10 @@ public class Student {
     @JoinColumn(name = "parent_id", nullable = false)
     private Parent parent;
 
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
+
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
@@ -79,6 +83,9 @@ public class Student {
 
     public Parent getParent() { return parent; }
     public void setParent(Parent parent) { this.parent = parent; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }

@@ -7,10 +7,10 @@ This matrix is the acceptance checklist for a configured environment. It has not
 | Install | Open app on HTTPS or `localhost`; install from the browser | App uses the EduCenter name, icon, colors and standalone display |
 | Offline | Open a page, then disconnect the network and navigate | Offline fallback appears; private page contents are not served from cache |
 | Permission | Open device settings without clicking enable | No browser permission prompt appears |
-| Subscription | Click enable after signing in | Subscription is stored for the signed-in user; button and device list update |
-| Ownership | Try to remove another user's device ID | Request is rejected and the other subscription remains active |
+| Subscription | Click enable after signing in to two or three accounts in one browser | Each account gets its own active link to the same physical browser subscription |
+| Ownership | Remove one account's link; try to remove another user's link ID or submit mismatched endpoint keys | Only the current account's link is removed; another account still receives; cross-account deletion and mismatched keys are rejected |
 | Push | Send a parent/teacher/admin message to a signed-up offline device | A generic push appears by default and opens the relevant conversation |
-| Preview | Turn detailed preview on and send a new event | Event title/body are shown; events created with privacy off remain generic |
+| Preview | Enable notifications and send a grade, report or homework event | Lock-screen title/body remain generic and contain no student name, score or answer |
 | Quiet hours | Set a quiet window and create a push event in that window | Notification is stored immediately; push is scheduled for the configured quiet-end time |
 | Retry | Make the provider request fail temporarily | Outbox retries with backoff; a permanent 404/410 disables the expired device |
 | Message compatibility | Poll `GET /api/notifications` while there are unread messages | Existing unread summary shape and URLs remain available |

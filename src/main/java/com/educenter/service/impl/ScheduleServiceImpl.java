@@ -131,6 +131,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule saved = scheduleRepository.save(s);
         classSessionService.synchronizeClass(classEntity.getId());
         notifyParents(saved, "schedule-created-" + saved.getId());
+        notifyStudents(saved, "schedule-created-" + saved.getId());
         return saved;
     }
 
@@ -162,8 +163,12 @@ public class ScheduleServiceImpl implements ScheduleService {
                             .filter(java.util.Objects::nonNull).map(u -> u.getId()).distinct().toList(),
                     "schedule-moved-away-" + saved.getId() + "-" + classEntity.getId(), "SCHEDULE_CHANGE",
                     "Lịch học lớp " + oldClass.getName() + " đã được chuyển", "Giáo viên đã chuyển lịch sang lớp " + classEntity.getName() + ".", "/parent/schedule");
+            notifyStudentsForClass(oldClass.getId(), "schedule-moved-away-" + saved.getId() + "-" + classEntity.getId(),
+                    "Lịch học đã thay đổi", "Lịch của lớp " + oldClass.getName() + " đã được chuyển sang lớp khác.");
         }
-        notifyParents(saved, "schedule-updated-" + saved.getId() + "-" + saved.getDayOfWeek() + "-" + saved.getStartTime() + "-" + saved.getEndTime() + "-" + saved.getRoom().getId());
+        String eventKey = "schedule-updated-" + saved.getId() + "-" + classEntity.getId() + "-" + saved.getDayOfWeek() + "-" + saved.getStartTime() + "-" + saved.getEndTime() + "-" + saved.getRoom().getId();
+        notifyParents(saved, eventKey);
+        notifyStudents(saved, eventKey);
         return saved;
     }
 
@@ -179,6 +184,8 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .filter(java.util.Objects::nonNull).map(u -> u.getId()).distinct().toList(),
                 "schedule-deleted-" + id, "SCHEDULE_CHANGE", "Lịch học đã được cập nhật",
                 "Lịch học lớp " + schedule.getClassEntity().getName() + " đã bị xóa.", "/parent/schedule");
+        notifyStudentsForClass(schedule.getClassEntity().getId(), "schedule-deleted-" + id,
+                "Lịch học đã được cập nhật", "Lịch học lớp " + schedule.getClassEntity().getName() + " đã bị xóa.");
     }
 
     private void notifyParents(Schedule schedule, String eventKey) {
@@ -189,5 +196,22 @@ public class ScheduleServiceImpl implements ScheduleService {
                         .map(e -> e.getStudent().getParent()).filter(java.util.Objects::nonNull).map(p -> p.getUser())
                         .filter(java.util.Objects::nonNull).map(u -> u.getId()).distinct().toList(),
                 eventKey, "SCHEDULE_CHANGE", "Lịch học lớp " + classEntity.getName() + " đã thay đổi", body, "/parent/schedule");
+    }
+
+    private void notifyStudents(Schedule schedule, String eventKey) {
+        ClassEntity classEntity = schedule.getClassEntity();
+        String body = classEntity.getName() + " · " + schedule.getDayOfWeekDisplay() + " · " + schedule.getTimeRangeDisplay()
+                + (schedule.getRoom() == null ? "" : " · Phòng " + schedule.getRoom().getName());
+        notifyStudentsForClass(classEntity.getId(), eventKey,
+                "Lịch học lớp " + classEntity.getName() + " đã thay đổi", body);
+    }
+
+    private void notifyStudentsForClass(Long classId, String eventKey, String title, String body) {
+        List<Long> userIds = enrollments.findByClassEntityIdAndStatus(classId, "ACTIVE").stream()
+                .map(e -> e.getStudent()).filter(java.util.Objects::nonNull)
+                .filter(student -> Boolean.TRUE.equals(student.getActive()) && student.getUser() != null
+                        && Boolean.TRUE.equals(student.getUser().getActive()))
+                .map(student -> student.getUser().getId()).distinct().toList();
+        notificationService.notifyUsers(userIds, eventKey, "SCHEDULE_CHANGE", title, body, "/student/dashboard");
     }
 }

@@ -5,6 +5,8 @@ import com.educenter.entity.Student;
 import com.educenter.entity.Tuition;
 import com.educenter.repository.ClassSessionRepository;
 import com.educenter.repository.ClassStudentRepository;
+import com.educenter.repository.HomeworkAssignmentRepository;
+import com.educenter.repository.HomeworkSubmissionRepository;
 import com.educenter.repository.TuitionRepository;
 import com.educenter.service.NotificationService;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,11 +23,15 @@ public class AcademicReminderDispatcher {
     private final ClassSessionRepository sessions;
     private final ClassStudentRepository enrollments;
     private final TuitionRepository tuitions;
+    private final HomeworkAssignmentRepository assignments;
+    private final HomeworkSubmissionRepository submissions;
     private final NotificationService notifications;
 
     public AcademicReminderDispatcher(ClassSessionRepository sessions, ClassStudentRepository enrollments,
-                                      TuitionRepository tuitions, NotificationService notifications) {
-        this.sessions = sessions; this.enrollments = enrollments; this.tuitions = tuitions; this.notifications = notifications;
+                                      TuitionRepository tuitions, HomeworkAssignmentRepository assignments,
+                                      HomeworkSubmissionRepository submissions, NotificationService notifications) {
+        this.sessions = sessions; this.enrollments = enrollments; this.tuitions = tuitions;
+        this.assignments = assignments; this.submissions = submissions; this.notifications = notifications;
     }
 
     @Scheduled(fixedDelayString = "${app.notifications.schedule-reminder-interval-ms:60000}")
@@ -42,6 +48,31 @@ public class AcademicReminderDispatcher {
             String details = session.getClassEntity().getName() + " · " + session.getWeekdayDisplay() + " " + session.getStartTime()
                     + (session.getRoom() == null ? "" : " · Phòng " + session.getRoom().getName());
             notifyParents(session.getClassEntity().getId(), event, "Sắp đến giờ học", details);
+        }
+    }
+
+    @Scheduled(fixedDelayString = "${app.notifications.homework-reminder-interval-ms:60000}")
+    @Transactional
+    public void homeworkDeadlineReminders() {
+        LocalDateTime now = LocalDateTime.now(ZONE);
+        for (var assignment : assignments.findByPublishedAtLessThanEqualAndDueAtBetweenOrderByDueAtAsc(
+                now, now, now.plusHours(24))) {
+            for (var enrollment : enrollments.findByClassEntityIdAndStatus(assignment.getClassEntity().getId(), "ACTIVE")) {
+                if ((enrollment.getEnrolledDate() != null && enrollment.getEnrolledDate().isAfter(now.toLocalDate()))
+                        || (enrollment.getDroppedDate() != null && !enrollment.getDroppedDate().isAfter(now.toLocalDate()))) continue;
+                Student student = enrollment.getStudent();
+                if (student == null || !Boolean.TRUE.equals(student.getActive())
+                        || submissions.findByAssignmentIdAndStudentId(assignment.getId(), student.getId()).isPresent()) continue;
+                String eventKey = "homework-deadline-" + assignment.getId() + "-" + student.getId();
+                if (student.getUser() != null && Boolean.TRUE.equals(student.getUser().getActive())) {
+                    notifications.notifyUser(student.getUser().getId(), eventKey, "HOMEWORK", "Bài tập sắp đến hạn",
+                            "Bạn có bài tập sắp đến hạn trong 24 giờ tới.", "/student/homework");
+                }
+                if (student.getParent() != null && student.getParent().getUser() != null) {
+                    notifications.notifyUser(student.getParent().getUser().getId(), eventKey, "HOMEWORK", "Bài tập sắp đến hạn",
+                            "Bài tập của " + student.getFullName() + " sắp đến hạn trong 24 giờ tới.", "/parent/homework");
+                }
+            }
         }
     }
 

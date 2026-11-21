@@ -7,6 +7,7 @@ import com.educenter.repository.ClassRepository;
 import com.educenter.repository.GradeRepository;
 import com.educenter.repository.StudentRepository;
 import com.educenter.service.GradeService;
+import com.educenter.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +20,16 @@ public class GradeServiceImpl implements GradeService {
     private final GradeRepository gradeRepository;
     private final ClassRepository classRepository;
     private final StudentRepository studentRepository;
+    private final NotificationService notifications;
 
     public GradeServiceImpl(GradeRepository gradeRepository,
                             ClassRepository classRepository,
-                            StudentRepository studentRepository) {
+                            StudentRepository studentRepository,
+                            NotificationService notifications) {
         this.gradeRepository = gradeRepository;
         this.classRepository = classRepository;
         this.studentRepository = studentRepository;
+        this.notifications = notifications;
     }
 
     @Override
@@ -60,7 +64,16 @@ public class GradeServiceImpl implements GradeService {
         grade.setNote(note);
         grade.recalculateAverageScore();
 
-        gradeRepository.save(grade);
+        Grade saved = gradeRepository.save(grade);
+        String eventKey = "grade-updated-" + classId + "-" + studentId + "-" + java.util.UUID.randomUUID();
+        if (student.getUser() != null && Boolean.TRUE.equals(student.getUser().getActive())) {
+            notifications.notifyUser(student.getUser().getId(), eventKey, "LEARNING_REPORT", "Điểm học tập đã được cập nhật",
+                    "Giáo viên vừa cập nhật điểm hoặc nhận xét trong hồ sơ học tập của bạn.", "/student/progress");
+        }
+        if (student.getParent() != null && student.getParent().getUser() != null) {
+            notifications.notifyUser(student.getParent().getUser().getId(), eventKey, "LEARNING_REPORT", "Điểm học tập đã được cập nhật",
+                    "Giáo viên vừa cập nhật kết quả học tập của " + student.getFullName() + ".", "/parent/results");
+        }
     }
 
     @Override

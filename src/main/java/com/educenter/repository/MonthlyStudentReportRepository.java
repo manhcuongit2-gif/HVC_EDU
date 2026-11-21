@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface MonthlyStudentReportRepository extends JpaRepository<MonthlyStudentReport, Long> {
     Optional<MonthlyStudentReport> findByClassEntityIdAndStudentIdAndReportMonth(Long classId, Long studentId, LocalDate reportMonth);
     List<MonthlyStudentReport> findByClassEntityIdAndReportMonthOrderByStudentFullNameAsc(Long classId, LocalDate reportMonth);
+    List<MonthlyStudentReport> findByStudentIdAndPublishedAtIsNotNullOrderByReportMonthDesc(Long studentId);
 
     @Query("select r from MonthlyStudentReport r join fetch r.classEntity c join fetch r.student s " +
             "where r.reportMonth = :month and r.publishedAt is not null order by c.name, s.fullName")

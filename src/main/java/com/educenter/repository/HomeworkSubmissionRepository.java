@@ -11,4 +11,5 @@ public interface HomeworkSubmissionRepository extends JpaRepository<HomeworkSubm
     Optional<HomeworkSubmission> findByAssignmentIdAndStudentId(Long assignmentId, Long studentId);
     Optional<HomeworkSubmission> findByIdAndAssignmentId(Long id, Long assignmentId);
     List<HomeworkSubmission> findByStudentParentUserIdAndAssignmentIdIn(Long parentUserId, List<Long> assignmentIds);
+    List<HomeworkSubmission> findByStudentIdAndAssignmentIdIn(Long studentId, List<Long> assignmentIds);
 }

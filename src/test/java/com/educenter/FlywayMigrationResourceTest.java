@@ -50,4 +50,35 @@ class FlywayMigrationResourceTest {
             assertTrue(sql.contains("UNIQUE KEY `uk_teacher_class_pay_rate_effective` (`class_id`, `effective_from`)"));
         }
     }
+
+    @Test
+    void studentPortalMigrationLinksExistingProfilesAndSubscriptionsAdditively() throws IOException {
+        String resourcePath = "db/migration/V20261130__student_portal_and_multi_account_push.sql";
+        try (var input = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            assertTrue(input != null, "Student portal migration must be available on the application classpath");
+            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(sql.contains("'ROLE_STUDENT'"));
+            assertTrue(sql.contains("ADD COLUMN `user_id` BIGINT NULL"));
+            assertTrue(sql.contains("ADD COLUMN `submission_text` TEXT NULL"));
+            assertTrue(sql.contains("CREATE TABLE `push_subscription_users`"));
+            assertTrue(sql.contains("SELECT `id`, `user_id`, `active`, `created_at`, `last_seen_at`"));
+            assertTrue(!sql.contains("DROP TABLE"), "Migration must preserve existing tables and data");
+        }
+    }
+
+    @Test
+    void onlineExamMigrationAddsSeparateExamTablesWithoutDroppingExistingData() throws IOException {
+        String resourcePath = "db/migration/V20261201__online_exam_module.sql";
+        try (var input = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            assertTrue(input != null, "Online exam migration must be available on the application classpath");
+            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(sql.contains("CREATE TABLE `exam_questions`"));
+            assertTrue(sql.contains("CREATE TABLE `exam_assignments`"));
+            assertTrue(sql.contains("CREATE TABLE `exam_attempts`"));
+            assertTrue(sql.contains("CREATE TABLE `exam_attempt_answers`"));
+            assertTrue(sql.contains("UNIQUE KEY `uk_exam_attempt_number`"));
+            assertTrue(!sql.contains("DROP TABLE"), "Exam migration must preserve existing tables and data");
+            assertTrue(!sql.contains("ALTER TABLE `grades`"), "Exam scores must remain separate from Grade");
+        }
+    }
 }

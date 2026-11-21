@@ -53,11 +53,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/icons/**", "/webjars/**", "/favicon.ico", "/manifest.webmanifest", "/sw.js", "/offline.html").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/push/public-key").permitAll()
-                .requestMatchers("/", "/login", "/register", "/auth/**", "/403", "/error/**", "/payment/**").permitAll()
+                .requestMatchers("/", "/login", "/register", "/auth/**", "/403", "/error/**", "/payment/vnpay-return").permitAll()
+                .requestMatchers("/payment/pay-tuition/**").hasAnyRole("ADMIN", "TEACHER", "PARENT")
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/teacher/**").hasRole("TEACHER")
                 .requestMatchers("/parent/**").hasRole("PARENT")
-                .anyRequest().authenticated()
+                .requestMatchers("/student/**").hasRole("STUDENT")
+                .requestMatchers("/notifications/**", "/api/business-notifications/**",
+                        "/api/push/subscriptions", "/api/push/subscriptions/**").authenticated()
+                .anyRequest().hasAnyRole("ADMIN", "TEACHER", "PARENT")
             )
             .formLogin(form -> form
                 .loginPage("/login")

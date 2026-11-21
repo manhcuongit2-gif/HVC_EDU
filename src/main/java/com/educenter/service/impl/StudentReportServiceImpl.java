@@ -119,6 +119,7 @@ public class StudentReportServiceImpl implements StudentReportService {
         }
         sessionReportRepository.saveAll(reports);
         refreshPublishedMonthForSession(session);
+        if (session.getPublishedAt() != null) notifyUpdatedSessionReports(session, reports);
     }
 
     @Override
@@ -143,6 +144,11 @@ public class StudentReportServiceImpl implements StudentReportService {
                         "learning-report-session-" + sessionId + "-" + report.getStudent().getId(), "LEARNING_REPORT",
                         "Báo cáo buổi học mới", "Đã có nhận xét buổi " + session.getSessionDate() + " của " + report.getStudent().getFullName() + ".",
                         "/parent/reports");
+            }
+            if (report.getStudent().getUser() != null && Boolean.TRUE.equals(report.getStudent().getUser().getActive())) {
+                notificationService.notifyUser(report.getStudent().getUser().getId(),
+                        "learning-report-session-" + sessionId + "-" + report.getStudent().getId(), "LEARNING_REPORT",
+                        "Nhận xét buổi học mới", "Giáo viên đã công bố nhận xét cho buổi học của bạn.", "/student/progress");
             }
         }
     }
@@ -210,6 +216,11 @@ public class StudentReportServiceImpl implements StudentReportService {
                     "Báo cáo học tập tháng mới", "Đã có tổng kết tháng " + month.getMonthValue() + "/" + month.getYear() + " cho " + student.getFullName() + ".",
                     "/parent/reports");
         }
+        if (student.getUser() != null && Boolean.TRUE.equals(student.getUser().getActive())) {
+            notificationService.notifyUser(student.getUser().getId(),
+                    "learning-report-monthly-" + classId + "-" + studentId + "-" + month + "-" + report.getPublishedAt(), "LEARNING_REPORT",
+                    "Tổng kết học tập tháng mới", "Giáo viên đã công bố tổng kết học tập tháng của bạn.", "/student/progress");
+        }
         BigDecimal calculatedTotal = classEntity.getSessionFee() == null ? BigDecimal.ZERO
                 : classEntity.getSessionFee().multiply(BigDecimal.valueOf(report.getPresentCount()));
         return billingService.synchronizeCharge(student, classEntity, month, calculatedTotal);
@@ -265,6 +276,22 @@ public class StudentReportServiceImpl implements StudentReportService {
             }
             if (report.getGoodEvaluationCount() == null || report.getGoodEvaluationCount() < 0) {
                 throw new IllegalArgumentException("Số lượt đánh giá tốt không hợp lệ.");
+            }
+        }
+    }
+
+    private void notifyUpdatedSessionReports(ClassSession session, List<SessionStudentReport> reports) {
+        String eventSuffix = java.util.UUID.randomUUID().toString();
+        for (SessionStudentReport report : reports) {
+            Student student = report.getStudent();
+            String eventKey = "learning-report-session-updated-" + session.getId() + "-" + student.getId() + "-" + eventSuffix;
+            if (student.getParent() != null && student.getParent().getUser() != null) {
+                notificationService.notifyUser(student.getParent().getUser().getId(), eventKey, "LEARNING_REPORT",
+                        "Báo cáo buổi học đã cập nhật", "Giáo viên đã cập nhật nhận xét buổi học của con bạn.", "/parent/reports");
+            }
+            if (student.getUser() != null && Boolean.TRUE.equals(student.getUser().getActive())) {
+                notificationService.notifyUser(student.getUser().getId(), eventKey, "LEARNING_REPORT",
+                        "Nhận xét buổi học đã cập nhật", "Giáo viên đã cập nhật nhận xét trong hồ sơ học tập của bạn.", "/student/progress");
             }
         }
     }
