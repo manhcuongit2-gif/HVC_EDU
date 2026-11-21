@@ -1,6 +1,7 @@
 package com.educenter.service.impl;
 
 import com.educenter.config.AIProperties;
+import com.educenter.dto.AISettingsUpdate;
 import com.educenter.entity.AISettings;
 import com.educenter.entity.AIUsage;
 import com.educenter.entity.User;
@@ -72,6 +73,25 @@ class AIUsageServiceImplTest {
 
         assertEquals("USER_DAILY_LIMIT", error.getCode());
         verify(usageRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void adminCanSetResponseLimitTo16384Tokens() {
+        when(settingsRepository.save(any(AISettings.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        AISettingsUpdate update = new AISettingsUpdate(true, true, true, true, true,
+                3, 30, 10_000L, 50_000, 16_384, 10, "openai/gpt-oss-120b");
+
+        AISettings saved = service.updateSettings(update);
+
+        assertEquals(16_384, saved.getMaxResponseTokens());
+    }
+
+    @Test
+    void adminCannotSetResponseLimitAbove16384Tokens() {
+        AISettingsUpdate update = new AISettingsUpdate(true, true, true, true, true,
+                3, 30, 10_000L, 50_000, 16_385, 10, "openai/gpt-oss-120b");
+
+        assertThrows(IllegalArgumentException.class, () -> service.updateSettings(update));
     }
 
     @Test

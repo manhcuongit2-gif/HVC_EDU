@@ -38,9 +38,10 @@
                     </h2>
                     <p class="text-muted mb-0">Danh sách các em học sinh đang theo học tại trung tâm Luyện Thi Hùng Cường</p>
                 </div>
-                <a th:href="@{/admin/students/add}" class="btn btn-primary d-flex align-items-center">
-                    <i class="bi bi-person-plus-fill me-2"></i>Thêm học sinh mới
-                </a>
+                <div class="d-flex flex-wrap gap-2">
+                    <a th:href="@{/admin/import(type='students')}" class="btn btn-outline-success"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel</a>
+                    <a th:href="@{/admin/students/add}" class="btn btn-primary d-flex align-items-center"><i class="bi bi-person-plus-fill me-2"></i>Thêm học sinh mới</a>
+                </div>
             </div>
 
             <!-- Thông báo thành công -->

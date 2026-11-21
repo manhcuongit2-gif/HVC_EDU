@@ -36,6 +36,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.educenter.security.CustomUserDetails;
 
 @Controller
 @RequestMapping("/admin/schedules")
@@ -63,6 +65,11 @@ public class AdminScheduleController {
         this.studentReportService = studentReportService;
         this.monthlyReportRepository = monthlyReportRepository;
         this.reportFileService = reportFileService;
+    }
+
+    @ModelAttribute("currentUser")
+    public CustomUserDetails currentUser(@AuthenticationPrincipal CustomUserDetails user) {
+        return user;
     }
 
     @GetMapping

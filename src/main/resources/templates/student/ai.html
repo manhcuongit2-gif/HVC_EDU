@@ -13,10 +13,15 @@
     .student-ai-message.assistant { background: #f3f6fb; }
     .student-ai-message.user { background: #e8f1ff; }
   </style>
+  <script th:inline="none">
+    window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }, options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] } };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
 </head>
 <body class="bg-light">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<main id="studentAiApp" class="container py-4 student-ai-shell">
+<div th:replace="~{fragments/student-navigation :: menu('ai')}"></div>
+<main id="studentAiApp" class="container py-4 student-ai-shell" th:attr="data-max-upload-bytes=${maxUploadBytes}">
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
     <div><h1 class="h3 mb-1">Hùng Cường AI</h1><p class="text-secondary mb-0">Hỏi bài, xin gợi ý từng bước hoặc gửi ảnh bài tập để được hướng dẫn.</p></div>
     <button id="newStudentConversation" type="button" class="btn btn-outline-primary"><i class="bi bi-plus-lg me-1"></i>Cuộc trò chuyện mới</button>
@@ -37,13 +42,19 @@
             <option value="ASK">Giải thích câu hỏi</option><option value="HINT">Gợi ý, chưa nêu đáp án</option><option value="NEXT_HINT">Gợi ý tiếp theo</option><option value="SOLUTION">Giải thích lời giải</option>
           </select>
         </div>
-        <label for="studentAiImage" class="form-label small mb-1">Ảnh bài tập (JPG, JPEG hoặc PNG, tối đa 10 MB)</label>
-        <input id="studentAiImage" class="form-control form-control-sm mb-2" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
-        <div id="studentAiImagePreview" class="d-none mb-2"><img alt="Xem trước ảnh bài tập" style="max-height:180px;max-width:100%" class="rounded border"><button id="removeStudentAiImage" type="button" class="btn btn-sm btn-outline-secondary ms-2">Bỏ ảnh</button></div>
+        <label for="studentAiAttachment" class="form-label small mb-1">Ảnh bài tập (JPG/PNG) hoặc PDF · tối đa theo giới hạn tải tệp AI</label>
+        <input id="studentAiAttachment" class="form-control form-control-sm mb-2" type="file" accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf">
+        <div id="studentAiAttachmentPreview" class="d-none mb-2 border rounded p-2 d-flex align-items-center gap-2">
+          <img id="studentAiAttachmentImage" alt="Xem trước ảnh bài tập" style="max-height:180px;max-width:75%" class="rounded border d-none">
+          <i id="studentAiAttachmentPdfIcon" class="bi bi-file-earmark-pdf text-danger fs-3 d-none" aria-hidden="true"></i>
+          <span id="studentAiAttachmentName" class="small text-break"></span>
+          <button id="removeStudentAiAttachment" type="button" class="btn btn-sm btn-outline-secondary ms-auto">Bỏ tệp</button>
+        </div>
         <div class="input-group"><textarea id="studentAiInput" class="form-control" rows="2" maxlength="12000" placeholder="Nhập câu hỏi của em…"></textarea><button id="studentAiSend" class="btn btn-primary" type="submit"><i class="bi bi-send me-1"></i>Gửi</button></div>
       </form>
     </div></section>
   </div>
 </main>
+<script src="/js/ai-math.js" defer></script>
 <script src="/js/student-ai.js" defer></script>
 </body></html>

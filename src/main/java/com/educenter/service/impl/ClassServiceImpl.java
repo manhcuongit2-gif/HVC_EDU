@@ -81,7 +81,7 @@ public class ClassServiceImpl implements ClassService {
         c.setTeacher(teacher);
         c.setAssistantTeacher(assistant);
         c.setMaxStudents(classDTO.getMaxStudents());
-        c.setTuitionFee(classDTO.getTuitionFee());
+        c.setTuitionFee(java.math.BigDecimal.ZERO);
         c.setSessionFee(classDTO.getSessionFee());
         c.setStatus(classDTO.getStatus() != null ? classDTO.getStatus() : "ACTIVE");
         c.setStartDate(classDTO.getStartDate());
@@ -113,7 +113,8 @@ public class ClassServiceImpl implements ClassService {
         c.setTeacher(teacher);
         c.setAssistantTeacher(assistant);
         c.setMaxStudents(classDTO.getMaxStudents());
-        c.setTuitionFee(classDTO.getTuitionFee());
+        // Preserve the legacy course fee on existing classes. It is no longer
+        // used to create charges; monthly billing continues to use sessionFee.
         c.setSessionFee(classDTO.getSessionFee());
         c.setStatus(classDTO.getStatus());
         c.setStartDate(classDTO.getStartDate());

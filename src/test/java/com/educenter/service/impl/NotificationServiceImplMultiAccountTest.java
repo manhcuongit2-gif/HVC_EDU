@@ -3,6 +3,7 @@ package com.educenter.service.impl;
 import com.educenter.entity.*;
 import com.educenter.repository.*;
 import com.educenter.service.PushSubscriptionOwnershipException;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -18,8 +19,9 @@ class NotificationServiceImplMultiAccountTest {
     private final NotificationPreferenceRepository preferences = mock(NotificationPreferenceRepository.class);
     private final PushSubscriptionRepository subscriptions = mock(PushSubscriptionRepository.class);
     private final PushSubscriptionUserRepository links = mock(PushSubscriptionUserRepository.class);
+    private final SimpMessagingTemplate messaging = mock(SimpMessagingTemplate.class);
     private final NotificationServiceImpl service = new NotificationServiceImpl(users, notifications, outbox,
-            preferences, subscriptions, links);
+            preferences, subscriptions, links, messaging);
 
     @Test
     void explicitOptInsSharePhysicalEndpointAndRemovingOneAccountKeepsTheOther() {

@@ -5,6 +5,9 @@ import com.educenter.dto.AdminExcelImportRow;
 import com.educenter.dto.ChatPage;
 import com.educenter.dto.TeacherEarningRow;
 import com.educenter.dto.TeacherEarningsPage;
+import com.educenter.dto.StudentCalendarDay;
+import com.educenter.dto.StudentPortalData;
+import com.educenter.dto.StudentScheduleEvent;
 import com.educenter.entity.ChatConversation;
 import com.educenter.entity.ChatMember;
 import com.educenter.entity.ClassEntity;
@@ -12,6 +15,7 @@ import com.educenter.entity.ClassSession;
 import com.educenter.entity.Role;
 import com.educenter.entity.Teacher;
 import com.educenter.entity.TeacherAdminMessage;
+import com.educenter.entity.Subject;
 import com.educenter.entity.User;
 import com.educenter.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TemplateRenderingTest {
 
@@ -264,7 +269,8 @@ class TemplateRenderingTest {
         try (var input = getClass().getClassLoader().getResourceAsStream("templates/parent/dashboard.html")) {
             assertTrue(input != null);
             String template = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-            assertTrue(template.indexOf("Báo cáo gần nhất và lịch học sắp tới") < template.indexOf("Truy cập nhanh"));
+            assertTrue(template.indexOf("B\u00e1o c\u00e1o g\u1ea7n nh\u1ea5t v\u00e0 l\u1ecbch h\u1ecdc s\u1eafp t\u1edbi")
+                    < template.indexOf("L\u1ecbch s\u1eed \u0111\u0103ng k\u00fd l\u1edbp"));
         }
     }
 
@@ -289,8 +295,8 @@ class TemplateRenderingTest {
 
         String html = templateEngine.process("chat/index", context);
 
-        assertTrue(html.contains("chat-inbox-layout"));
-        assertTrue(html.contains("/chat/new"));
+        assertTrue(html.contains("inbox-layout"));
+        assertTrue(html.contains("newMessageContacts"));
     }
 
     @Test
@@ -319,7 +325,7 @@ class TemplateRenderingTest {
 
         String html = templateEngine.process("chat/thread", context);
 
-        assertTrue(html.contains("Parent conversation"));
+        assertTrue(html.contains("Teacher"));
         assertTrue(html.contains("chat-thread-window"));
         assertTrue(html.contains("/chat/3/messages"));
     }
@@ -340,7 +346,49 @@ class TemplateRenderingTest {
         String html = templateEngine.process("parent/schedule", context);
 
         assertTrue(html.contains("calendar-grid"));
+        assertEquals(1, occurrences(html, "/parent/homework"));
+        assertEquals(1, occurrences(html, "/parent/exams"));
+        assertTrue(html.contains("/parent/tuition"));
+        assertTrue(html.contains("/parent/reports"));
         assertTrue(html.contains("Lịch học của con"));
+    }
+
+    @Test
+    void rendersStudentScheduleForOwnClassesAndAttendance() {
+        User teacherUser = testUser(8L, "Teacher", "ROLE_TEACHER");
+        Teacher teacher = new Teacher();
+        teacher.setUser(teacherUser);
+        Subject subject = new Subject();
+        subject.setName("Math");
+        ClassEntity classEntity = new ClassEntity();
+        classEntity.setId(11L);
+        classEntity.setName("Math 7");
+        classEntity.setSubject(subject);
+        classEntity.setTeacher(teacher);
+        ClassSession session = new ClassSession();
+        session.setId(101L);
+        session.setClassEntity(classEntity);
+        session.setSessionDate(LocalDate.of(2026, 11, 21));
+        session.setStartTime(LocalTime.of(9, 0));
+        session.setEndTime(LocalTime.of(10, 30));
+        session.setStatus("SCHEDULED");
+
+        WebContext context = webContext();
+        context.setVariable("currentUser", new CustomUserDetails(testUser(92L, "Student", "ROLE_STUDENT")));
+        context.setVariable("portal", new StudentPortalData(null, List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), 0, 0, 0, 0, 0, 0));
+        context.setVariable("selectedMonth", YearMonth.of(2026, 11));
+        context.setVariable("monthLabel", "11/2026");
+        context.setVariable("previousMonth", YearMonth.of(2026, 10));
+        context.setVariable("nextMonth", YearMonth.of(2026, 12));
+        context.setVariable("todayMonth", YearMonth.of(2026, 11));
+        context.setVariable("calendarDays", List.of(new StudentCalendarDay(LocalDate.of(2026, 11, 21), true, false,
+                List.of(new StudentScheduleEvent(session, "PRESENT", "On time", "#2563eb")))));
+
+        String html = templateEngine.process("student/schedule", context);
+
+        assertTrue(html.contains("Math 7"));
+        assertTrue(html.contains("PRESENT"));
+        assertTrue(html.contains("On time"));
     }
 
     @Test
@@ -388,6 +436,10 @@ class TemplateRenderingTest {
 
         assertTrue(html.contains("Hùng Cường AI"));
         assertTrue(html.contains("studentAiForm"));
+        assertEquals(1, occurrences(html, "/student/homework"));
+        assertEquals(1, occurrences(html, "/student/exams"));
+        assertEquals(1, occurrences(html, "/student/progress"));
+        assertTrue(html.contains("/student/schedule"));
         assertTrue(html.contains("/student/ai"));
     }
 
@@ -413,6 +465,16 @@ class TemplateRenderingTest {
         user.setFullName(fullName);
         user.setRole(new Role(null, roleName, roleName));
         return user;
+    }
+
+    private int occurrences(String value, String needle) {
+        int count = 0;
+        int offset = 0;
+        while ((offset = value.indexOf(needle, offset)) >= 0) {
+            count++;
+            offset += needle.length();
+        }
+        return count;
     }
 
     private WebContext webContext() {

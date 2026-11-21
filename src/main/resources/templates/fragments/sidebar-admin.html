@@ -2,99 +2,57 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"></head>
 <body>
-<nav th:fragment="sidebar(activeMenu)" class="col-md-3 col-lg-2 d-md-block sidebar collapse p-0">
-    <style>
-        .sidebar { background-color: #17324d !important; color: #d9e7f4 !important; }
-        .sidebar .nav-link { color: #d9e7f4 !important; }
-        .sidebar .nav-link:hover, .sidebar .nav-link:focus-visible, .sidebar .nav-link.active {
-            color: #fff !important; background-color: #0d6efd !important;
-        }
-    </style>
-    <div class="pt-3">
-        <div class="px-3 pb-2 text-uppercase text-white-50 small fw-bold">Menu Quản trị</div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'dashboard'} ? ' active' : ''" th:href="@{/admin/dashboard}">
-                    <i class="bi bi-speedometer2"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'subjects'} ? ' active' : ''" th:href="@{/admin/subjects}">
-                    <i class="bi bi-book-half"></i> Môn học
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'rooms'} ? ' active' : ''" th:href="@{/admin/rooms}">
-                    <i class="bi bi-building"></i> Phòng học
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'teachers'} ? ' active' : ''" th:href="@{/admin/teachers}">
-                    <i class="bi bi-person-badge-fill"></i> Người dạy
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'parents'} ? ' active' : ''" th:href="@{/admin/parents}">
-                    <i class="bi bi-person-heart"></i> Phụ huynh
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'students'} ? ' active' : ''" th:href="@{/admin/students}">
-                    <i class="bi bi-people-fill"></i> Học sinh
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'import'} ? ' active' : ''" th:href="@{/admin/import}">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Nhập Excel
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'classes'} ? ' active' : ''" th:href="@{/admin/classes}">
-                    <i class="bi bi-easel2-fill"></i> Lớp học
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'schedules'} ? ' active' : ''" th:href="@{/admin/schedules}">
-                    <i class="bi bi-calendar3"></i> Lịch học
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'materials'} ? ' active' : ''" th:href="@{/admin/materials}">
-                    <i class="bi bi-file-earmark-text"></i> Tài liệu
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'ai'} ? ' active' : ''" th:href="@{/admin/ai-management}">
-                    <i class="bi bi-stars"></i> Hùng Cường AI
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'chat'} ? ' active' : ''" th:href="@{/chat}">
-                    <i class="bi bi-chat-square-text"></i> Tin nhắn
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'notifications'} ? ' active' : ''" th:href="@{/admin/notifications}">
-                    <i class="bi bi-megaphone-fill"></i> Thông báo chung
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'registrations'} ? ' active' : ''" th:href="@{/admin/registrations}">
-                    <i class="bi bi-file-earmark-check-fill"></i> Đăng ký học
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'tuition'} ? ' active' : ''" th:href="@{/admin/tuition}">
-                    <i class="bi bi-credit-card-fill"></i> Học phí & VNPay
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:classappend="${activeMenu == 'statistics'} ? ' active' : ''" th:href="@{/admin/statistics}">
-                    <i class="bi bi-bar-chart-fill"></i> Thống kê
-                </a>
-            </li>
-        </ul>
+<th:block th:fragment="sidebar(activeMenu)">
+  <nav id="adminSidebar" class="col-md-3 col-lg-2 sidebar p-0" aria-label="Menu quản trị">
+    <div class="admin-sidebar-mobile-head d-md-none"><span class="fw-bold">Menu quản trị</span><button id="adminMenuClose" type="button" class="btn btn-sm btn-light" aria-label="Đóng menu"><i class="bi bi-x-lg"></i></button></div>
+    <div class="pt-3 pb-4">
+      <section class="admin-menu-group">
+        <div class="admin-menu-title">Tổng quan</div>
+        <a class="nav-link" th:classappend="${activeMenu == 'dashboard'} ? ' active' : ''" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2"></i>Dashboard</a>
+      </section>
+      <section class="admin-menu-group">
+        <div class="admin-menu-title">Đào tạo</div>
+        <a class="nav-link" th:classappend="${activeMenu == 'subjects'} ? ' active' : ''" th:href="@{/admin/subjects}"><i class="bi bi-book-half"></i>Môn học</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'rooms'} ? ' active' : ''" th:href="@{/admin/rooms}"><i class="bi bi-building"></i>Phòng học</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'students'} ? ' active' : ''" th:href="@{/admin/students}"><i class="bi bi-people-fill"></i>Học sinh</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'classes'} ? ' active' : ''" th:href="@{/admin/classes}"><i class="bi bi-easel2-fill"></i>Lớp học</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'schedules'} ? ' active' : ''" th:href="@{/admin/schedules}"><i class="bi bi-calendar3"></i>Lịch học</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'materials'} ? ' active' : ''" th:href="@{/admin/materials}"><i class="bi bi-file-earmark-text"></i>Tài liệu</a>
+      </section>
+      <section class="admin-menu-group">
+        <div class="admin-menu-title">Tài khoản</div>
+        <a class="nav-link" th:classappend="${activeMenu == 'teachers'} ? ' active' : ''" th:href="@{/admin/teachers}"><i class="bi bi-person-badge-fill"></i>Người dạy</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'parents'} ? ' active' : ''" th:href="@{/admin/parents}"><i class="bi bi-person-heart"></i>Phụ huynh</a>
+      </section>
+      <section class="admin-menu-group">
+        <div class="admin-menu-title">Vận hành</div>
+        <a class="nav-link" th:classappend="${activeMenu == 'registrations'} ? ' active' : ''" th:href="@{/admin/registrations}"><i class="bi bi-file-earmark-check-fill"></i>Đăng ký học</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'tuition'} ? ' active' : ''" th:href="@{/admin/tuition}"><i class="bi bi-credit-card-fill"></i>Học phí</a>
+      </section>
+      <section class="admin-menu-group">
+        <div class="admin-menu-title">Hệ thống</div>
+        <a class="nav-link" th:classappend="${activeMenu == 'ai'} ? ' active' : ''" th:href="@{/admin/ai-management}"><i class="bi bi-stars"></i>Hùng Cường AI</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'chat'} ? ' active' : ''" th:href="@{/chat}"><i class="bi bi-chat-square-text"></i>Tin nhắn</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'notifications'} ? ' active' : ''" th:href="@{/admin/notifications}"><i class="bi bi-megaphone-fill"></i>Thông báo chung</a>
+        <a class="nav-link" th:classappend="${activeMenu == 'statistics'} ? ' active' : ''" th:href="@{/admin/statistics}"><i class="bi bi-bar-chart-fill"></i>Thống kê</a>
+      </section>
     </div>
-</nav>
+  </nav>
+  <div id="adminSidebarScrim" class="admin-sidebar-scrim" aria-hidden="true"></div>
+  <script>
+    (() => {
+      const setOpen = (open) => {
+        document.body.classList.toggle('admin-menu-open', open);
+        document.getElementById('adminMenuToggle')?.setAttribute('aria-expanded', String(open));
+      };
+      document.addEventListener('click', (event) => {
+        if (event.target.closest('#adminMenuToggle')) { setOpen(true); return; }
+        if (event.target.closest('#adminMenuClose, #adminSidebarScrim') || event.target.closest('#adminSidebar a')) setOpen(false);
+      });
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setOpen(false); });
+    })();
+  </script>
+  <script th:src="@{/js/admin-list-tools.js}" defer></script>
+</th:block>
 </body>
 </html>

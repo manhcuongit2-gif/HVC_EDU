@@ -125,15 +125,9 @@ public class RegistrationServiceImpl implements RegistrationService {
             classStudentRepository.save(cs);
         }
 
-        // 2. Tự động sinh khoản học phí trong bảng tuition
-        Tuition t = new Tuition();
-        t.setStudent(r.getStudent());
-        t.setClassEntity(classEntity);
-        t.setAmount(classEntity.getTuitionFee());
-        t.setDueDate(LocalDate.now().plusDays(15));
-        t.setStatus("UNPAID");
-        t.setDescription("Học phí khóa học " + classEntity.getName() + " (Đăng ký học ngày " + LocalDate.now() + ")");
-        tuitionRepository.save(t);
+        // Tuition is created only by the Admin manual billing flow or the existing
+        // monthly per-session billing process. Approving enrollment must not create
+        // a second course-based charge.
         notificationService.notifyUser(r.getParent().getUser().getId(), "registration-processed-" + r.getId(), "GENERAL",
                 "Đăng ký lớp đã được duyệt", "Đơn đăng ký lớp " + classEntity.getName() + " đã được duyệt.",
                 "/parent/registrations");

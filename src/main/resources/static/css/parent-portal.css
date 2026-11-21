@@ -1,0 +1,62 @@
+body {
+    background: #f4f7fb;
+    color: #17253b;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main.container, main.container-fluid {
+    padding-top: 1.5rem;
+    padding-bottom: 2.5rem;
+}
+
+main h1, main h2, main h3, main h4, main h5 {
+    color: #14253d;
+    letter-spacing: -.015em;
+}
+
+main .card, main article.card, main .calendar-card {
+    border-color: #e1e9f2;
+    border-radius: 1rem;
+    box-shadow: 0 .4rem 1.2rem rgba(27, 55, 88, .06);
+}
+
+main .card-header {
+    border-bottom-color: #e7edf4;
+}
+
+main .btn {
+    border-radius: .65rem;
+    font-weight: 550;
+}
+
+main .form-control, main .form-select {
+    border-color: #d5dfeb;
+    border-radius: .65rem;
+}
+
+main .form-control:focus, main .form-select:focus {
+    border-color: #74a7fa;
+    box-shadow: 0 0 0 .2rem rgba(21, 94, 239, .15);
+}
+
+main .table thead th {
+    background: #f3f7fc;
+    color: #41536b;
+    font-size: .83rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+main .alert {
+    border-radius: .85rem;
+}
+
+main :focus-visible, .parent-portal-nav :focus-visible {
+    outline: 3px solid rgba(21, 94, 239, .4);
+    outline-offset: 2px;
+}
+
+@media (max-width: 575.98px) {
+    main.container, main.container-fluid { padding-top: 1rem; }
+    main .table-responsive { border-radius: .75rem; }
+}

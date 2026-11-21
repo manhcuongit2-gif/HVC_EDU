@@ -10,7 +10,7 @@
 <body class="bg-light">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <div class="container-fluid"><div class="row">
-    <div th:replace="~{fragments/sidebar-admin :: sidebar('import')}"></div>
+    <div th:replace="~{fragments/sidebar-admin :: sidebar(${previewType == 'parents' ? 'parents' : (previewType == 'classes' ? 'classes' : 'students')})}"></div>
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
         <header class="border-bottom pb-3 mb-4"><h1 class="h3 fw-bold"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Nhập dữ liệu bằng Excel</h1><p class="text-muted mb-0">Tải mẫu, nhập dữ liệu, xem trước lỗi theo từng dòng rồi xác nhận đưa vào hệ thống.</p></header>
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>

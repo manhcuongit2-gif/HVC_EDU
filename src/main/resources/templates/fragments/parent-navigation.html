@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"></head>
+<body>
+<th:block th:fragment="menu(active)">
+  <style>
+    .parent-portal-nav { background:#fff; border-bottom:1px solid #dce6f1; box-shadow:0 2px 8px rgba(20,52,86,.04); }
+    .parent-portal-nav .parent-nav-scroll { display:flex; gap:.35rem; overflow-x:auto; padding:.65rem 0; scrollbar-width:thin; }
+    .parent-portal-nav a { flex:0 0 auto; border-radius:999px; padding:.48rem .72rem; color:#43536a; text-decoration:none; font-size:.875rem; }
+    .parent-portal-nav a:hover,.parent-portal-nav a:focus-visible { background:#edf4ff; color:#1457b8; }
+    .parent-portal-nav a.active { background:#155eef; color:#fff; font-weight:600; }
+    @media(min-width:992px){.parent-portal-nav .parent-nav-scroll{flex-wrap:wrap;overflow:visible}.parent-portal-nav a{padding:.5rem .8rem}}
+  </style>
+  <nav class="parent-portal-nav" aria-label="Menu Phụ huynh">
+    <div class="container-fluid px-lg-4 parent-nav-scroll">
+      <a th:href="@{/parent/children}" th:classappend="${active == 'children'} ? ' active' : ''"><i class="bi bi-people me-1"></i>Hồ sơ các con</a>
+      <a th:href="@{/parent/schedule}" th:classappend="${active == 'schedule'} ? ' active' : ''"><i class="bi bi-calendar3 me-1"></i>Lịch học</a>
+      <a th:href="@{/parent/grades}" th:classappend="${active == 'grades'} ? ' active' : ''"><i class="bi bi-bar-chart me-1"></i>Điểm & chuyên cần</a>
+      <a th:href="@{/parent/results}" th:classappend="${active == 'results'} ? ' active' : ''"><i class="bi bi-clipboard-data me-1"></i>Kết quả</a>
+      <a th:href="@{/parent/reports}" th:classappend="${active == 'reports'} ? ' active' : ''"><i class="bi bi-file-earmark-text me-1"></i>Báo cáo</a>
+      <a th:href="@{/parent/materials}" th:classappend="${active == 'materials'} ? ' active' : ''"><i class="bi bi-folder2-open me-1"></i>Tài liệu</a>
+      <a th:href="@{/parent/register-class}" th:classappend="${active == 'register-class'} ? ' active' : ''"><i class="bi bi-plus-circle me-1"></i>Đăng ký lớp</a>
+      <a th:href="@{/parent/registrations}" th:classappend="${active == 'registrations'} ? ' active' : ''"><i class="bi bi-card-checklist me-1"></i>Theo dõi đăng ký</a>
+      <a th:href="@{/parent/tuition}" th:classappend="${active == 'tuition'} ? ' active' : ''"><i class="bi bi-credit-card me-1"></i>Học phí</a>
+    </div>
+  </nav>
+</th:block>
+</body>
+</html>

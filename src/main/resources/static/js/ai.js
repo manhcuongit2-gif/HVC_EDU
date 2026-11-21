@@ -40,14 +40,30 @@
     };
 
     const escapeHtml = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    let mathTypesetQueue = Promise.resolve();
     const renderMarkdown = (value) => {
-        let html = window.marked?.parse ? window.marked.parse(value || '', { breaks: true, gfm: true }) : `<p>${escapeHtml(value || '').replace(/\n/g, '<br>')}</p>`;
+        const formulas = [];
+        const nonce = Math.random().toString(36).slice(2);
+        const normalized = window.HungCuongAIMath?.normalize(value) ?? String(value || '');
+        const source = normalized.replace(/\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\]|(?<!\\)\$(?!\$)[^\n$]*?(?<!\\)\$(?!\$)/g, formula => {
+            const token = `HCMATH${nonce}TOKEN${formulas.length}END`;
+            formulas.push([token, formula]);
+            return token;
+        });
+        let html = window.marked?.parse ? window.marked.parse(source, { breaks: true, gfm: true }) : `<p>${escapeHtml(source).replace(/\n/g, '<br>')}</p>`;
         if (window.DOMPurify?.sanitize) html = window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
-        else html = `<pre>${escapeHtml(value || '')}</pre>`;
+        else html = `<pre>${escapeHtml(normalized)}</pre>`;
+        for (const [token, formula] of formulas) html = html.split(token).join(escapeHtml(formula));
         return html;
     };
     const maybeTypeset = (node) => {
-        if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise([node]).catch(() => {});
+        if (!node || !window.MathJax?.typesetPromise) return mathTypesetQueue;
+        mathTypesetQueue = mathTypesetQueue.catch(() => {}).then(async () => {
+            if (!node.isConnected || !window.MathJax?.typesetPromise) return;
+            window.MathJax.typesetClear?.([node]);
+            await window.MathJax.typesetPromise([node]);
+        }).catch(() => {});
+        return mathTypesetQueue;
     };
 
     const scrollToBottom = () => {
@@ -68,7 +84,7 @@
         const content = document.createElement('div');
         content.className = 'ai-message-text';
         if (isUser) content.textContent = message.content || '';
-        else { content.innerHTML = renderMarkdown(message.content || ''); maybeTypeset(content); }
+        else content.innerHTML = renderMarkdown(message.content || '');
         body.append(content);
         const actions = document.createElement('div');
         actions.className = 'ai-message-actions';
@@ -205,7 +221,7 @@
                         userNode.dataset.messageId = data.userMessageId;
                         userNode.querySelector('[data-action="edit"]').dataset.messageId = data.userMessageId;
                     } else if (type === 'delta') {
-                        answer += data; assistantText.innerHTML = renderMarkdown(answer); maybeTypeset(assistantText); scrollToBottom();
+                        answer += data; assistantText.innerHTML = renderMarkdown(answer); scrollToBottom();
                     } else if (type === 'error') showError(new Error(data.message));
                     else if (type === 'done') {
                         completed = true;
@@ -219,7 +235,8 @@
             }
             if (completed) await loadConversation(currentConversationId);
             else if (editMessageId && currentConversationId) await loadConversation(currentConversationId);
-            else if (!answer) assistantNode.remove();
+            else if (answer) await maybeTypeset(assistantText);
+            else assistantNode.remove();
         } catch (error) {
             if (editMessageId && currentConversationId) await loadConversation(currentConversationId).catch(() => {});
             if (error.name !== 'AbortError') showError(error);

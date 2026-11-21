@@ -1,12 +1,16 @@
 package com.educenter.service.impl;
 
 import com.educenter.entity.*;
+import com.educenter.dto.BusinessNotificationView;
 import com.educenter.repository.*;
 import com.educenter.service.PushSubscriptionOwnershipException;
 import com.educenter.service.NotificationService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -26,16 +30,19 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationPreferenceRepository preferences;
     private final PushSubscriptionRepository subscriptions;
     private final PushSubscriptionUserRepository subscriptionUsers;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public NotificationServiceImpl(UserRepository users, UserNotificationRepository notifications,
                                    NotificationOutboxRepository outbox, NotificationPreferenceRepository preferences,
-                                   PushSubscriptionRepository subscriptions, PushSubscriptionUserRepository subscriptionUsers) {
+                                   PushSubscriptionRepository subscriptions, PushSubscriptionUserRepository subscriptionUsers,
+                                   SimpMessagingTemplate messagingTemplate) {
         this.users = users;
         this.notifications = notifications;
         this.outbox = outbox;
         this.preferences = preferences;
         this.subscriptions = subscriptions;
         this.subscriptionUsers = subscriptionUsers;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -53,7 +60,7 @@ public class NotificationServiceImpl implements NotificationService {
         item.setTitle(safe(title, MAX_TITLE));
         item.setBody(safe(body, MAX_BODY));
         item.setTargetPath(safePath(targetPath));
-        item = notifications.save(item);
+        item = notifications.saveAndFlush(item);
 
         NotificationPreference preference = getOrCreatePreference(user);
         if (preference.isPushEnabled() && categoryEnabled(preference, item.getCategory())) {
@@ -72,6 +79,17 @@ public class NotificationServiceImpl implements NotificationService {
                 job.setScheduledAt(quietEndIfNeeded(preference, LocalDateTime.now()));
                 outbox.save(job);
             }
+        }
+        BusinessNotificationView notificationView = BusinessNotificationView.from(item);
+        String recipientUsername = user.getUsername();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() {
+                    try {
+                        messagingTemplate.convertAndSendToUser(recipientUsername, "/queue/business-notifications", notificationView);
+                    } catch (RuntimeException ignored) { }
+                }
+            });
         }
         return item;
     }

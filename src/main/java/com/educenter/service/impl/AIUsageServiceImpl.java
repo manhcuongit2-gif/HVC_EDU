@@ -147,7 +147,7 @@ public class AIUsageServiceImpl implements AIUsageService {
         requirePositive(update.maxPromptCharacters(), "Độ dài câu hỏi");
         requirePositive(update.maxResponseTokens(), "Độ dài câu trả lời");
         requirePositive(update.maxConcurrentRequests(), "Số yêu cầu đồng thời");
-        if (update.maxPromptCharacters() > 50000 || update.maxResponseTokens() > 8192 || update.maxConcurrentRequests() > 50
+        if (update.maxPromptCharacters() > 50000 || update.maxResponseTokens() > 16384 || update.maxConcurrentRequests() > 50
                 || update.perUserDailyRequests() > 10000 || update.globalDailyRequests() > 100000
                 || update.dailyTokenLimit() > 1_000_000_000L)
             throw new IllegalArgumentException("Một hoặc nhiều giới hạn vượt mức tối đa cho phép.");

@@ -7,6 +7,14 @@
     .message-notification { position: relative; }
     .message-notification-menu { position: absolute; z-index: 1050; top: calc(100% + .5rem); right: 0; width: min(22rem, calc(100vw - 2rem)); max-height: 22rem; overflow-y: auto; }
     .message-notification-item { white-space: normal; }
+    .navbar-account-chip { display:flex; align-items:center; gap:.55rem; color:#fff; text-decoration:none; min-width:0; }
+    .navbar-account-chip:hover { color:#fff; opacity:.9; }
+    .navbar-account-avatar { display:grid; width:2rem; height:2rem; flex:0 0 2rem; place-items:center; overflow:hidden; border-radius:50%; background:#fff; color:#155eef; font-weight:700; }
+    .navbar-account-avatar img { width:100%; height:100%; object-fit:cover; }
+    .navbar-actions { display:flex; align-items:center; justify-content:flex-end; gap:.5rem !important; flex-wrap:wrap; min-width:0; }
+    .business-toast-region { position:fixed; z-index:1080; top:1rem; right:1rem; width:min(23rem,calc(100vw - 2rem)); display:grid; gap:.65rem; pointer-events:none; }
+    .business-toast { pointer-events:auto; border:0; border-left:.28rem solid var(--toast-accent,#155eef); border-radius:.9rem; box-shadow:0 .75rem 2rem rgba(15,35,65,.2); }
+    .business-toast .toast-body { overflow-wrap:anywhere; }
     .ai-floating-launcher {
         position: fixed;
         right: 1.5rem;
@@ -28,7 +36,12 @@
     .ai-floating-launcher:hover { color: #fff; transform: translateY(-3px); box-shadow: 0 .75rem 1.5rem rgba(17, 62, 154, .42); }
     .ai-floating-launcher:focus-visible { outline: 3px solid #ffd166; outline-offset: 3px; }
     @media (max-width: 575.98px) {
+        .navbar .container-fluid { padding-left:.65rem !important; padding-right:.65rem !important; align-items:flex-start; }
+        .navbar-brand { font-size:.82rem; margin-right:.5rem; }
+        .navbar-actions { flex:1 1 auto; gap:.35rem !important; }
+        .navbar-actions > * { flex-shrink:0; }
         .ai-floating-launcher { right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom)); width: 3.5rem; height: 3.5rem; }
+        .business-toast-region { top:auto; right:.75rem; bottom:calc(.75rem + env(safe-area-inset-bottom)); width:calc(100vw - 1.5rem); }
     }
 </style>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
@@ -38,7 +51,8 @@
             <span>LUYỆN THI HÙNG CƯỜNG</span>
         </a>
 
-        <div class="d-flex align-items-center gap-3">
+        <div class="navbar-actions">
+            <button th:if="${currentUser != null and currentUser.roleName == 'ROLE_ADMIN'}" id="adminMenuToggle" type="button" class="btn btn-outline-light btn-sm d-md-none" aria-controls="adminSidebar" aria-expanded="false"><i class="bi bi-list fs-5" aria-hidden="true"></i><span class="visually-hidden">Mở menu quản trị</span></button>
             <a class="btn btn-outline-light btn-sm" th:href="@{/}" title="Về trang chính" aria-label="Về trang chính"><i class="bi bi-house-door-fill"></i><span class="d-none d-md-inline ms-1">Trang chính</span></a>
             <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_TEACHER'}" class="btn btn-outline-light btn-sm" th:href="@{/teacher/homework}"><i class="bi bi-journal-check me-1"></i><span class="d-none d-md-inline">Bài tập</span></a>
             <a th:if="${currentUser != null and currentUser.roleName == 'ROLE_TEACHER'}" class="btn btn-outline-light btn-sm" th:href="@{/teacher/exams}"><i class="bi bi-ui-checks-grid me-1"></i><span class="d-none d-md-inline">Đề thi</span></a>
@@ -68,7 +82,11 @@
                     </div>
                 </div>
             </div>
-            <div class="text-white text-end d-none d-sm-block">
+            <a th:if="${currentUser != null and (currentUser.roleName == 'ROLE_STUDENT' or currentUser.roleName == 'ROLE_PARENT' or currentUser.roleName == 'ROLE_TEACHER')}" class="navbar-account-chip d-flex" th:href="@{/account/settings}" title="Mở tài khoản">
+                <span class="navbar-account-avatar"><img th:if="${currentUser.user.avatarFilename != null}" th:src="@{/account/avatar}" alt=""><span th:unless="${currentUser.user.avatarFilename != null}" th:text="${#strings.substring(currentUser.fullName,0,1)}">U</span></span>
+                <span class="text-end d-none d-lg-block"><span class="fw-semibold small d-block" th:text="${currentUser.fullName}">Họ tên</span><span class="badge bg-light text-primary small" th:text="${currentUser.roleName == 'ROLE_TEACHER' ? 'NGƯỜI DẠY' : (currentUser.roleName == 'ROLE_PARENT' ? 'PHỤ HUYNH' : 'HỌC SINH')}">ROLE</span></span>
+            </a>
+            <div class="text-white text-end d-none d-sm-block" th:if="${currentUser == null or currentUser.roleName == 'ROLE_ADMIN'}">
                 <div class="fw-semibold small" th:text="${currentUser != null ? currentUser.fullName : 'Người dùng'}">Họ tên</div>
                 <span class="badge bg-light text-primary small" th:text="${currentUser == null ? 'USER' : (currentUser.roleName == 'ROLE_TEACHER' ? 'NGƯỜI DẠY' : (currentUser.roleName == 'ROLE_PARENT' ? 'PHỤ HUYNH' : (currentUser.roleName == 'ROLE_STUDENT' ? 'HỌC SINH' : (currentUser.roleName == 'ROLE_ADMIN' ? 'QUẢN TRỊ VIÊN' : currentUser.roleName))))}">ROLE</span>
             </div>
@@ -93,6 +111,12 @@
         <path d="m12 2 2.15 6.55L21 11l-6.85 2.45L12 20l-2.15-6.55L3 11l6.85-2.45L12 2Zm7 12 1.05 3.05L23 18l-2.95.95L19 22l-1.05-3.05L15 18l2.95-.95L19 14ZM5 2l.72 2.28L8 5l-2.28.72L5 8l-.72-2.28L2 5l2.28-.72L5 2Z" />
     </svg>
 </a>
+<div th:if="${currentUser != null}" id="businessToastRegion" class="business-toast-region" aria-live="polite" aria-atomic="false"
+     th:attr="data-csrf-token=${_csrf != null ? _csrf.token : ''},data-csrf-header=${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}"></div>
+<th:block th:if="${currentUser != null}">
+    <script src="/webjars/github-com-stomp-js-stompjs/7.0.0/bundles/stomp.umd.min.js" defer></script>
+    <script src="/js/business-notifications.js" defer></script>
+</th:block>
 <script src="/js/pwa.js" defer></script>
 <script>
     (() => {
@@ -144,25 +168,6 @@
 
         refresh();
         window.setInterval(refresh, 8000);
-    })();
-</script>
-<script>
-    (() => {
-        const badge = document.getElementById('businessNotificationCount');
-        if (!badge) return;
-        const refresh = () => Promise.all([
-            fetch('/api/business-notifications', {credentials:'same-origin', headers:{Accept:'application/json'}}).then(r => r.ok ? r.json() : null),
-            fetch('/api/notifications', {credentials:'same-origin', headers:{Accept:'application/json'}}).then(r => r.ok ? r.json() : null)
-        ]).then(([data, messages]) => {
-                if (!data) return;
-                const count = Number(data.unreadCount || 0);
-                badge.textContent = count > 99 ? '99+' : String(count);
-                badge.classList.toggle('d-none', count === 0);
-                const total = count + Number(messages?.unreadCount || 0);
-                if (total > 0 && navigator.setAppBadge) navigator.setAppBadge(total).catch(() => {});
-                else if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
-            }).catch(() => {});
-        refresh(); window.setInterval(refresh, 20000);
     })();
 </script>
 </th:block>

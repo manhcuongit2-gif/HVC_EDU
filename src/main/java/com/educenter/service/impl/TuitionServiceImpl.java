@@ -74,6 +74,9 @@ public class TuitionServiceImpl implements TuitionService {
     @Override
     @Transactional
     public Tuition createTuition(Long studentId, Long classId, BigDecimal amount, LocalDate dueDate, String description) {
+        if (amount == null || amount.signum() <= 0) {
+            throw new IllegalArgumentException("Nhập số tiền thu lớn hơn 0. Khoản thu thủ công không lấy giá từ lớp học.");
+        }
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy học sinh"));
         ClassEntity classEntity = classRepository.findById(classId)
@@ -82,7 +85,7 @@ public class TuitionServiceImpl implements TuitionService {
         Tuition t = new Tuition();
         t.setStudent(student);
         t.setClassEntity(classEntity);
-        t.setAmount(amount != null ? amount : classEntity.getTuitionFee());
+        t.setAmount(amount);
         t.setDueDate(dueDate != null ? dueDate : LocalDate.now().plusDays(15));
         t.setStatus("UNPAID");
         t.setDescription(description != null ? description : "Học phí lớp " + classEntity.getName());

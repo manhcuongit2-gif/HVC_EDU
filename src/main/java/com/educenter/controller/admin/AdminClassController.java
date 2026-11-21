@@ -64,6 +64,7 @@ public class AdminClassController {
         ClassDTO classDTO = new ClassDTO();
         classDTO.setStatus("ACTIVE");
         classDTO.setMaxStudents(30);
+        classDTO.setTuitionFee(BigDecimal.ZERO);
 
         model.addAttribute("classDTO", classDTO);
         model.addAttribute("subjects", subjectService.findAllActive());

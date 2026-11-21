@@ -16,11 +16,13 @@
             margin-bottom: 30px;
         }
     </style>
+    <link rel="stylesheet" th:href="@{/css/parent-portal.css}">
 </head>
 <body class="bg-light">
 
 <!-- Navbar dùng chung -->
 <div th:replace="~{fragments/navbar :: navbar}"></div>
+<div th:replace="~{fragments/parent-navigation :: menu('grades')}"></div>
 
 <div class="container py-4">
     <!-- Header Section -->

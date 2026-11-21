@@ -70,6 +70,7 @@ public class StudentAIController {
         result.put("ready", ready);
         result.put("selectedModel", settings.getSelectedModel());
         result.put("visionReady", ready && properties.getGroq().isVisionModel(settings.getSelectedModel()));
+        result.put("maxUploadBytes", properties.getGroq().getMaxUploadBytes());
         result.put("usage", usage.summary(user.getId()));
         result.put("message", !configured ? "Hùng Cường AI chưa được cấu hình khóa API trên máy chủ."
                 : !settings.isEnabled() ? "AI đang tắt hoặc chưa được Admin cấu hình hạn mức."
@@ -146,11 +147,12 @@ public class StudentAIController {
                                                        @RequestParam(required = false) Long conversationId,
                                                        @RequestParam(required = false) String message,
                                                        @RequestParam(defaultValue = "ASK") String action,
-                                                       @RequestPart(value = "image", required = false) MultipartFile image) {
+                                                       @RequestPart(value = "image", required = false) MultipartFile image,
+                                                       @RequestPart(value = "pdf", required = false) MultipartFile pdf) {
         StudentAIChatRequest request = new StudentAIChatRequest(conversationId, message, action);
         StreamingResponseBody body = output -> {
             try {
-                studentAI.chat(user.getId(), request, image, event -> writeEvent(output, event));
+                studentAI.chat(user.getId(), request, image, pdf, event -> writeEvent(output, event));
             } catch (UncheckedIOException disconnected) {
                 // The browser closed its stream.
             } catch (AIException error) {

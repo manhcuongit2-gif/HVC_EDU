@@ -14,11 +14,13 @@
             overflow: hidden;
         }
     </style>
+    <link rel="stylesheet" th:href="@{/css/parent-portal.css}">
 </head>
 <body class="bg-light">
 
 <!-- Navbar dùng chung -->
 <div th:replace="~{fragments/navbar :: navbar}"></div>
+<div th:replace="~{fragments/parent-navigation :: menu('registrations')}"></div>
 
 <div class="container py-4">
     <!-- Header Section -->
@@ -55,7 +57,6 @@
                             <th class="ps-4" style="width: 70px;">Mã</th>
                             <th>Con em</th>
                             <th>Lớp học đăng ký</th>
-                            <th>Học phí</th>
                             <th>Ngày nộp</th>
                             <th>Ghi chú của bạn</th>
                             <th class="text-center" style="width: 150px;">Trạng thái</th>
@@ -64,7 +65,7 @@
                     </thead>
                     <tbody>
                         <tr th:if="${#lists.isEmpty(registrations)}">
-                            <td colspan="8" class="text-center py-4 text-muted">
+                            <td colspan="7" class="text-center py-4 text-muted">
                                 <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                 Bạn chưa nộp đơn đăng ký lớp học nào.
                             </td>
@@ -78,9 +79,7 @@
                                 <div class="fw-bold text-primary" th:text="${r.classEntity.name}">Toán 10 - Nâng Cao</div>
                                 <small class="text-muted" th:text="'GV: ' + ${r.classEntity.teacher.user.fullName}"></small>
                             </td>
-                            <td>
-                                <span class="fw-bold text-success" th:text="${#numbers.formatDecimal(r.classEntity.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.200.000 đ</span>
-                            </td>
+
                             <td>
                                 <span class="small text-muted" th:text="${#temporals.format(r.registrationDate, 'dd/MM/yyyy HH:mm')}">01/09/2026</span>
                             </td>

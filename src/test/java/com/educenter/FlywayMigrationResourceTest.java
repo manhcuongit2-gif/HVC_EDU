@@ -96,4 +96,16 @@ class FlywayMigrationResourceTest {
             assertTrue(!sql.contains("DROP TABLE"), "Migration must preserve existing tables and data");
         }
     }
+
+    @Test
+    void aiResponseTokenMigrationOnlyRaisesThePreviousDefault() throws IOException {
+        String resourcePath = "db/migration/V20261206__increase_ai_response_token_limit.sql";
+        try (var input = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            assertTrue(input != null, "AI response token migration must be available on the application classpath");
+            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            assertTrue(sql.contains("SET max_response_tokens = 16384"));
+            assertTrue(sql.contains("max_response_tokens IS NULL OR max_response_tokens = 8192"));
+            assertTrue(!sql.contains("DROP TABLE"), "Migration must preserve existing tables and data");
+        }
+    }
 }

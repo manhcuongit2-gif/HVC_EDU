@@ -85,10 +85,7 @@
                             <small class="text-muted d-block">Người dạy hỗ trợ:</small>
                             <strong class="text-dark" th:text="${classEntity.assistantTeacher != null ? classEntity.assistantTeacher.user.fullName : 'Chưa phân công'}">Chưa phân công</strong>
                         </li>
-                            <li class="mb-3">
-                                <small class="text-muted d-block">Học phí trọn gói:</small>
-                                <strong class="text-success fs-5" th:text="${#numbers.formatDecimal(classEntity.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.200.000 đ</strong>
-                            </li>
+
                             <li class="mb-3">
                                 <small class="text-muted d-block">Đơn giá mỗi buổi:</small>
                                 <strong class="text-primary fs-5" th:text="${classEntity.sessionFee != null ? #numbers.formatDecimal(classEntity.sessionFee, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Chưa cấu hình'}"></strong>

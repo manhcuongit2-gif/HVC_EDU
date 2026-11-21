@@ -34,8 +34,10 @@ public class AdminExcelImportController {
     }
 
     @GetMapping
-    public String index(@AuthenticationPrincipal CustomUserDetails user, Model model) {
+    public String index(@AuthenticationPrincipal CustomUserDetails user,
+                        @RequestParam(required = false) String type, Model model) {
         model.addAttribute("currentUser", user);
+        model.addAttribute("previewType", Set.of("parents", "students", "classes").contains(type) ? type : "parents");
         return "admin/import";
     }
 
@@ -51,6 +53,7 @@ public class AdminExcelImportController {
     public String preview(@RequestParam String type, @RequestParam MultipartFile file,
                           @AuthenticationPrincipal CustomUserDetails user, HttpSession session, Model model) {
         addBaseModel(user, model);
+        model.addAttribute("previewType", Set.of("parents", "students", "classes").contains(type) ? type : "parents");
         try {
             List<AdminExcelImportRow> rows = importService.preview(type, file);
             String importId = UUID.randomUUID().toString();

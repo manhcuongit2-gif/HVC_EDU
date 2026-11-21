@@ -34,6 +34,7 @@ public class StudentExamController {
 
     @GetMapping
     public String index(@AuthenticationPrincipal CustomUserDetails user, Model model) {
+        model.addAttribute("currentUser", user);
         model.addAttribute("assignments", exams.assignmentsForStudent(user.getId()));
         model.addAttribute("pdfAssignments", pdfExams.forStudent(user.getId()));
         return "student/exams";
@@ -102,6 +103,7 @@ public class StudentExamController {
 
     @GetMapping("/results")
     public String results(@AuthenticationPrincipal CustomUserDetails user, Model model) {
+        model.addAttribute("currentUser", user);
         model.addAttribute("assignments", exams.publishedResultsForStudent(user.getId())); return "student/exam-results";
     }
 

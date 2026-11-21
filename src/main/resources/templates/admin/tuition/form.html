@@ -64,7 +64,7 @@
                                 <select class="form-select" id="classId" name="classId" required>
                                     <option value="">-- Chọn lớp học --</option>
                                     <option th:each="c : ${classes}" th:value="${c.id}"
-                                            th:text="${c.name} + ' (Học phí niêm yết: ' + ${#numbers.formatDecimal(c.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ)'">
+                                            th:text="${c.name}">
                                         Toán 10 - Nâng Cao
                                     </option>
                                 </select>

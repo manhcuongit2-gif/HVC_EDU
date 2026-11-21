@@ -10,9 +10,11 @@
         .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}.weekday,.calendar-day{border-right:1px solid #e8edf4;border-bottom:1px solid #e8edf4}.weekday{padding:10px 6px;text-align:center;background:#f5f8fc;color:#607086;font-weight:700;font-size:.83rem}.calendar-day{min-height:155px;padding:7px;background:white}.calendar-day.other-month{background:#f9fafc;color:#aab4c2}.calendar-day.today{box-shadow:inset 0 0 0 2px #1769e0;background:#f1f7ff}.day-number{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:5px}.day-number .today-tag{font-size:.65rem;color:#1769e0}.calendar-event{border-left:3px solid var(--event-color);border-radius:5px;padding:4px 6px;margin:4px 0;background:color-mix(in srgb,var(--event-color) 10%,white);font-size:.72rem;line-height:1.25}.calendar-event summary{cursor:pointer;font-weight:700;color:#24344b}.calendar-event details>div{padding:6px 0 2px;color:#4d5c72}.calendar-event a{color:#1769e0;font-weight:600}.legend-dot{width:10px;height:10px;display:inline-block;border-radius:50%;margin-right:5px}
         @media(max-width:767px){.calendar-day{min-height:92px;padding:4px 2px}.weekday{font-size:.68rem;padding:7px 1px}.calendar-event{font-size:.62rem;padding:3px}.event-detail{display:none}}
     </style>
+    <link rel="stylesheet" th:href="@{/css/parent-portal.css}">
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
+<div th:replace="~{fragments/parent-navigation :: menu('schedule')}"></div>
 <main class="container-fluid px-lg-4 py-4">
     <header class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div><h1 class="h3 fw-bold mb-1"><i class="bi bi-calendar-week text-primary me-2"></i>Lịch học của con</h1><p class="text-muted mb-0">Lịch được đồng bộ với các buổi học do trung tâm cập nhật (giờ Việt Nam, UTC+7).</p></div>
@@ -39,12 +41,13 @@
                     <summary><span th:text="${#temporals.format(event.session.startTime,'HH:mm')}"></span> · <span th:text="${event.session.classEntity.name}"></span></summary>
                     <div><strong th:text="${event.session.classEntity.subject.name}"></strong><br>
                         Học sinh: <span th:text="${#strings.listJoin(event.childNames, ', ')}"></span><br>
+                        <span th:each="childAttendance, stat : ${event.attendance}"><span th:text="${childAttendance.studentName}"></span>: <strong th:text="${childAttendance.status == null ? 'Chưa có điểm danh' : (childAttendance.status == 'PRESENT' ? 'Có mặt' : (childAttendance.status == 'ABSENT' ? 'Vắng' : (childAttendance.status == 'EXCUSED' ? 'Có phép' : childAttendance.status)))}"></strong><span th:if="${!stat.last}"> · </span></span><br>
                         <span class="event-detail">Ngày: <span th:text="|${event.session.weekdayDisplay}, ${#temporals.format(event.session.sessionDate,'dd/MM/yyyy')}|"></span><br>
                         Thời gian: <span th:text="|${event.session.startTime}–${event.session.endTime}|"></span><br>
                         Phòng: <span th:text="${event.session.room != null ? event.session.room.name : 'Chưa xếp phòng'}"></span><br>
                         Người dạy: <span th:text="${event.session.classEntity.teacher.user.fullName}"></span><br>
                         Người dạy hỗ trợ: <span th:text="${event.session.classEntity.assistantTeacher != null ? event.session.classEntity.assistantTeacher.user.fullName : 'Chưa phân công'}"></span><br>
-                        Trạng thái: <span th:text="${event.session.status == 'SCHEDULED' ? 'Đã lên lịch' : event.session.status}"></span></span>
+                        Trạng thái: <span th:text="${event.session.status == 'CANCELLED' ? 'Đã hủy' : (event.session.status == 'SCHEDULED' ? 'Đã lên lịch' : event.session.status)}"></span></span>
                         <div th:if="${event.reportAvailable}" class="mt-1"><a th:href="@{/parent/results}">Xem báo cáo buổi học</a></div>
                         <div th:unless="${event.reportAvailable}" class="small text-muted mt-1">Báo cáo chưa được công bố.</div>
                     </div>

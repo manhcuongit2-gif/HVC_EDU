@@ -1,6 +1,7 @@
 package com.educenter.controller.parent;
 
 import com.educenter.dto.ParentCalendarDay;
+import com.educenter.dto.ParentChildAttendance;
 import com.educenter.dto.ParentScheduleEvent;
 import com.educenter.entity.ClassSession;
 import com.educenter.entity.ClassStudent;
@@ -8,7 +9,9 @@ import com.educenter.entity.Parent;
 import com.educenter.entity.Student;
 import com.educenter.repository.ClassSessionRepository;
 import com.educenter.repository.ClassStudentRepository;
+import com.educenter.repository.AttendanceRepository;
 import com.educenter.repository.ParentRepository;
+import com.educenter.repository.SessionStudentReportRepository;
 import com.educenter.repository.StudentRepository;
 import com.educenter.security.CustomUserDetails;
 import com.educenter.service.ClassSessionService;
@@ -37,15 +40,20 @@ public class ParentScheduleController {
     private final ClassStudentRepository classStudentRepository;
     private final ClassSessionRepository classSessionRepository;
     private final ClassSessionService classSessionService;
+    private final AttendanceRepository attendanceRepository;
+    private final SessionStudentReportRepository sessionReports;
 
     public ParentScheduleController(ParentRepository parentRepository, StudentRepository studentRepository,
                                     ClassStudentRepository classStudentRepository, ClassSessionRepository classSessionRepository,
-                                    ClassSessionService classSessionService) {
+                                    ClassSessionService classSessionService, AttendanceRepository attendanceRepository,
+                                    SessionStudentReportRepository sessionReports) {
         this.parentRepository = parentRepository;
         this.studentRepository = studentRepository;
         this.classStudentRepository = classStudentRepository;
         this.classSessionRepository = classSessionRepository;
         this.classSessionService = classSessionService;
+        this.attendanceRepository = attendanceRepository;
+        this.sessionReports = sessionReports;
     }
 
     @GetMapping
@@ -74,15 +82,25 @@ public class ParentScheduleController {
 
         for (Student child : children) {
             if (selectedChildId != null && !selectedChildId.equals(child.getId())) continue;
+            Map<Long, String> publishedStatusBySession = new HashMap<>();
+            sessionReports.findPublishedForStudent(child.getId()).forEach(report ->
+                    publishedStatusBySession.put(report.getClassSession().getId(), report.getAttendanceStatus()));
+            Map<String, String> storedStatusByClassDate = new HashMap<>();
+            attendanceRepository.findByStudentIdOrderByAttendanceDateDesc(child.getId()).forEach(row ->
+                    storedStatusByClassDate.put(row.getClassEntity().getId() + ":" + row.getAttendanceDate(), row.getStatus()));
             for (ClassStudent enrollment : classStudentRepository.findByStudentId(child.getId())) {
                 if (!"ACTIVE".equals(enrollment.getStatus()) || enrollment.getClassEntity() == null) continue;
                 if (enrollment.getEnrolledDate() != null && enrollment.getEnrolledDate().isAfter(lastOfMonth)) continue;
                 Long classId = enrollment.getClassEntity().getId();
                 seenClassIds.add(classId);
                 for (ClassSession session : classSessionRepository.findByClassEntityIdAndSessionDateBetweenOrderBySessionDateAscStartTimeAsc(classId, gridStart, gridEnd)) {
-                    if ("CANCELLED".equals(session.getStatus())) continue;
                     EventAccumulator accumulator = events.computeIfAbsent(session.getId(), ignored -> new EventAccumulator(session));
                     accumulator.childNames.add(child.getFullName());
+                    String attendanceStatus = publishedStatusBySession.get(session.getId());
+                    if (attendanceStatus == null) {
+                        attendanceStatus = storedStatusByClassDate.get(classId + ":" + session.getSessionDate());
+                    }
+                    accumulator.attendance.put(child.getId(), new ParentChildAttendance(child.getFullName(), attendanceStatus));
                 }
             }
         }
@@ -94,6 +112,7 @@ public class ParentScheduleController {
         events.values().forEach(value -> {
             String color = classColors.getOrDefault(value.session.getClassEntity().getId(), COLORS.get(0));
             ParentScheduleEvent event = new ParentScheduleEvent(value.session, List.copyOf(value.childNames),
+                    List.copyOf(value.attendance.values()),
                     value.session.getPublishedAt() != null, color);
             eventsByDate.computeIfAbsent(value.session.getSessionDate(), ignored -> new ArrayList<>()).add(event);
         });
@@ -127,6 +146,7 @@ public class ParentScheduleController {
     private static final class EventAccumulator {
         private final ClassSession session;
         private final Set<String> childNames = new LinkedHashSet<>();
+        private final Map<Long, ParentChildAttendance> attendance = new LinkedHashMap<>();
         private EventAccumulator(ClassSession session) { this.session = session; }
     }
 }

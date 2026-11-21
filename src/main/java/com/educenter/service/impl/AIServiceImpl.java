@@ -218,6 +218,7 @@ public class AIServiceImpl implements AIService {
                 + "Không yêu cầu hoặc tiết lộ mật khẩu, khóa API hay thông tin riêng tư. "
                 + "Không thay đổi dữ liệu, công bố nhận xét, gửi tin nhắn hay thực hiện hành động thay người dùng. "
                 + "Nếu chưa đủ dữ liệu, hãy nói rõ giới hạn.";
+        system += "For mathematical expressions, wrap inline formulas in \\(...\\) and display formulas in \\[...\\]. Never output raw LaTeX, including inside Markdown tables.";
         return new ArrayList<>(List.of(message("system", AIPersona.combine(role, system))));
     }
 

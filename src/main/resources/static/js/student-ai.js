@@ -7,14 +7,19 @@
   const list = document.getElementById('studentConversationList');
   const messages = document.getElementById('studentAiMessages');
   const input = document.getElementById('studentAiInput');
-  const imageInput = document.getElementById('studentAiImage');
-  const preview = document.getElementById('studentAiImagePreview');
+  const attachmentInput = document.getElementById('studentAiAttachment');
+  const preview = document.getElementById('studentAiAttachmentPreview');
+  const previewImage = document.getElementById('studentAiAttachmentImage');
+  const previewName = document.getElementById('studentAiAttachmentName');
+  const previewPdfIcon = document.getElementById('studentAiAttachmentPdfIcon');
   const working = document.getElementById('studentAiWorking');
   const send = document.getElementById('studentAiSend');
   let conversationId = null;
   let busy = false;
   let aiReady = true;
   let previewUrl = null;
+  const maxUploadBytes = Number(app.dataset.maxUploadBytes) || 10 * 1024 * 1024;
+  const maxUploadLabel = `${Math.max(1, Math.round(maxUploadBytes / (1024 * 1024)))} MB`;
 
   const api = async (url, options = {}) => {
     const headers = new Headers(options.headers || {});
@@ -32,7 +37,9 @@
     document.getElementById('studentAiWelcome')?.remove();
     const article = document.createElement('article');
     article.className = `student-ai-message ${senderRole === 'USER' ? 'user' : 'assistant'} rounded p-3`;
-    article.textContent = content || '';
+    const safeContent = content || '';
+    article.textContent = senderRole === 'USER' || !window.HungCuongAIMath
+      ? safeContent : window.HungCuongAIMath.normalize(safeContent);
     if (transient) article.dataset.transient = 'true';
     messages.append(article);
     messages.scrollTop = messages.scrollHeight;
@@ -60,8 +67,9 @@
     const rows = await (await api(`/api/ai/student/conversations/${id}/messages`)).json();
     messages.replaceChildren();
     if (!rows.length) {
-      const welcome = document.createElement('div'); welcome.id = 'studentAiWelcome'; welcome.className = 'text-center text-secondary py-5'; welcome.textContent = 'Em có thể nhập câu hỏi hoặc tải ảnh bài tập lên.'; messages.append(welcome);
+      const welcome = document.createElement('div'); welcome.id = 'studentAiWelcome'; welcome.className = 'text-center text-secondary py-5'; welcome.textContent = 'Em có thể nhập câu hỏi hoặc tải ảnh/PDF bài tập lên.'; messages.append(welcome);
     } else rows.forEach(row => addMessage(row.senderRole, row.content));
+    await window.HungCuongAIMath?.typeset(messages);
     renderConversationList();
   };
 
@@ -75,6 +83,7 @@
     const decoder = new TextDecoder();
     let buffer = '';
     let assistantNode = null;
+    let assistantAnswer = '';
     while (true) {
       const { value, done } = await reader.read();
       buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
@@ -90,13 +99,18 @@
           await renderConversationList();
         } else if (eventName === 'delta') {
           if (!assistantNode) assistantNode = addMessage('ASSISTANT', '', true);
-          assistantNode.textContent += typeof data === 'string' ? data : String(data);
+          assistantAnswer += typeof data === 'string' ? data : String(data);
+          assistantNode.textContent = assistantAnswer;
           messages.scrollTop = messages.scrollHeight;
         } else if (eventName === 'error') {
           throw new Error(data.message || 'Không thể tạo câu trả lời.');
         } else if (eventName === 'done') {
           if (!assistantNode) addMessage('ASSISTANT', 'Đã hoàn tất.');
-          if (assistantNode) delete assistantNode.dataset.transient;
+          if (assistantNode) {
+            assistantNode.textContent = window.HungCuongAIMath?.normalize(assistantAnswer) ?? assistantAnswer;
+            delete assistantNode.dataset.transient;
+            await window.HungCuongAIMath?.typeset(assistantNode);
+          }
         }
       }
       if (done) break;
@@ -104,41 +118,55 @@
   };
 
   document.getElementById('newStudentConversation').addEventListener('click', () => createConversation().catch(error => { status.textContent = error.message; }));
-  imageInput.addEventListener('change', () => {
-    const file = imageInput.files?.[0];
-    if (!file) { preview.classList.add('d-none'); return; }
-    if (!/^image\/(jpeg|png)$/.test(file.type) || file.size > 10 * 1024 * 1024) {
-      status.textContent = 'Chọn ảnh JPG/JPEG hoặc PNG không vượt quá 10 MB.'; imageInput.value = ''; preview.classList.add('d-none'); return;
-    }
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = URL.createObjectURL(file);
-    preview.querySelector('img').src = previewUrl;
-    preview.classList.remove('d-none');
-  });
-  document.getElementById('removeStudentAiImage').addEventListener('click', () => {
-    imageInput.value = ''; preview.classList.add('d-none');
+  const clearAttachment = () => {
+    attachmentInput.value = ''; preview.classList.add('d-none');
+    previewImage.classList.add('d-none'); previewPdfIcon.classList.add('d-none'); previewImage.removeAttribute('src');
+    previewName.textContent = '';
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewUrl = null;
+  };
+  attachmentInput.addEventListener('change', () => {
+    const file = attachmentInput.files?.[0];
+    if (!file) { clearAttachment(); return; }
+    const name = file.name.toLowerCase();
+    const isPdf = name.endsWith('.pdf') && (!file.type || file.type === 'application/pdf' || file.type === 'application/octet-stream');
+    const isImage = /\.(jpe?g|png)$/.test(name) && (!file.type || /^image\/(jpeg|png)$/.test(file.type));
+    if ((!isPdf && !isImage) || file.size <= 0 || file.size > maxUploadBytes) {
+      status.textContent = `Chọn một ảnh JPG/PNG hoặc PDF hợp lệ, dung lượng tối đa ${maxUploadLabel}.`;
+      clearAttachment(); return;
+    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewName.textContent = file.name;
+    if (isPdf) {
+      previewImage.classList.add('d-none'); previewImage.removeAttribute('src');
+      previewPdfIcon.classList.remove('d-none'); previewUrl = null;
+    } else {
+      previewPdfIcon.classList.add('d-none'); previewUrl = URL.createObjectURL(file);
+      previewImage.src = previewUrl; previewImage.classList.remove('d-none');
+    }
+    preview.classList.remove('d-none');
   });
+  document.getElementById('removeStudentAiAttachment').addEventListener('click', clearAttachment);
 
   document.getElementById('studentAiForm').addEventListener('submit', async event => {
     event.preventDefault();
     if (busy) return;
     const prompt = input.value.trim();
-    const image = imageInput.files?.[0];
-    if (!prompt && !image) { status.textContent = 'Nhập câu hỏi hoặc chọn ảnh trước khi gửi.'; return; }
+    const attachment = attachmentInput.files?.[0];
+    const isPdf = attachment?.name.toLowerCase().endsWith('.pdf');
+    if (!prompt && !attachment) { status.textContent = 'Nhập câu hỏi hoặc chọn ảnh/PDF trước khi gửi.'; return; }
     busy = true; send.disabled = true; working.classList.remove('d-none'); status.textContent = 'Đang gửi câu hỏi…';
-    addMessage('USER', `${prompt || 'Hỏi về ảnh bài tập'}${image ? '\n[Đã gửi kèm ảnh]' : ''}`);
+    addMessage('USER', `${prompt || (isPdf ? 'Hỏi về PDF bài tập' : 'Hỏi về ảnh bài tập')}${attachment ? `\n[Đã gửi kèm ${isPdf ? 'PDF' : 'ảnh'}: ${attachment.name}]` : ''}`);
     const form = new FormData();
     form.append('message', prompt);
     form.append('action', document.getElementById('studentAiAction').value);
     if (conversationId) form.append('conversationId', String(conversationId));
-    if (image) form.append('image', image);
+    if (attachment) form.append(isPdf ? 'pdf' : 'image', attachment);
     try {
       const response = await api('/api/ai/student/chat', { method: 'POST', body: form, headers: { Accept: 'text/event-stream' } });
-      input.value = '';
-      document.getElementById('removeStudentAiImage').click();
       await readSse(response);
+      input.value = '';
+      clearAttachment();
       status.textContent = 'Đã nhận câu trả lời.';
       await renderConversationList();
     } catch (error) {

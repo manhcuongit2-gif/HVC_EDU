@@ -13,11 +13,13 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
     </style>
+    <link rel="stylesheet" th:href="@{/css/parent-portal.css}">
 </head>
 <body class="bg-light">
 
 <!-- Navbar dùng chung -->
 <div th:replace="~{fragments/navbar :: navbar}"></div>
+<div th:replace="~{fragments/parent-navigation :: menu('register-class')}"></div>
 
 <div class="container py-4">
     <!-- Header Section -->
@@ -65,7 +67,7 @@
                         <select class="form-select" id="classId" name="classId" required>
                             <option value="">-- Chọn lớp học --</option>
                             <option th:each="cls : ${classes}" th:value="${cls.id}"
-                                    th:text="${cls.name} + ' - Môn ' + ${cls.subject.name} + ' (GV: ' + ${cls.teacher.user.fullName} + ') - Học phí: ' + ${#numbers.formatDecimal(cls.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                    th:text="${cls.name} + ' - Môn ' + ${cls.subject.name} + ' (GV: ' + ${cls.teacher.user.fullName} + ')'">
                                 Toán 10 - Nâng Cao
                             </option>
                         </select>

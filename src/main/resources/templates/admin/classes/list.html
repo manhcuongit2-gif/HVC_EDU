@@ -50,9 +50,10 @@
                     </h2>
                     <p class="text-muted mb-0">Quản lý danh sách lớp học, phân công người dạy và theo dõi sĩ số</p>
                 </div>
-                <a th:href="@{/admin/classes/add}" class="btn btn-primary d-flex align-items-center">
-                    <i class="bi bi-plus-circle me-2"></i>Mở lớp học mới
-                </a>
+                <div class="d-flex flex-wrap gap-2">
+                    <a th:href="@{/admin/import(type='classes')}" class="btn btn-outline-success"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel</a>
+                    <a th:href="@{/admin/classes/add}" class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>Mở lớp học mới</a>
+                </div>
             </div>
 
             <!-- Thông báo thành công -->
@@ -79,7 +80,6 @@
                                     <th>Môn học</th>
                                     <th>Người dạy phụ trách</th>
                                     <th class="text-center" style="width: 120px;">Sĩ số</th>
-                                    <th style="min-width: 130px;">Học phí</th>
                                     <th style="min-width: 140px;">Đơn giá / buổi</th>
                                     <th class="text-center" style="width: 140px;">Trạng thái</th>
                                     <th style="width: 170px;" class="text-end pe-4">Thao tác</th>
@@ -87,7 +87,7 @@
                             </thead>
                             <tbody>
                                 <tr th:if="${#lists.isEmpty(classes)}">
-                                    <td colspan="9" class="text-center py-4 text-muted">
+                                    <td colspan="8" class="text-center py-4 text-muted">
                                         <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                         Chưa có lớp học nào trong hệ thống.
                                     </td>
@@ -122,11 +122,7 @@
                                             0 / 25
                                         </span>
                                     </td>
-                                    <td>
-                                        <span class="fw-bold text-success" th:text="${#numbers.formatDecimal(c.tuitionFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                                            1,200,000 đ
-                                        </span>
-                                    </td>
+
                                     <td><span class="fw-semibold text-primary" th:text="${c.sessionFee != null ? #numbers.formatDecimal(c.sessionFee, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Chưa cấu hình'}"></span></td>
                                     <td class="text-center">
                                         <span th:if="${c.status == 'ACTIVE'}" class="badge badge-active px-3 py-2 rounded-pill">

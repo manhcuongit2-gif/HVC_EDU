@@ -1,7 +1,9 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kết quả thi của con</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-<body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div><main class="container py-4">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kết quả thi của con</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">    <link rel="stylesheet" th:href="@{/css/parent-portal.css}">
+</head>
+<body class="bg-light"><div th:replace="~{fragments/navbar :: navbar}"></div>
+<div th:replace="~{fragments/parent-navigation :: menu('exams')}"></div><main class="container py-4">
   <h1 class="h3">Kết quả thi của con</h1><p class="text-secondary">Chỉ hiển thị kết quả của học sinh đã liên kết với tài khoản phụ huynh.</p>
   <section class="card border-0 shadow-sm mb-4"><div class="card-header bg-white fw-semibold">Đề PDF đã chấm</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Học sinh</th><th>Đề</th><th>Lớp / môn</th><th>Điểm</th><th>Nhận xét</th></tr></thead><tbody>
     <tr th:each="row : ${pdfAssignments}"><td th:text="${row.student.fullName}"></td><td th:text="${row.assignment.title}"></td><td th:text="|${row.assignment.classEntity.name} · ${row.assignment.classEntity.subject.name}|"></td><td th:text="|${row.submission.score} / 10|"></td><td th:text="${row.submission.feedback != null ? row.submission.feedback : '—'}"></td></tr>
